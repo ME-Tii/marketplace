@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+database.db
+static/uploads/
+.pytest_cache/
+.DS_Store

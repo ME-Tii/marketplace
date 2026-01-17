@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Profile - Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Marketplace</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/dashboard">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/notices">Notices</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/messages">Messages{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
+            </li>
+          </ul>
+           <ul class="navbar-nav">
+             {% if session.get('user_id') %}
+             <li class="nav-item">
+               <span class="navbar-text text-primary d-block text-center">{{ current_username }}</span>
+             </li>
+             <li class="nav-item">
+               <a class="nav-link" href="/profile/{{ current_username }}">My Profile</a>
+             </li>
+             <li class="nav-item">
+               <a class="nav-link" href="/logout">Logout</a>
+             </li>
+             {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="/login">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/register">Register</a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container mt-5">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+           <h2 class="text-center">Edit Profile</h2>
+           {% if error %}
+           <div class="alert alert-danger">{{ error }}</div>
+           {% endif %}
+           <form action="/edit_profile" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="profile_picture" class="form-label">Profile Picture</label>
+              <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
+              {% if profile_picture %}
+              <small class="form-text text-muted">Current picture: <img src="{{ profile_picture }}" style="max-width: 100px;"></small>
+              {% endif %}
+            </div>
+             <div class="mb-3">
+               <label for="description" class="form-label">Description</label>
+               <textarea class="form-control" id="description" name="description" rows="5" placeholder="Tell others about yourself...">{{ description }}</textarea>
+             </div>
+             <h4>Change Password</h4>
+             <div class="mb-3">
+               <label for="current_password" class="form-label">Current Password</label>
+               <input type="password" class="form-control" id="current_password" name="current_password">
+             </div>
+             <div class="mb-3">
+               <label for="new_password" class="form-label">New Password</label>
+               <input type="password" class="form-control" id="new_password" name="new_password">
+             </div>
+             <div class="mb-3">
+               <label for="confirm_password" class="form-label">Confirm New Password</label>
+               <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+             </div>
+             <button type="submit" class="btn btn-primary w-100">Update Profile</button>
+          </form>
+          <div class="text-center mt-3">
+            <a href="/profile/{{ current_username }}">Back to Profile</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="bg-dark text-white text-center py-3 mt-5">© 2023 Marketplace</footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  </body>
+</html>
