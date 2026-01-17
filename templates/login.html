@@ -50,9 +50,12 @@
               <input type="checkbox" class="form-check-input" id="rememberMe">
               <label class="form-check-label" for="rememberMe">Remember me</label>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Login</button>
-          </form>
-          <div class="text-center mt-3">
+             <button type="submit" class="btn btn-primary w-100">Login</button>
+             {% if error %}
+             <div class="alert alert-danger mt-3">{{ error }}</div>
+             {% endif %}
+           </form>
+           <div class="text-center mt-3">
             <a href="#">Forgot password?</a>
           </div>
             <div class="text-center mt-3">
