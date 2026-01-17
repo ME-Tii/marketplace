@@ -2,7 +2,7 @@ import requests
 import time
 
 # Replace with your Render app URL
-APP_URL = 'https://your-marketplace-app.onrender.com'
+APP_URL = 'https://marketplace-g2xq.onrender.com'
 
 def keep_awake():
     while True:
