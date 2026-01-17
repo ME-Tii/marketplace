@@ -49,8 +49,11 @@
          <div class="col-md-4 text-center">
            <img src="{{ profile_picture or '/static/pictures/placeholder.png' }}" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;" alt="Profile Picture">
          </div>
-         <div class="col-md-8">
-           <h1>{{ username }}'s Profile</h1>
+          <div class="col-md-8">
+            <h1>{{ username }}'s Profile</h1>
+            {% if success %}
+            <div class="alert alert-success">{{ success }}</div>
+            {% endif %}
              {% if is_owner %}
              <a href="/edit_profile" class="btn btn-secondary mb-3">Edit Profile</a>
              {% if username == 'admin' %}
