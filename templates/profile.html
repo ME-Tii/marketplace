@@ -55,6 +55,10 @@
              <a href="/edit_profile" class="btn btn-secondary mb-3">Edit Profile</a>
              {% if username == 'admin' %}
              <a href="/export_data" class="btn btn-info mb-3">Export Data</a>
+             <form method="post" action="/import_data" enctype="multipart/form-data" class="d-inline">
+               <input type="file" name="data_file" accept=".json" required class="form-control d-inline w-auto">
+               <button type="submit" class="btn btn-success mb-3">Import Data</button>
+             </form>
              {% endif %}
              {% else %}
             <a href="/chat/{{ username }}" class="btn btn-primary mb-3">Send Message</a>
