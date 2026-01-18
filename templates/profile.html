@@ -124,9 +124,36 @@
                    <span class="page-link">Next</span>
                  </li>
                  {% endif %}
-               </ul>
-             </nav>
-             {% endif %}
+                </ul>
+              </nav>
+              {% endif %}
+              <h3>{% if session.get('lang') == 'de' %}Gemeldete Beiträge{% else %}Reported Posts{% endif %}</h3>
+              {% if reports %}
+              <ul class="list-group mb-3">
+                {% for report in reports %}
+                <li class="list-group-item">
+                  <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ report[1] }}</h5> <!-- post title -->
+                    <small>{{ report[6] }}</small> <!-- timestamp -->
+                  </div>
+                  <p class="mb-1"><strong>{% if session.get('lang') == 'de' %}Gemeldet von:{% else %}Reported by:{% endif %}</strong> {{ report[7] }}</p> <!-- reporter username -->
+                  <p class="mb-1"><strong>{% if session.get('lang') == 'de' %}Grund:{% else %}Reason:{% endif %}</strong> {{ report[3] }}</p>
+                  {% if report[4] %}
+                  <p class="mb-1"><strong>{% if session.get('lang') == 'de' %}Beschreibung:{% else %}Description:{% endif %}</strong> {{ report[4] }}</p>
+                  {% endif %}
+                  <div class="d-flex">
+                    <a href="/post/{{ report[0] }}" class="btn btn-primary btn-sm me-2">{% if session.get('lang') == 'de' %}Beitrag anzeigen{% else %}View Post{% endif %}</a>
+                    <form method="post" action="/delete_report/{{ report[5] }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this report?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                      <button type="submit" class="btn btn-danger btn-sm">{% if session.get('lang') == 'de' %}Bericht löschen{% else %}Delete Report{% endif %}</button>
+                    </form>
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>{% if session.get('lang') == 'de' %}Keine gemeldeten Beiträge.{% else %}No reported posts.{% endif %}</p>
+              {% endif %}
              {% endif %}
              {% else %}
              <a href="/chat/{{ username }}" class="btn btn-primary mb-3">{% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send Message{% endif %}</a>
