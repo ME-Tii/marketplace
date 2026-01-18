@@ -70,14 +70,21 @@
                   <img src="{{ profile_picture or '/static/pictures/placeholder.png' }}" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;" alt="Profile Picture">
                 </div>
                 <div class="col-md-6 d-flex align-items-center">
-                  <div>
-                    <a href="/export_data" class="btn btn-info me-2 mb-2">{% if session.get('lang') == 'de' %}Daten exportieren{% else %}Export Data{% endif %}</a>
-                    <form method="post" action="/import_data" enctype="multipart/form-data" class="d-inline">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                      <input type="file" name="data_file" accept=".json" required class="form-control d-inline w-auto me-2 mb-2">
-                       <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Daten importieren{% else %}Import Data{% endif %}</button>
-                    </form>
-                  </div>
+                   <div>
+                     <a href="/export_data" class="btn btn-info me-2 mb-2">{% if session.get('lang') == 'de' %}Daten exportieren{% else %}Export Data{% endif %}</a>
+                     <form method="post" action="/import_data" enctype="multipart/form-data" class="d-inline">
+                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                       <input type="file" name="data_file" accept=".json" required class="form-control d-inline w-auto me-2 mb-2">
+                        <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Daten importieren{% else %}Import Data{% endif %}</button>
+                     </form>
+                     <br>
+                     <a href="/export_images" class="btn btn-info me-2 mb-2 mt-3">{% if session.get('lang') == 'de' %}Bilder exportieren{% else %}Export Images{% endif %}</a>
+                     <form method="post" action="/import_images" enctype="multipart/form-data" class="d-inline">
+                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                       <input type="file" name="images_file" accept=".zip" required class="form-control d-inline w-auto me-2 mb-2">
+                        <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Bilder importieren{% else %}Import Images{% endif %}</button>
+                     </form>
+                   </div>
                 </div>
               </div>
               <div class="row">
