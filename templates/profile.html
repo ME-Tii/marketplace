@@ -65,6 +65,14 @@
                  <button type="submit" class="btn btn-success">Import Data</button>
                </form>
              </div>
+             {% if all_users %}
+             <h3>All Users</h3>
+             <ul class="list-group mb-3">
+               {% for user in all_users %}
+               <li class="list-group-item">{{ user[0] }} - {{ user[1] }}</li>
+               {% endfor %}
+             </ul>
+             {% endif %}
              {% endif %}
              {% else %}
             <a href="/chat/{{ username }}" class="btn btn-primary mb-3">Send Message</a>
