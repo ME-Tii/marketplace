@@ -9,18 +9,18 @@
   <body>
      <nav class="navbar navbar-expand-md navbar-dark bg-dark">
        <div class="container-fluid">
-         <a class="navbar-brand" href="/>{% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</a>
+          <a class="navbar-brand" href="/">{% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</a>
          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
            <span class="navbar-toggler-icon"></span>
          </button>
          <div class="collapse navbar-collapse" id="navbarNav">
            <ul class="navbar-nav me-auto">
              <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/dashboard">{% if session.get('lang') == 'de' %}Armaturenbrett{% else %}Dashboard{% endif %}</a>
+               <a class="nav-link text-nowrap" href="/dashboard">{% if session.get('lang') == 'de' %}Uebersichtsseite{% else %}Dashboard{% endif %}</a>
              </li>
 
             <li class="nav-item">
-              <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Benachrichtigungen{% else %}Notices{% endif %}</a>
+              <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Merken{% else %}Notices{% endif %}</a>
             </li>
             <li class="nav-item">
               <a class="nav-link text-nowrap" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
@@ -35,18 +35,16 @@
                <span class="navbar-text text-primary d-block text-center">{{ current_username }}</span>
              </li>
              <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/profile/{{ current_username }}">My Profile</a>
+                <a class="nav-link text-nowrap" href="/profile/{{ current_username }}">{% if session.get('lang') == 'de' %}Mein Profil{% else %}My Profile{% endif %}</a>
              </li>
              <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/logout">Logout</a>
+                <a class="nav-link text-nowrap" href="/logout">{% if session.get('lang') == 'de' %}Abmelden{% else %}Logout{% endif %}</a>
              </li>
-             {% else %}
-             <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/login">{% if session.get('lang') == 'de' %}Anmelden{% else %}Login{% endif %}</a>
-             </li>
-             <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/register">{% if session.get('lang') == 'de' %}Registrieren{% else %}Register{% endif %}</a>
-             </li>
+              {% else %}
+
+              <li class="nav-item">
+                <a class="nav-link text-nowrap" href="/register">{% if session.get('lang') == 'de' %}Registrieren{% else %}Register{% endif %}</a>
+              </li>
             {% endif %}
            </ul>
          </div>

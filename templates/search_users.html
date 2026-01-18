@@ -16,11 +16,11 @@
          <div class="collapse navbar-collapse" id="navbarNav">
            <ul class="navbar-nav me-auto">
              <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/dashboard">{% if session.get('lang') == 'de' %}Armaturenbrett{% else %}Dashboard{% endif %}</a>
+               <a class="nav-link text-nowrap" href="/dashboard">{% if session.get('lang') == 'de' %}Uebersichtsseite{% else %}Dashboard{% endif %}</a>
              </li>
 
             <li class="nav-item">
-              <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Benachrichtigungen{% else %}Notices{% endif %}</a>
+              <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Merken{% else %}Notices{% endif %}</a>
             </li>
             <li class="nav-item">
               <a class="nav-link text-nowrap" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>

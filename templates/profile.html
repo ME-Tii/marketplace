@@ -7,44 +7,49 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   </head>
   <body>
-     <nav class="navbar navbar-expand-md navbar-dark bg-dark">
-       <div class="container-fluid">
-         <a class="navbar-brand" href="/>{% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</a>
-         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-           <span class="navbar-toggler-icon"></span>
-         </button>
-         <div class="collapse navbar-collapse" id="navbarNav">
-           <ul class="navbar-nav me-auto">
-             <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/dashboard">{% if session.get('lang') == 'de' %}Armaturenbrett{% else %}Dashboard{% endif %}</a>
-             </li>
+       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+           <a class="navbar-brand" href="/">{% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</a>
+           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+             <span class="navbar-toggler-icon"></span>
+           </button>
+           <div class="collapse navbar-collapse" id="navbarNav">
+             <ul class="navbar-nav me-auto">
+               <li class="nav-item">
+                 <a class="nav-link text-nowrap" href="/dashboard">{% if session.get('lang') == 'de' %}Uebersichtsseite{% else %}Dashboard{% endif %}</a>
+               </li>
 
-            <li class="nav-item">
-              <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Benachrichtigungen{% else %}Notices{% endif %}</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link text-nowrap" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
-            </li>
-          </ul>
-           <ul class="navbar-nav">
+               <li class="nav-item">
+                 <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Merken{% else %}Notices{% endif %}</a>
+               </li>
               <li class="nav-item">
-                <a class="nav-link text-nowrap" href="/switch_lang?lang={% if session.get('lang') == 'de' %}en{% else %}de{% endif %}">{% if session.get('lang') == 'de' %}English{% else %}Deutsch{% endif %}</a>
+                <a class="nav-link text-nowrap" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
               </li>
-              {% if session.get('user_id') %}
-             <li class="nav-item">
-               <span class="navbar-text text-primary d-block text-center">{{ current_username }}</span>
-             </li>
-             <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/profile/{{ current_username }}">My Profile</a>
-             </li>
+            </ul>
+             <ul class="navbar-nav">
+               <li class="nav-item">
+                 <a class="nav-link text-nowrap" href="/switch_lang?lang={% if session.get('lang') == 'de' %}en{% else %}de{% endif %}">{% if session.get('lang') == 'de' %}English{% else %}Deutsch{% endif %}</a>
+               </li>
+               {% if session.get('user_id') %}
               <li class="nav-item">
-                <a class="nav-link text-nowrap" href="/logout">Logout</a>
+                <span class="navbar-text text-primary d-block text-center">{{ current_username }}</span>
               </li>
-              {% endif %}
-           </ul>
-         </div>
-       </div>
-    </nav>
+              <li class="nav-item">
+                 <a class="nav-link{% if is_owner %} active{% endif %} text-nowrap"{% if is_owner %} aria-current="page"{% endif %} href="/profile/{{ current_username }}">{% if session.get('lang') == 'de' %}Mein Profil{% else %}My Profile{% endif %}</a>
+              </li>
+              <li class="nav-item">
+                 <a class="nav-link text-nowrap" href="/logout">{% if session.get('lang') == 'de' %}Abmelden{% else %}Logout{% endif %}</a>
+              </li>
+              {% else %}
+
+              <li class="nav-item">
+                <a class="nav-link text-nowrap" href="/register">{% if session.get('lang') == 'de' %}Registrieren{% else %}Register{% endif %}</a>
+              </li>
+             {% endif %}
+            </ul>
+           </div>
+        </div>
+     </nav>
      <div class="container mt-5">
        <div class="row">
          <div class="col-md-4 text-center">
@@ -153,9 +158,10 @@
                {% if is_owner %}
                <div class="d-flex justify-content-between mt-2">
                   <a href="/edit_post/{{ post[0] }}" class="btn btn-warning btn-sm">{% if session.get('lang') == 'de' %}Bearbeiten{% else %}Edit{% endif %}</a>
-                 <form method="post" action="/delete_post/{{ post[0] }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
-                    <button type="submit" class="btn btn-danger btn-sm">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>
-                 </form>
+                  <form method="post" action="/delete_post/{{ post[0] }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                     <button type="submit" class="btn btn-danger btn-sm">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>
+                  </form>
                </div>
                {% endif %}
              </div>
@@ -167,7 +173,7 @@
         <p>{% if session.get('lang') == 'de' %}Noch keine Beiträge.{% else %}No posts yet.{% endif %}</p>
        {% endif %}
     </div>
-    <footer class="bg-dark text-white text-center py-3 mt-5">© 2023 Marketplace</footer>
+     <footer class="bg-dark text-white text-center py-3 mt-5">© 2023 {% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>
 </html>

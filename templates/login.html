@@ -17,7 +17,7 @@
             <ul class="navbar-nav me-auto flex-nowrap">
 
                <li class="nav-item">
-                 <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Benachrichtigungen{% else %}Notices{% endif %}</a>
+                 <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Merken{% else %}Notices{% endif %}</a>
                </li>
                <li class="nav-item">
                  <a class="nav-link text-nowrap" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
