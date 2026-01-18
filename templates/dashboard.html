@@ -51,11 +51,11 @@
       </div>
     </nav>
     <div class="container mt-5">
-      <h1>Community Board</h1>
+      <h1>{% if session.get('lang') == 'de' %}Gemeinschaftsbrett{% else %}Community Board{% endif %}</h1>
       {% if session.get('user_id') %}
       <a href="/create_post_page" class="btn btn-primary mb-3">{% if session.get('lang') == 'de' %}Neuen Beitrag erstellen{% else %}Create New Post{% endif %}</a>
       {% else %}
-      <p>Please <a href="/login">{% if session.get('lang') == 'de' %}anmelden{% else %}login{% endif %}</a> to create posts.</p>
+      <p>{% if session.get('lang') == 'de' %}Bitte{% else %}Please{% endif %} <a href="/login">{% if session.get('lang') == 'de' %}anmelden{% else %}login{% endif %}</a> {% if session.get('lang') == 'de' %}um Beiträge zu erstellen.{% else %}to create posts.{% endif %}</p>
       {% endif %}
       <form class="mb-3" method="get">
         <div class="row g-2">
@@ -102,7 +102,7 @@
         {% endfor %}
       </div>
      </div>
-     <footer class="bg-dark text-white text-center py-3 mt-5">© 2023 Marketplace</footer>
+     <footer class="bg-dark text-white text-center py-3 mt-5">© 2023 {% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</footer>
      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
    </body>
 </html>
