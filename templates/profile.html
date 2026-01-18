@@ -69,10 +69,10 @@
              <h3>All Users</h3>
              <ul class="list-group mb-3">
                {% for user in all_users %}
-               <li class="list-group-item d-flex justify-content-between align-items-center">
-                 <div>
+               <li class="list-group-item d-flex justify-content-between align-items-start">
+                 <div class="flex-grow-1">
                    <strong>{{ user[0] }}</strong> - {{ user[1] }}<br>
-                   <small class="text-muted">Password Hash: {{ user[2] }}</small>
+                   <small class="text-muted">Password Hash:<br><code style="word-break: break-all; font-size: 0.8em;">{{ user[2] }}</code></small>
                  </div>
                  {% if user[0] != 'admin' %}
                  <form method="post" action="/delete_user/{{ user[0] }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ user[0] }}?');">
