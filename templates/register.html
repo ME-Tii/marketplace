@@ -7,26 +7,30 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   </head>
   <body>
-     <nav class="navbar navbar-expand navbar-dark bg-dark">
-       <div class="container-fluid">
-         <a class="navbar-brand" href="/">{% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</a>
-         <div>
+      <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="/">{% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto flex-nowrap">
 
                <li class="nav-item">
-                 <a class="nav-link" href="/notices">{% if session.get('lang') == 'de' %}Benachrichtigungen{% else %}Notices{% endif %}</a>
+                 <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Benachrichtigungen{% else %}Notices{% endif %}</a>
                </li>
                <li class="nav-item">
-                 <a class="nav-link" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
+                 <a class="nav-link text-nowrap" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
                </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="/login">{% if session.get('lang') == 'de' %}Anmelden{% else %}Login{% endif %}</a>
+                  <a class="nav-link text-nowrap" href="/login">{% if session.get('lang') == 'de' %}Anmelden{% else %}Login{% endif %}</a>
                 </li>
             </ul>
             <ul class="navbar-nav">
 
-             </ul>
-       </div>
+           </ul>
+          </div>
+        </div>
      </nav>
     <div class="container mt-5">
       <div class="row justify-content-center">
