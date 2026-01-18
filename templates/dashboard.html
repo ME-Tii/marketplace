@@ -94,7 +94,7 @@
               <p class="card-text mt-auto"><small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[8] }}">{{ post[8] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small></p>
               <div class="d-flex justify-content-between">
                  <a href="/post/{{ post[0] }}" class="btn btn-primary">{% if session.get('lang') == 'de' %}Details anzeigen{% else %}View Details{% endif %}</a>
-                 <a href="/add_notice/{{ post[0] }}" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Beachten{% else %}Notice{% endif %}</a>
+                 <a href="/add_notice/{{ post[0] }}" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
               </div>
             </div>
           </div>

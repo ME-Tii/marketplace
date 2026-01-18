@@ -131,9 +131,9 @@
              {% else %}
              <a href="/chat/{{ username }}" class="btn btn-primary mb-3">{% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send Message{% endif %}</a>
             {% if is_noticed %}
-             <a href="/remove_notice_user/{{ username }}" class="btn btn-warning mb-3">{% if session.get('lang') == 'de' %}Beachten entfernen{% else %}Remove Notice{% endif %}</a>
+             <a href="/remove_notice_user/{{ username }}" class="btn btn-warning mb-3">{% if session.get('lang') == 'de' %}Merken entfernen{% else %}Remove Notice{% endif %}</a>
             {% else %}
-             <a href="/add_notice_user/{{ username }}" class="btn btn-info mb-3">{% if session.get('lang') == 'de' %}Benutzer bemerken{% else %}Notice User{% endif %}</a>
+             <a href="/add_notice_user/{{ username }}" class="btn btn-info mb-3">{% if session.get('lang') == 'de' %}Benutzer merken{% else %}Notice User{% endif %}</a>
             {% endif %}
              {% endif %}
           </div>
