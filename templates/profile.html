@@ -56,6 +56,9 @@
             {% endif %}
              {% if is_owner %}
              <a href="/edit_profile" class="btn btn-secondary mb-3">Edit Profile</a>
+            {% if description %}
+            <p class="lead">{{ description }}</p>
+            {% endif %}
              {% if username == 'admin' %}
              <div class="mb-3">
                <a href="/export_data" class="btn btn-info me-2">Export Data</a>
@@ -126,13 +129,10 @@
             {% else %}
             <a href="/add_notice_user/{{ username }}" class="btn btn-info mb-3">Notice User</a>
             {% endif %}
-            {% endif %}
-           {% if description %}
-           <p class="lead">{{ description }}</p>
-           {% endif %}
-         </div>
-       </div>
-       <h2>Posts</h2>
+             {% endif %}
+          </div>
+        </div>
+        <h2>Posts</h2>
        {% if posts %}
        <div class="row">
          {% for post in posts %}
