@@ -194,15 +194,19 @@
                <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
                {% endif %}
                <p class="card-text mt-auto"><small class="text-muted">Posted on {{ post[7] }}</small></p>
-               {% if is_owner %}
-               <div class="d-flex justify-content-between mt-2">
-                  <a href="/edit_post/{{ post[0] }}" class="btn btn-warning btn-sm">{% if session.get('lang') == 'de' %}Bearbeiten{% else %}Edit{% endif %}</a>
-                  <form method="post" action="/delete_post/{{ post[0] }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                     <button type="submit" class="btn btn-danger btn-sm">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>
-                  </form>
-               </div>
-               {% endif %}
+                {% if is_owner %}
+                <div class="d-flex justify-content-between mt-2">
+                   <a href="/edit_post/{{ post[0] }}" class="btn btn-warning btn-sm">{% if session.get('lang') == 'de' %}Bearbeiten{% else %}Edit{% endif %}</a>
+                   <form method="post" action="/delete_post/{{ post[0] }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                      <button type="submit" class="btn btn-danger btn-sm">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>
+                   </form>
+                </div>
+                {% else %}
+                <div class="d-flex justify-content-start mt-2">
+                   <a href="/chat/{{ username }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send Message{% endif %}</a>
+                </div>
+                {% endif %}
              </div>
            </div>
          </div>

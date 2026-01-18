@@ -92,10 +92,13 @@
               <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
               {% endif %}
               <p class="card-text mt-auto"><small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[8] }}">{{ post[8] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small></p>
-              <div class="d-flex justify-content-between">
-                 <a href="/post/{{ post[0] }}" class="btn btn-primary">{% if session.get('lang') == 'de' %}Details anzeigen{% else %}View Details{% endif %}</a>
-                 <a href="/add_notice/{{ post[0] }}" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
-              </div>
+               <div class="d-flex justify-content-between">
+                  <a href="/post/{{ post[0] }}" class="btn btn-primary">{% if session.get('lang') == 'de' %}Details anzeigen{% else %}View Details{% endif %}</a>
+                  {% if current_username and current_username != post[8] %}
+                  <a href="/chat/{{ post[8] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Nachricht{% else %}Message{% endif %}</a>
+                  {% endif %}
+                  <a href="/add_notice/{{ post[0] }}" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
+               </div>
             </div>
           </div>
         </div>
