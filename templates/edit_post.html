@@ -39,12 +39,12 @@
                <a class="nav-link" href="/logout">Logout</a>
              </li>
              {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="/login">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/register">Register</a>
-            </li>
+             <li class="nav-item">
+               <a class="nav-link" href="/login">{% if session.get('lang') == 'de' %}Anmelden{% else %}Login{% endif %}</a>
+             </li>
+             <li class="nav-item">
+               <a class="nav-link" href="/register">{% if session.get('lang') == 'de' %}Registrieren{% else %}Register{% endif %}</a>
+             </li>
             {% endif %}
           </ul>
         </div>
@@ -53,46 +53,46 @@
     <div class="container mt-5">
       <div class="row justify-content-center">
         <div class="col-md-6">
-          <h2 class="text-center">Edit Post</h2>
+           <h2 class="text-center">{% if session.get('lang') == 'de' %}Beitrag bearbeiten{% else %}Edit Post{% endif %}</h2>
            <form action="/edit_post/{{ post[0] }}" method="post" enctype="multipart/form-data">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
              <div class="mb-3">
-              <label for="title" class="form-label">Title</label>
+               <label for="title" class="form-label">{% if session.get('lang') == 'de' %}Titel{% else %}Title{% endif %}</label>
               <input type="text" class="form-control" id="title" name="title" value="{{ post[1] }}" required>
             </div>
             <div class="mb-3">
-              <label for="description" class="form-label">Description</label>
+               <label for="description" class="form-label">{% if session.get('lang') == 'de' %}Beschreibung{% else %}Description{% endif %}</label>
               <textarea class="form-control" id="description" name="description" rows="3" required>{{ post[2] }}</textarea>
             </div>
             <div class="mb-3">
-              <label for="type" class="form-label">Type</label>
+               <label for="type" class="form-label">{% if session.get('lang') == 'de' %}Typ{% else %}Type{% endif %}</label>
               <select class="form-control" id="type" name="type" required>
-                <option value="sell" {% if post[3] == 'sell' %}selected{% endif %}>Sell</option>
-                <option value="buy" {% if post[3] == 'buy' %}selected{% endif %}>Buy</option>
-                <option value="trade" {% if post[3] == 'trade' %}selected{% endif %}>Trade</option>
-                <option value="notification" {% if post[3] == 'notification' %}selected{% endif %}>Notification</option>
+                 <option value="sell" {% if post[3] == 'sell' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}</option>
+                 <option value="buy" {% if post[3] == 'buy' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
+                 <option value="trade" {% if post[3] == 'trade' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}</option>
+                 <option value="notification" {% if post[3] == 'notification' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}</option>
               </select>
             </div>
             <div class="mb-3">
-              <label for="image" class="form-label">Image</label>
+               <label for="image" class="form-label">{% if session.get('lang') == 'de' %}Bild{% else %}Image{% endif %}</label>
               <input type="file" class="form-control" id="image" name="image" accept="image/*">
               {% if post[4] %}
               <small class="form-text text-muted">Current image: <img src="{{ post[4] }}" style="max-width: 100px;"></small>
               {% endif %}
             </div>
             <div class="mb-3">
-              <label for="price" class="form-label">Price (optional)</label>
+               <label for="price" class="form-label">{% if session.get('lang') == 'de' %}Preis (optional){% else %}Price (optional){% endif %}</label>
               <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ post[5] or '' }}" placeholder="Enter price">
             </div>
             <div class="mb-3">
-              <label for="links" class="form-label">Links</label>
+               <label for="links" class="form-label">{% if session.get('lang') == 'de' %}Links{% else %}Links{% endif %}</label>
               <input type="url" class="form-control" id="links" name="links" value="{{ post[6] or '' }}">
             </div>
-            <button type="submit" class="btn btn-primary w-100">Update Post</button>
+             <button type="submit" class="btn btn-primary w-100">{% if session.get('lang') == 'de' %}Beitrag aktualisieren{% else %}Update Post{% endif %}</button>
           </form>
-          <div class="text-center mt-3">
-            <a href="/profile/{{ current_username }}">Back to Profile</a>
-          </div>
+           <div class="text-center mt-3">
+             <a href="/profile/{{ current_username }}">{% if session.get('lang') == 'de' %}Zurück zum Profil{% else %}Back to Profile{% endif %}</a>
+           </div>
         </div>
       </div>
     </div>

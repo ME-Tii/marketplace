@@ -56,18 +56,18 @@
           <h5 class="card-title">{{ post[1] }} <small class="text-muted">({{ post[3] }})</small></h5>
           <p class="card-text">{{ post[2] }}</p>
           {% if post[6] %}
-          <p><strong>Price: ${{ post[6] }}</strong></p>
+           <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong></p>
           {% endif %}
           <img src="{{ post[4] or '/static/pictures/placeholder.png' }}" class="img-fluid" alt="Post Image">
           {% if post[5] %}
           <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
           {% endif %}
-          <p class="card-text"><small class="text-muted">Posted by <a href="/profile/{{ post[8] }}">{{ post[8] }}</a> on {{ post[7] }}</small></p>
+           <p class="card-text"><small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[8] }}">{{ post[8] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small></p>
         </div>
       </div>
       <div class="mt-3 d-flex justify-content-between">
-        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
-        <a href="/add_notice/{{ post[0] }}" class="btn btn-info">Notice</a>
+         <a href="/dashboard" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Zurück zum Dashboard{% else %}Back to Dashboard{% endif %}</a>
+         <a href="/add_notice/{{ post[0] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Beachten{% else %}Notice{% endif %}</a>
       </div>
     </div>
     <footer class="bg-dark text-white text-center py-3 mt-5">© 2023 Marketplace</footer>

@@ -35,16 +35,16 @@
                <span class="navbar-text text-primary d-block text-center">{{ current_username }}</span>
              </li>
              <li class="nav-item">
-               <a class="nav-link" href="/profile/{{ current_username }}">My Profile</a>
+                <a class="nav-link" href="/profile/{{ current_username }}">{% if session.get('lang') == 'de' %}Mein Profil{% else %}My Profile{% endif %}</a>
              </li>
              <li class="nav-item">
-               <a class="nav-link" href="/logout">Logout</a>
+                <a class="nav-link" href="/logout">{% if session.get('lang') == 'de' %}Abmelden{% else %}Logout{% endif %}</a>
              </li>
              {% else %}
 
-            <li class="nav-item">
-              <a class="nav-link" href="/register">Register</a>
-            </li>
+             <li class="nav-item">
+               <a class="nav-link" href="/register">{% if session.get('lang') == 'de' %}Registrieren{% else %}Register{% endif %}</a>
+             </li>
             {% endif %}
           </ul>
         </div>
@@ -53,30 +53,30 @@
     <div class="container mt-5">
       <h1>Community Board</h1>
       {% if session.get('user_id') %}
-      <a href="/create_post_page" class="btn btn-primary mb-3">Create New Post</a>
+      <a href="/create_post_page" class="btn btn-primary mb-3">{% if session.get('lang') == 'de' %}Neuen Beitrag erstellen{% else %}Create New Post{% endif %}</a>
       {% else %}
-      <p>Please <a href="/login">login</a> to create posts.</p>
+      <p>Please <a href="/login">{% if session.get('lang') == 'de' %}anmelden{% else %}login{% endif %}</a> to create posts.</p>
       {% endif %}
       <form class="mb-3" method="get">
         <div class="row g-2">
           <div class="col-md-6">
-            <input class="form-control" type="search" name="q" placeholder="Search posts..." value="{{ query or '' }}">
+            <input class="form-control" type="search" name="q" placeholder="{% if session.get('lang') == 'de' %}Beiträge suchen...{% else %}Search posts...{% endif %}" value="{{ query or '' }}">
           </div>
           <div class="col-md-4">
             <select class="form-select" name="type">
-              <option value="">All Types</option>
-              <option value="buy" {% if type_filter == 'buy' %}selected{% endif %}>Buy</option>
-              <option value="sell" {% if type_filter == 'sell' %}selected{% endif %}>Sell</option>
-              <option value="trade" {% if type_filter == 'trade' %}selected{% endif %}>Trade</option>
-              <option value="notification" {% if type_filter == 'notification' %}selected{% endif %}>Notification</option>
+              <option value="">{% if session.get('lang') == 'de' %}Alle Typen{% else %}All Types{% endif %}</option>
+              <option value="buy" {% if type_filter == 'buy' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
+              <option value="sell" {% if type_filter == 'sell' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}</option>
+              <option value="trade" {% if type_filter == 'trade' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}</option>
+              <option value="notification" {% if type_filter == 'notification' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}</option>
             </select>
           </div>
           <div class="col-md-2">
-            <button class="btn btn-outline-success w-100" type="submit">Search</button>
+            <button class="btn btn-outline-success w-100" type="submit">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
           </div>
         </div>
       </form>
-      <h2>Posts</h2>
+      <h2>{% if session.get('lang') == 'de' %}Beiträge{% else %}Posts{% endif %}</h2>
       <div class="row">
         {% for post in posts %}
         <div class="col-md-4 mb-3">
@@ -85,16 +85,16 @@
               <h5 class="card-title">{{ post[1] }} <small class="text-muted">({{ post[3] }})</small></h5>
               <p class="card-text">{{ post[2] }}</p>
               {% if post[6] %}
-              <p><strong>Price: ${{ post[6] }}</strong></p>
+              <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong></p>
               {% endif %}
               <img src="{{ post[4] or '/static/pictures/placeholder.png' }}" class="img-fluid mb-2" alt="Post Image">
               {% if post[5] %}
               <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
               {% endif %}
-              <p class="card-text mt-auto"><small class="text-muted">Posted by <a href="/profile/{{ post[8] }}">{{ post[8] }}</a> on {{ post[7] }}</small></p>
+              <p class="card-text mt-auto"><small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[8] }}">{{ post[8] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small></p>
               <div class="d-flex justify-content-between">
-                <a href="/post/{{ post[0] }}" class="btn btn-primary">View Details</a>
-                <a href="/add_notice/{{ post[0] }}" class="btn btn-secondary">Notice</a>
+                 <a href="/post/{{ post[0] }}" class="btn btn-primary">{% if session.get('lang') == 'de' %}Details anzeigen{% else %}View Details{% endif %}</a>
+                 <a href="/add_notice/{{ post[0] }}" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Beachten{% else %}Notice{% endif %}</a>
               </div>
             </div>
           </div>

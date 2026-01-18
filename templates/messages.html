@@ -53,14 +53,14 @@
     <div class="container-fluid mt-5">
       <div class="row">
         <div class="col-md-3">
-          <h5>Search Users</h5>
+           <h5>{% if session.get('lang') == 'de' %}Benutzer suchen{% else %}Search Users{% endif %}</h5>
           <form action="/search_users" method="get" class="mb-3">
             <div class="input-group">
-              <input type="text" class="form-control" name="q" placeholder="Search by username" required>
-              <button class="btn btn-outline-secondary" type="submit">Search</button>
+               <input type="text" class="form-control" name="q" placeholder="{% if session.get('lang') == 'de' %}Nach Benutzername suchen{% else %}Search by username{% endif %}" required>
+               <button class="btn btn-outline-secondary" type="submit">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
             </div>
           </form>
-          <h5>Chats</h5>
+           <h5>{% if session.get('lang') == 'de' %}Chats{% else %}Chats{% endif %}</h5>
           <ul class="list-group">
             {% for conv in conversations %}
             <li class="list-group-item {% if conv == selected_chat %}active{% endif %}">
@@ -71,7 +71,7 @@
         </div>
         <div class="col-md-9">
           {% if selected_chat %}
-          <h1>Chat with {{ selected_chat }}</h1>
+           <h1>{% if session.get('lang') == 'de' %}Chat mit{% else %}Chat with{% endif %} {{ selected_chat }}</h1>
           <div class="card">
             <div class="card-body" style="height: 400px; overflow-y: scroll;">
               {% for message in messages %}
@@ -92,14 +92,14 @@
            <form action="/send_message/{{ selected_chat }}" method="post" enctype="multipart/form-data" class="mt-3">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
              <div class="input-group mb-2">
-              <input type="text" class="form-control" name="message" placeholder="Type your message...">
+               <input type="text" class="form-control" name="message" placeholder="{% if session.get('lang') == 'de' %}Geben Sie Ihre Nachricht ein...{% else %}Type your message...{% endif %}">
               <input type="file" class="form-control" name="attachment" accept="image/*,.pdf,.doc,.docx">
-              <button class="btn btn-primary" type="submit">Send</button>
+               <button class="btn btn-primary" type="submit">{% if session.get('lang') == 'de' %}Senden{% else %}Send{% endif %}</button>
             </div>
           </form>
           {% else %}
-          <h1>Messages</h1>
-          <p>Select a chat to start messaging.</p>
+           <h1>{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}</h1>
+           <p>{% if session.get('lang') == 'de' %}Wählen Sie einen Chat aus, um mit dem Nachrichten zu beginnen.{% else %}Select a chat to start messaging.{% endif %}</p>
           {% endif %}
         </div>
       </div>

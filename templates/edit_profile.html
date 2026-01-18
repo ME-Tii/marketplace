@@ -53,40 +53,40 @@
     <div class="container mt-5">
       <div class="row justify-content-center">
         <div class="col-md-6">
-           <h2 class="text-center">Edit Profile</h2>
+            <h2 class="text-center">{% if session.get('lang') == 'de' %}Profil bearbeiten{% else %}Edit Profile{% endif %}</h2>
            {% if error %}
            <div class="alert alert-danger">{{ error }}</div>
            {% endif %}
            <form action="/edit_profile" method="post" enctype="multipart/form-data">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
              <div class="mb-3">
-              <label for="profile_picture" class="form-label">Profile Picture</label>
+               <label for="profile_picture" class="form-label">{% if session.get('lang') == 'de' %}Profilbild{% else %}Profile Picture{% endif %}</label>
               <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
               {% if profile_picture %}
               <small class="form-text text-muted">Current picture: <img src="{{ profile_picture }}" style="max-width: 100px;"></small>
               {% endif %}
             </div>
              <div class="mb-3">
-               <label for="description" class="form-label">Description</label>
-               <textarea class="form-control" id="description" name="description" rows="5" placeholder="Tell others about yourself...">{{ description }}</textarea>
+                <label for="description" class="form-label">{% if session.get('lang') == 'de' %}Beschreibung{% else %}Description{% endif %}</label>
+                <textarea class="form-control" id="description" name="description" rows="5" placeholder="{% if session.get('lang') == 'de' %}Erzählen Sie anderen von sich...{% else %}Tell others about yourself...{% endif %}">{{ description }}</textarea>
              </div>
-             <h4>Change Password</h4>
+              <h4>{% if session.get('lang') == 'de' %}Passwort ändern{% else %}Change Password{% endif %}</h4>
              <div class="mb-3">
-               <label for="current_password" class="form-label">Current Password</label>
+                <label for="current_password" class="form-label">{% if session.get('lang') == 'de' %}Aktuelles Passwort{% else %}Current Password{% endif %}</label>
                <input type="password" class="form-control" id="current_password" name="current_password">
              </div>
              <div class="mb-3">
-               <label for="new_password" class="form-label">New Password</label>
+                <label for="new_password" class="form-label">{% if session.get('lang') == 'de' %}Neues Passwort{% else %}New Password{% endif %}</label>
                <input type="password" class="form-control" id="new_password" name="new_password">
              </div>
              <div class="mb-3">
-               <label for="confirm_password" class="form-label">Confirm New Password</label>
+                <label for="confirm_password" class="form-label">{% if session.get('lang') == 'de' %}Neues Passwort bestätigen{% else %}Confirm New Password{% endif %}</label>
                <input type="password" class="form-control" id="confirm_password" name="confirm_password">
              </div>
-             <button type="submit" class="btn btn-primary w-100">Update Profile</button>
+              <button type="submit" class="btn btn-primary w-100">{% if session.get('lang') == 'de' %}Profil aktualisieren{% else %}Update Profile{% endif %}</button>
           </form>
           <div class="text-center mt-3">
-            <a href="/profile/{{ current_username }}">Back to Profile</a>
+             <a href="/profile/{{ current_username }}">{% if session.get('lang') == 'de' %}Zurück zum Profil{% else %}Back to Profile{% endif %}</a>
           </div>
         </div>
       </div>
