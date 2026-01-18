@@ -59,7 +59,8 @@
            <div class="alert alert-danger">{{ error }}</div>
            {% endif %}
            <form action="/edit_profile" method="post" enctype="multipart/form-data">
-            <div class="mb-3">
+             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+             <div class="mb-3">
               <label for="profile_picture" class="form-label">Profile Picture</label>
               <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
               {% if profile_picture %}

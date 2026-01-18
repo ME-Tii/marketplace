@@ -60,6 +60,7 @@
              <div class="mb-3">
                <a href="/export_data" class="btn btn-info me-2">Export Data</a>
                <form method="post" action="/import_data" enctype="multipart/form-data" class="d-inline">
+                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                  <input type="file" name="data_file" accept=".json" required class="form-control d-inline w-auto me-2">
                  <button type="submit" class="btn btn-success">Import Data</button>
                </form>
