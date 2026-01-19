@@ -22,8 +22,11 @@
                <li class="nav-item">
                  <a class="nav-link text-nowrap" href="/notices">{% if session.get('lang') == 'de' %}Merken{% else %}Notices{% endif %}</a>
                </li>
+               <li class="nav-item">
+                 <a class="nav-link active text-nowrap" aria-current="page" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
+               </li>
               <li class="nav-item">
-                <a class="nav-link active text-nowrap" aria-current="page" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
+                <a class="nav-link text-nowrap" href="/groups">{% if session.get('lang') == 'de' %}Gruppen{% else %}Groups{% endif %}</a>
               </li>
             </ul>
              <ul class="navbar-nav">
