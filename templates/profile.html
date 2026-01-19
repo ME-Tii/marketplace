@@ -71,6 +71,7 @@
                 </div>
                 <div class="col-md-6 d-flex align-items-center">
                    <div>
+                     <a href="/export_all" class="btn btn-success me-2 mb-2">{% if session.get('lang') == 'de' %}Alles exportieren{% else %}Export All{% endif %}</a>
                      <a href="/export_data" class="btn btn-info me-2 mb-2">{% if session.get('lang') == 'de' %}Daten exportieren{% else %}Export Data{% endif %}</a>
                      <form method="post" action="/import_data" enctype="multipart/form-data" class="d-inline">
                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
