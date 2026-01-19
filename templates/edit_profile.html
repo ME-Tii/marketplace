@@ -9,7 +9,7 @@
   <body>
      <nav class="navbar navbar-expand-md navbar-dark bg-dark">
        <div class="container-fluid">
-         <a class="navbar-brand" href="/>{% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</a>
+           <a class="navbar-brand" href="/">{% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</a>
          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
            <span class="navbar-toggler-icon"></span>
          </button>
@@ -34,19 +34,17 @@
              <li class="nav-item">
                <span class="navbar-text text-primary d-block text-center">{{ current_username }}</span>
              </li>
-             <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/profile/{{ current_username }}">My Profile</a>
-             </li>
-             <li class="nav-item">
-               <a class="nav-link text-nowrap" href="/logout">Logout</a>
-             </li>
-             {% else %}
-            <li class="nav-item">
-              <a class="nav-link text-nowrap" href="/login">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link text-nowrap" href="/register">Register</a>
-            </li>
+              <li class="nav-item">
+                 <a class="nav-link text-nowrap" href="/profile/{{ current_username }}">{% if session.get('lang') == 'de' %}Mein Profil{% else %}My Profile{% endif %}</a>
+              </li>
+              <li class="nav-item">
+                 <a class="nav-link text-nowrap" href="/logout">{% if session.get('lang') == 'de' %}Abmelden{% else %}Logout{% endif %}</a>
+              </li>
+              {% else %}
+
+              <li class="nav-item">
+                <a class="nav-link text-nowrap" href="/register">{% if session.get('lang') == 'de' %}Registrieren{% else %}Register{% endif %}</a>
+              </li>
             {% endif %}
            </ul>
          </div>
