@@ -1515,6 +1515,208 @@ def messages():
     conn.close()
     return render_template('messages.html', conversations=conversations, conversations_unread=conversations_unread, selected_chat=selected_chat, messages=messages_data, unread_messages=new_unread, post_preview=post_preview)
 
+@app.route('/checkout/<int:post_id>')
+def checkout(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT title, price, user_id FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post or not post[1]:
+        conn.close()
+        return 'Post not found or has no price', 404
+    
+    if post[2] == session['user_id']:
+        conn.close()
+        flash('You cannot buy your own item.', 'warning')
+        return redirect(f'/post/{post_id}')
+    
+    c.execute("SELECT * FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
+    existing_order = c.fetchone()
+    conn.close()
+    
+    return render_template('checkout.html', post=post, post_id=post_id, existing_order=existing_order, unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/process_checkout/<int:post_id>', methods=['POST'])
+def process_checkout(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    full_name = request.form.get('full_name')
+    street = request.form.get('street')
+    city = request.form.get('city')
+    state = request.form.get('state')
+    zip_code = request.form.get('zip_code')
+    country = request.form.get('country')
+    phone = request.form.get('phone')
+    save_address = request.form.get('save_address')
+    
+    if not all([full_name, street, city, zip_code, country, phone]):
+        flash('Please fill in all required fields.', 'danger')
+        return redirect(f'/checkout/{post_id}')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT title, price, user_id FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post or not post[1]:
+        conn.close()
+        return 'Post not found or has no price', 404
+    
+    if post[2] == session['user_id']:
+        conn.close()
+        flash('You cannot buy your own item.', 'warning')
+        return redirect(f'/post/{post_id}')
+    
+    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status) VALUES (?, ?, ?, ?, 'pending')",
+              (post_id, session['user_id'], post[2], post[1]))
+    order_id = c.lastrowid
+    
+    c.execute("""INSERT INTO addresses (user_id, order_id, full_name, street, city, state, zip_code, country, phone)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+              (session['user_id'], order_id, full_name, street, city, state, zip_code, country, phone))
+    
+    conn.commit()
+    conn.close()
+    
+    session['current_order_id'] = order_id
+    return redirect(f'/create_checkout_session/{post_id}')
+
+@app.route('/create_checkout_session/<int:post_id>')
+def create_checkout_session(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    if not app.config['STRIPE_SECRET_KEY']:
+        flash('Stripe is not configured.', 'danger')
+        return redirect(f'/post/{post_id}')
+    
+    order_id = session.get('current_order_id')
+    if not order_id:
+        flash('Please complete checkout form first.', 'warning')
+        return redirect(f'/checkout/{post_id}')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT title, price, user_id FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    conn.close()
+    
+    if not post or not post[1]:
+        return 'Post not found or has no price', 404
+    
+    session.pop('current_order_id', None)
+    
+    seller_id = post[2]
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT stripe_account_id FROM users WHERE id = ?", (seller_id,))
+    seller = c.fetchone()
+    conn.close()
+    
+    transfer_data = None
+    if seller and seller[0]:
+        transfer_data = {'destination': seller[0]}
+    
+    try:
+        session_params = {
+            'payment_method_types': ['card'],
+            'line_items': [{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': post[0]
+                    },
+                    'unit_amount': int(post[1] * 100),
+                },
+                'quantity': 1,
+            }],
+            'mode': 'payment',
+            'success_url': request.url_root + f'payment_success?post_id={post_id}&order_id={order_id}',
+            'cancel_url': request.url_root + f'post/{post_id}',
+            'metadata': {'order_id': order_id, 'post_id': post_id}
+        }
+        
+        if transfer_data:
+            session_params['transfer_data'] = transfer_data
+        
+        session_stripe = stripe.checkout.Session.create(**session_params)
+        return redirect(session_stripe.url, code=303)
+    except Exception as e:
+        flash(f'Payment error: {str(e)}', 'danger')
+        return redirect(f'/post/{post_id}')
+
+@app.route('/payment_success')
+def payment_success():
+    post_id = request.args.get('post_id')
+    order_id = request.args.get('order_id')
+    
+    if not post_id:
+        return redirect('/dashboard')
+    
+    if order_id:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("UPDATE orders SET status = 'paid' WHERE id = ?", (order_id,))
+        conn.commit()
+        conn.close()
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT title, price FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    conn.close()
+    return render_template('payment_success.html', post=post, order_id=order_id, unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/orders')
+def orders():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""SELECT o.id, o.post_id, o.buyer_id, o.seller_id, o.amount, o.status, o.created_at,
+                 p.title, p.image, u.username as seller_username
+                 FROM orders o
+                 JOIN posts p ON o.post_id = p.id
+                 JOIN users u ON o.seller_id = u.id
+                 WHERE o.buyer_id = ? OR o.seller_id = ?
+                 ORDER BY o.created_at DESC""", (session['user_id'], session['user_id']))
+    orders = c.fetchall()
+    conn.close()
+    return render_template('orders.html', orders=orders, unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/order/<int:order_id>')
+def order_detail(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""SELECT o.id, o.post_id, o.buyer_id, o.seller_id, o.amount, o.status, o.created_at,
+                 o.tracking_number, o.shipped_at, o.delivered_at, o.dispute_status,
+                 p.title, p.image, p.description,
+                 buyer.username, buyer.email,
+                 seller.username, seller.email,
+                 a.full_name, a.street, a.city, a.state, a.zip_code, a.country, a.phone
+                 FROM orders o
+                 JOIN posts p ON o.post_id = p.id
+                 JOIN users buyer ON o.buyer_id = buyer.id
+                 JOIN users seller ON o.seller_id = seller.id
+                 LEFT JOIN addresses a ON a.order_id = o.id AND a.user_id = o.buyer_id
+                 WHERE o.id = ? AND (o.buyer_id = ? OR o.seller_id = ?)""", 
+              (order_id, session['user_id'], session['user_id']))
+    order = c.fetchone()
+    conn.close()
+    
+    if not order:
+        return 'Order not found', 404
+    
+    return render_template('order_detail.html', order=order, unread_messages=get_unread_messages_count(session.get('user_id')))
+
 # One-time migration: update image paths
 conn = sqlite3.connect('database.db')
 c = conn.cursor()
