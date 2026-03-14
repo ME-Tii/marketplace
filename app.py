@@ -32,6 +32,38 @@ else:
     # For local development, skip Talisman to avoid HTTPS redirects
     pass
 
+@app.route('/webhook/stripe', methods=['POST'])
+def stripe_webhook():
+    payload = request.data
+    sig_header = request.headers.get('stripe-signature')
+    
+    if not app.config['STRIPE_SECRET_KEY'] or not sig_header:
+        return '', 400
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, app.config.get('STRIPE_WEBHOOK_SECRET', '')
+        )
+    except ValueError:
+        return 'Invalid payload', 400
+    except stripe.error.SignatureVerificationError:
+        return 'Invalid signature', 400
+    
+    if event['type'] == 'checkout.session.completed':
+        session_obj = event['data']['object']
+        order_id = session_obj.get('metadata', {}).get('order_id')
+        payment_id = session_obj.get('payment_intent')
+        
+        if order_id:
+            conn = sqlite3.connect('database.db')
+            c = conn.cursor()
+            c.execute("UPDATE orders SET status = 'paid', stripe_payment_id = ? WHERE id = ?",
+                     (payment_id, order_id))
+            conn.commit()
+            conn.close()
+    
+    return '', 200
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -104,6 +136,33 @@ def init_db():
         c.execute("ALTER TABLE group_posts ADD COLUMN price REAL")
     except sqlite3.OperationalError:
         pass
+    # Orders table
+    c.execute('''CREATE TABLE IF NOT EXISTS orders
+                 (id INTEGER PRIMARY KEY, post_id INTEGER, buyer_id INTEGER, seller_id INTEGER,
+                  amount REAL, status TEXT DEFAULT 'pending', stripe_payment_id TEXT,
+                  tracking_number TEXT, shipped_at DATETIME, delivered_at DATETIME,
+                  dispute_status TEXT DEFAULT NULL,
+                  created_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN tracking_number TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN shipped_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN delivered_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN dispute_status TEXT")
+    except sqlite3.OperationalError:
+        pass
+    # Shipping addresses
+    c.execute('''CREATE TABLE IF NOT EXISTS addresses
+                 (id INTEGER PRIMARY KEY, user_id INTEGER, order_id INTEGER,
+                  full_name TEXT, street TEXT, city TEXT, state TEXT, zip_code TEXT, country TEXT, phone TEXT)''')
     # Add sample posts if none exist
     c.execute("SELECT COUNT(*) FROM posts")
     if c.fetchone()[0] == 0:
