@@ -264,7 +264,12 @@ def connect_stripe_callback():
     except Exception as e:
         flash(f'Failed to connect Stripe account: {str(e)}', 'danger')
     
-    return redirect('/profile')
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT username FROM users WHERE id = ?", (session.get('user_id'),))
+    user = c.fetchone()
+    conn.close()
+    return redirect(f'/profile/{user[0]}')
 
 @app.route('/disconnect/stripe')
 def disconnect_stripe():
@@ -276,10 +281,12 @@ def disconnect_stripe():
     c = conn.cursor()
     c.execute("UPDATE users SET stripe_account_id = NULL WHERE id = ?", (user_id,))
     conn.commit()
+    c.execute("SELECT username FROM users WHERE id = ?", (user_id,))
+    user = c.fetchone()
     conn.close()
     
     flash('Stripe account disconnected', 'info')
-    return redirect('/profile')
+    return redirect(f'/profile/{user[0]}')
 
 
 @app.route('/login')
