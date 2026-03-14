@@ -141,6 +141,9 @@ content %}
               {% if session.get('lang') == 'de' %}Benachrichtigung{% else
               %}Notification{% endif %}
             </option>
+            <option value="giveaway">
+              {% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}
+            </option>
           </select>
         </div>
         <div class="mb-3">

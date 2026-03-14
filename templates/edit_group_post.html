@@ -93,6 +93,9 @@ block content %}
               {% if session.get('lang') == 'de' %}Benachrichtigung{% else
               %}Notification{% endif %}
             </option>
+            <option value="giveaway" {% if post[3]="" ="giveaway" %}selected{% endif %}>
+              {% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}
+            </option>
           </select>
         </div>
         <div class="mb-3">
