@@ -7,3 +7,4 @@ Flask-Talisman==1.1.0
 pandas
 numpy
 matplotlib
+stripe
