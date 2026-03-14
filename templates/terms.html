@@ -4,19 +4,44 @@
   <div class="row">
     <div class="col-md-8 offset-md-2">
       <h1>{% if session.get('lang') == 'de' %}Nutzungsbedingungen{% else %}Terms of Service{% endif %}</h1>
-      <p>{% if session.get('lang') == 'de' %}Willkommen bei Marketplace. Durch die Nutzung dieser Website erklären Sie sich mit den folgenden Bedingungen einverstanden:{% else %}Welcome to Marketplace. By using this website, you agree to the following terms:{% endif %}</p>
+      <p><em>{% if session.get('lang') == 'de' %}Stand: März 2026{% else %}Last updated: March 2026{% endif %}</em></p>
       
-      <h4>{% if session.get('lang') == 'de' %}1. Nutzung{% else %}1. Usage{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Sie erklären sich damit einverstanden, diese Plattform nur für rechtmäßige Zwecke zu nutzen.{% else %}You agree to use this platform only for lawful purposes.{% endif %}</p>
+      <h4>{% if session.get('lang') == 'de' %}1. Allgemeines{% else %}1. General{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Willkommen bei Marketplace. Durch die Nutzung dieser Plattform erklären Sie sich mit den folgenden Nutzungsbedingungen einverstanden. Wenn Sie diesen Bedingungen nicht zustimmen, nutzen Sie die Plattform bitte nicht.{% else %}Welcome to Marketplace. By using this platform, you agree to these Terms of Service. If you do not agree to these terms, please do not use this platform.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}2. Konto{% else %}2. Account{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Sie sind verantwortlich für die Sicherheit Ihres Kontos und Passworts.{% else %}You are responsible for maintaining the security of your account and password.{% endif %}</p>
+      <h4>{% if session.get('lang') == 'de' %}2. Kontoerstellung{% else %}2. Account Registration{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Sie müssen mindestens 18 Jahre alt sein, um ein Konto zu erstellen. Sie sind verantwortlich für die Sicherheit Ihres Kontos und Passworts. Sie tragen die Verantwortung für alle Aktivitäten unter Ihrem Konto.{% else %}You must be at least 18 years old to create an account. You are responsible for maintaining the security of your account and password. You are responsible for all activities that occur under your account.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}3. Inhalte{% else %}3. Content{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Sie behalten das Eigentum an Ihren Inhalten, sind aber verantwortlich für deren Rechtmäßigkeit.{% else %}You retain ownership of your content but are responsible for its legality.{% endif %}</p>
+      <h4>{% if session.get('lang') == 'de' %}3. Nutzung der Plattform{% else %}3. Platform Usage{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Sie verpflichten sich, diese Plattform nur für rechtmäßige Zwecke zu nutzen. Folgende Handlungen sind untersagt:{% else %}You agree to use this platform only for lawful purposes. The following activities are prohibited:{% endif %}</p>
+      <ul>
+        <li>{% if session.get('lang') == 'de' %}Verkauf illegaler Waren oder Dienstleistungen{% else %}Selling illegal goods or services{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}Betrügerische Aktivitäten{% else %}Fraudulent activities{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}Verletzung der Rechte Dritter{% else %}Violating the rights of third parties{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}Spam oder unerwünschte Nachrichten{% else %}Spam or unsolicited messages{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}Veröffentlichung schädlicher Inhalte{% else %}Publishing harmful content{% endif %}</li>
+      </ul>
       
-      <h4>{% if session.get('lang') == 'de' %}4. Zahlungen{% else %}4. Payments{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Alle Zahlungen werden über Stripe abgewickelt. Wir speichern keine Zahlungsinformationen.{% else %}All payments are processed through Stripe. We do not store payment information.{% endif %}</p>
+      <h4>{% if session.get('lang') == 'de' %}4. Geistiges Eigentum{% else %}4. Intellectual Property{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Sie behalten das Eigentum an den Inhalten, die Sie veröffentlichen. Durch das Posten von Inhalten gewähren Sie uns eine nicht-exklusive, gebührenfreie Lizenz zur Nutzung dieser Inhalte. Sie garantieren, dass Sie über die Rechte an den von Ihnen veröffentlichten Inhalten verfügen.{% else %}You retain ownership of the content you post. By posting content, you grant us a non-exclusive, royalty-free license to use such content. You warrant that you have the rights to the content you publish.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}5. Zahlungen und Transaktionen{% else %}5. Payments and Transactions{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Alle Zahlungen werden über Stripe abgewickelt. Wir speichern keine Zahlungsinformationen. Verkäufer sind für die Einhaltung aller geltenden Steuergesetze verantwortlich. Bei Streitigkeiten zwischen Käufer und Verkäufer werden wir nach besten Kräften vermitteln, haben aber keine Verantwortung für die Lösung solcher Streitigkeiten.{% else %}All payments are processed through Stripe. We do not store payment information. Sellers are responsible for complying with all applicable tax laws. In case of disputes between buyer and seller, we will attempt to mediate but are not responsible for resolving such disputes.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}6. Haftungsausschluss{% else %}6. Disclaimer{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Die Plattform wird "wie besehen" bereitgestellt. Wir übernehmen keine Gewährleistung für die Verfügbarkeit, Zuverlässigkeit oder Genauigkeit der Plattform. Wir haften nicht für indirekte, zufällige oder Folgeschäden.{% else %}The platform is provided "as is". We do not warrant that the platform will be available, reliable, or accurate. We are not liable for indirect, incidental, or consequential damages.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}7. Datenschutz{% else %}7. Privacy{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Wir erheben und verarbeiten personenbezogene Daten gemäß unserer Datenschutzerklärung. Durch die Nutzung der Plattform stimmen Sie dieser Verarbeitung zu.{% else %}We collect and process personal data in accordance with our Privacy Policy. By using the platform, you consent to such processing.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}8. Kündigung{% else %}8. Termination{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Wir behalten uns das Recht vor, Konten zu sperren oder zu löschen, gegen diese Nutzungsbedingungen verstoßen. Sie können Ihr Konto jederzeit durch Kontaktaufnahme mit uns kündigen.{% else %}We reserve the right to suspend or delete accounts that violate these Terms of Service. You may delete your account at any time by contacting us.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}9. Änderungen{% else %}9. Changes{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Wir behalten uns das Recht vor, diese Nutzungsbedingungen jederzeit zu ändern. Änderungen werden auf dieser Seite veröffentlicht.{% else %}We reserve the right to modify these Terms of Service at any time. Changes will be posted on this page.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}10. Kontakt{% else %}10. Contact{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Bei Fragen zu diesen Nutzungsbedingungen kontaktieren Sie uns bitte.{% else %}If you have any questions about these Terms of Service, please contact us.{% endif %}</p>
       
       <a href="/register" class="btn btn-primary mt-3">{% if session.get('lang') == 'de' %}Zurück zur Registrierung{% else %}Back to Registration{% endif %}</a>
     </div>
