@@ -13,13 +13,18 @@ import matplotlib.pyplot as plt
 import requests
 import io
 import base64
+import stripe
 
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_change_this')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'  # Secure only in production
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+app.config['STRIPE_PUBLIC_KEY'] = os.environ.get('STRIPE_PUBLIC_KEY', 'pk_test_51T8PWW8gWUxTvhfMrWiSGibJDmrQslPZlxNN25Gpxup3pBVQoBg50DGh3pIGbXfJdIhfyzJ1G9bMraRfcIraBjSL00wJ9BQESt')
+app.config['STRIPE_SECRET_KEY'] = os.environ.get('STRIPE_SECRET_KEY', '')
+app.config['STRIPE_CONNECT_CLIENT_ID'] = os.environ.get('STRIPE_CONNECT_CLIENT_ID', '')
+stripe.api_key = app.config['STRIPE_SECRET_KEY']
 csrf = CSRFProtect(app)
 if os.environ.get('FLASK_ENV') == 'production':
     Talisman(app, content_security_policy=None)  # Basic security headers only in production
@@ -51,6 +56,10 @@ def init_db():
         pass  # column already exists
     try:
         c.execute("ALTER TABLE users ADD COLUMN profile_picture TEXT")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN stripe_account_id TEXT")
     except sqlite3.OperationalError:
         pass  # column already exists
     c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123')))
@@ -132,6 +141,83 @@ def inject_user():
     return {'current_username': None}
 
 
+@app.route('/terms')
+def terms():
+    return render_template('terms.html', unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/connect/stripe')
+def connect_stripe():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    user_id = session['user_id']
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT stripe_account_id FROM users WHERE id = ?", (user_id,))
+    user = c.fetchone()
+    conn.close()
+    
+    if user and user[0]:
+        flash('Stripe account already connected', 'info')
+        return redirect('/profile')
+    
+    if not app.config['STRIPE_CONNECT_CLIENT_ID']:
+        flash('Stripe Connect is not configured. Please contact the administrator.', 'danger')
+        return redirect('/profile')
+    
+    stripe_auth_url = f"https://connect.stripe.com/oauth/authorize?response_type=code&client_id={app.config['STRIPE_CONNECT_CLIENT_ID']}&scope=read_write&redirect_uri={request.url_root}connect/stripe/callback"
+    return redirect(stripe_auth_url)
+
+@app.route('/connect/stripe/callback')
+def connect_stripe_callback():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    error = request.args.get('error')
+    if error:
+        flash(f'Stripe connection failed: {error}', 'danger')
+        return redirect('/profile')
+    
+    code = request.args.get('code')
+    if not code:
+        flash('No authorization code received', 'danger')
+        return redirect('/profile')
+    
+    try:
+        response = stripe.OAuth.token(
+            grant_type='authorization_code',
+            code=code
+        )
+        stripe_account_id = response['stripe_user_id']
+        
+        user_id = session['user_id']
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("UPDATE users SET stripe_account_id = ? WHERE id = ?", (stripe_account_id, user_id))
+        conn.commit()
+        conn.close()
+        
+        flash('Stripe account connected successfully!', 'success')
+    except Exception as e:
+        flash(f'Failed to connect Stripe account: {str(e)}', 'danger')
+    
+    return redirect('/profile')
+
+@app.route('/disconnect/stripe')
+def disconnect_stripe():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    user_id = session['user_id']
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("UPDATE users SET stripe_account_id = NULL WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Stripe account disconnected', 'info')
+    return redirect('/profile')
+
 
 @app.route('/login')
 def login_page():
@@ -157,9 +243,10 @@ def register():
     username = request.form.get('username')
     email = request.form.get('email')
     password = request.form.get('password')
-    confirm = request.form.get('confirmPassword')
+    confirm = request.form.get('confirm_password')
+    terms = request.form.get('terms')
     description = request.form.get('description') or ''
-    if not all([username, email, password, confirm]):
+    if not all([username, email, password, confirm]) or not terms:
         return 'All fields required', 400
     if password != confirm:
         return 'Passwords do not match', 400
@@ -294,7 +381,7 @@ def profile(username):
     query = request.args.get('q', '')
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT id, description, profile_picture FROM users WHERE username = ?", (username,))
+    c.execute("SELECT id, description, profile_picture, stripe_account_id FROM users WHERE username = ?", (username,))
     user = c.fetchone()
     if not user:
         conn.close()
@@ -302,6 +389,7 @@ def profile(username):
     user_id = user[0]
     description = user[1] or ''
     profile_picture = user[2] or None
+    stripe_account_id = user[3] or None
     # Regular posts
     posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp FROM posts WHERE posts.user_id = ?"
     params = [user_id]
@@ -355,7 +443,7 @@ def profile(username):
     is_owner = session.get('user_id') == user_id
     success = request.args.get('success')
     total_pages = (total_users + per_page - 1) // per_page if total_users > 0 else 1
-    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query)
+    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query)
 
 @app.route('/delete_user/<username>', methods=['POST'])
 def delete_user(username):
