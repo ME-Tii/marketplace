@@ -272,12 +272,14 @@
                 <p class="card-text mt-auto">
                   <small class="text-muted">Posted on {{ post[7] }}</small>
                 </p>
-      {% if is_owner %}
-      <a href="/edit_profile" class="btn btn-secondary mb-3"
-        >{% if session.get('lang') == 'de' %}Profil bearbeiten{% else %}Edit
-        Profile{% endif %}</a
-      >
-      {% endif %}
+                {% if is_owner %}
+                <div class="mt-2">
+                  <a href="/edit_post/{{ post[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Bearbeiten{% else %}Edit{% endif %}</a>
+                  <form action="/delete_post/{{ post[0] }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>
+                  </form>
+                </div>
+                {% endif %}
               </div>
             </div>
           </div>
@@ -288,6 +290,12 @@
           {% if session.get('lang') == 'de' %}Noch keine Beiträge.{% else %}No
           posts yet.{% endif %}
         </p>
+        {% endif %}
+        
+        {% if is_owner %}
+        <a href="/edit_profile" class="btn btn-secondary mb-3 mt-3"
+          >{% if session.get('lang') == 'de' %}Profil bearbeiten{% else %}Edit
+          Profile{% endif %}</a>
         {% endif %}
         
         {% if is_owner %}
