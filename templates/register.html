@@ -58,6 +58,12 @@
             required
           />
         </div>
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="terms" name="terms" required />
+          <label class="form-check-label" for="terms">
+            {% if session.get('lang') == 'de' %}Ich stimme den <a href="/terms" target="_blank">Nutzungsbedingungen</a> zu{% else %}I agree to the <a href="/terms" target="_blank">Terms of Service</a>{% endif %}
+          </label>
+        </div>
         <button type="submit" class="btn btn-primary w-100">
           {% if session.get('lang') == 'de' %}Registrieren{% else %}Register{%
           endif %}
