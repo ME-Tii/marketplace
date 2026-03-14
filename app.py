@@ -224,7 +224,11 @@ def connect_stripe():
         flash('Stripe Connect is not configured. Please contact the administrator.', 'danger')
         return redirect('/profile')
     
-    stripe_auth_url = f"https://connect.stripe.com/oauth/authorize?response_type=code&client_id={app.config['STRIPE_CONNECT_CLIENT_ID']}&scope=read_write&redirect_uri={request.url_root}connect/stripe/callback"
+    redirect_uri = request.url_root + 'connect/stripe/callback'
+    if request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https':
+        redirect_uri = redirect_uri.replace('http://', 'https://')
+    
+    stripe_auth_url = f"https://connect.stripe.com/oauth/authorize?response_type=code&client_id={app.config['STRIPE_CONNECT_CLIENT_ID']}&scope=read_write&redirect_uri={redirect_uri}"
     return redirect(stripe_auth_url)
 
 @app.route('/connect/stripe/callback')
