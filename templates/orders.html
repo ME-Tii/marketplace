@@ -1,0 +1,135 @@
+{% extends "base.html" %} {% block title %}{% if session.get('lang') == 'de'
+%}Bestellungen{% else %}Orders{% endif %} - Marketplace{% endblock %} {% block
+content %}
+<div class="container mt-5">
+  <h2>
+    {% if session.get('lang') == 'de' %}Meine Bestellungen{% else %}My Orders{%
+    endif %}
+  </h2>
+
+  <h4 class="mt-4">
+    {% if session.get('lang') == 'de' %}Einkäufe (als Käufer){% else %}Purchases
+    (as Buyer){% endif %}
+  </h4>
+  {% if purchases %}
+  <table class="table table-striped mt-2">
+    <thead>
+      <tr>
+        <th>
+          {% if session.get('lang') == 'de' %}Artikel{% else %}Item{% endif %}
+        </th>
+        <th>
+          {% if session.get('lang') == 'de' %}Preis{% else %}Price{% endif %}
+        </th>
+        <th>
+          {% if session.get('lang') == 'de' %}Status{% else %}Status{% endif %}
+        </th>
+        <th>
+          {% if session.get('lang') == 'de' %}Datum{% else %}Date{% endif %}
+        </th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in purchases %}
+      <tr>
+        <td><a href="/post/{{ p[5] }}">{{ p[4] }}</a></td>
+        <td>${{ p[1] }}</td>
+        <td>
+          <span
+            class="badge bg-{% if p[2] == 'paid' %}warning{% elif p[2] == 'shipped' %}info{% elif p[2] == 'delivered' %}success{% else %}secondary{% endif %}"
+            >{{ p[2] }}</span
+          >
+        </td>
+        <td>{{ p[3] }}</td>
+        <td>
+          <a href="/order/{{ p[0] }}" class="btn btn-sm btn-primary"
+            >{% if session.get('lang') == 'de' %}Details{% else %}Details{%
+            endif %}</a
+          >
+          {% if p[2] == 'pending' %}
+          <form
+            method="post"
+            action="/cancel_order/{{ p[0] }}"
+            class="d-inline"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button
+              type="submit"
+              class="btn btn-sm btn-danger"
+              onclick="return confirm('{% if session.get('lang') == 'de' %}Bestellung wirklich abbrechen?{% else %}Cancel this order?{% endif %}')"
+            >
+              {% if session.get('lang') == 'de' %}Abbrechen{% else %}Cancel{%
+              endif %}
+            </button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted">
+    {% if session.get('lang') == 'de' %}Noch keine Käufe.{% else %}No purchases
+    yet.{% endif %}
+  </p>
+  {% endif %}
+
+  <h4 class="mt-5">
+    {% if session.get('lang') == 'de' %}Verkäufe (als Verkäufer){% else %}Sales
+    (as Seller){% endif %}
+  </h4>
+  {% if sales %}
+  <table class="table table-striped mt-2">
+    <thead>
+      <tr>
+        <th>
+          {% if session.get('lang') == 'de' %}Artikel{% else %}Item{% endif %}
+        </th>
+        <th>
+          {% if session.get('lang') == 'de' %}Preis{% else %}Price{% endif %}
+        </th>
+        <th>
+          {% if session.get('lang') == 'de' %}Käufer{% else %}Buyer{% endif %}
+        </th>
+        <th>
+          {% if session.get('lang') == 'de' %}Status{% else %}Status{% endif %}
+        </th>
+        <th>
+          {% if session.get('lang') == 'de' %}Datum{% else %}Date{% endif %}
+        </th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sales %}
+      <tr>
+        <td><a href="/post/{{ s[5] }}">{{ s[4] }}</a></td>
+        <td>${{ s[1] }}</td>
+        <td>{{ s[6] }}</td>
+        <td>
+          <span
+            class="badge bg-{% if s[2] == 'paid' %}warning{% elif s[2] == 'shipped' %}info{% elif s[2] == 'delivered' %}success{% else %}secondary{% endif %}"
+            >{{ s[2] }}</span
+          >
+        </td>
+        <td>{{ s[3] }}</td>
+        <td>
+          <a href="/order/{{ s[0] }}" class="btn btn-sm btn-primary"
+            >{% if session.get('lang') == 'de' %}Details{% else %}Details{%
+            endif %}</a
+          >
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted">
+    {% if session.get('lang') == 'de' %}Noch keine Verkäufe.{% else %}No sales
+    yet.{% endif %}
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

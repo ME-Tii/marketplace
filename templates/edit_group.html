@@ -1,91 +1,71 @@
-<!doctype html>
-<html lang="en" data-bs-theme="dark">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Edit Group - Marketplace</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  </head>
-  <body>
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-           <a class="navbar-brand" href="/">{% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</a>
-           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-             <span class="navbar-toggler-icon"></span>
-           </button>
-           <div class="collapse navbar-collapse" id="navbarNav">
-             <ul class="navbar-nav me-auto">
-               <li class="nav-item">
-                 <a class="nav-link" href="/dashboard">{% if session.get('lang') == 'de' %}Übersichtsseite{% else %}Dashboard{% endif %}</a>
-               </li>
-
-               <li class="nav-item">
-                 <a class="nav-link" href="/notices">{% if session.get('lang') == 'de' %}Merken{% else %}Notices{% endif %}</a>
-               </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="/messages">{% if session.get('lang') == 'de' %}Nachrichten{% else %}Messages{% endif %}{% if unread_messages > 0 %}<span class="badge bg-danger ms-1">{{ unread_messages }}</span>{% endif %}</a>
-               </li>
-               <li class="nav-item">
-                 <a class="nav-link active" href="/groups">{% if session.get('lang') == 'de' %}Gruppen{% else %}Groups{% endif %}</a>
-               </li>
-            </ul>
-             <ul class="navbar-nav">
-               <li class="nav-item">
-                 <a class="nav-link" href="/switch_lang?lang={% if session.get('lang') == 'de' %}en{% else %}de{% endif %}">{% if session.get('lang') == 'de' %}English{% else %}Deutsch{% endif %}</a>
-               </li>
-               {% if session.get('user_id') %}
-              <li class="nav-item">
-                <span class="navbar-text text-primary d-block text-center">{{ current_username }}</span>
-              </li>
-              <li class="nav-item">
-                 <a class="nav-link" href="/profile/{{ current_username }}">{% if session.get('lang') == 'de' %}Mein Profil{% else %}My Profile{% endif %}</a>
-              </li>
-              <li class="nav-item">
-                 <a class="nav-link" href="/logout">{% if session.get('lang') == 'de' %}Abmelden{% else %}Logout{% endif %}</a>
-              </li>
-              {% else %}
-
-              <li class="nav-item">
-                <a class="nav-link" href="/register">{% if session.get('lang') == 'de' %}Registrieren{% else %}Register{% endif %}</a>
-              </li>
-             {% endif %}
-            </ul>
-           </div>
+{% extends "base.html" %} {% block title %}Edit Group{% endblock %} {% block
+content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <h2 class="text-center mb-4">
+        {% if session.get('lang') == 'de' %}Gruppe bearbeiten{% else %}Edit
+        Group{% endif %}
+      </h2>
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div
+        class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      {% endfor %} {% endif %} {% endwith %}
+      <form method="post" class="card p-4 shadow">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="mb-3">
+          <label for="name" class="form-label"
+            >{% if session.get('lang') == 'de' %}Gruppenname{% else %}Group
+            Name{% endif %} <span class="text-danger">*</span></label
+          >
+          <input
+            type="text"
+            class="form-control"
+            id="name"
+            name="name"
+            required
+            maxlength="100"
+            value="{{ group_data[0] }}"
+          />
         </div>
-     </nav>
-    <div class="container mt-5">
-      <div class="row justify-content-center">
-        <div class="col-md-6">
-          <h2 class="text-center mb-4">{% if session.get('lang') == 'de' %}Gruppe bearbeiten{% else %}Edit Group{% endif %}</h2>
-          {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-              {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                  {{ message }}
-                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-              {% endfor %}
-            {% endif %}
-          {% endwith %}
-          <form method="post" class="card p-4 shadow">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div class="mb-3">
-              <label for="name" class="form-label">{% if session.get('lang') == 'de' %}Gruppenname{% else %}Group Name{% endif %} <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="name" name="name" required maxlength="100" value="{{ group_data[0] }}">
-            </div>
-            <div class="mb-3">
-              <label for="description" class="form-label">{% if session.get('lang') == 'de' %}Beschreibung{% else %}Description{% endif %}</label>
-              <textarea class="form-control" id="description" name="description" rows="3" maxlength="500">{{ group_data[1] or '' }}</textarea>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">{% if session.get('lang') == 'de' %}Gruppe aktualisieren{% else %}Update Group{% endif %}</button>
-          </form>
-          <div class="text-center mt-3">
-            <a href="/group/{{ group_id }}" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Zurück zur Gruppe{% else %}Back to Group{% endif %}</a>
-          </div>
+        <div class="mb-3">
+          <label for="description" class="form-label"
+            >{% if session.get('lang') == 'de' %}Beschreibung{% else
+            %}Description{% endif %}</label
+          >
+          <textarea
+            class="form-control"
+            id="description"
+            name="description"
+            rows="3"
+            maxlength="500"
+          >
+{{ group_data[1] or '' }}</textarea
+          >
         </div>
+        <button type="submit" class="btn btn-primary w-100">
+          {% if session.get('lang') == 'de' %}Gruppe aktualisieren{% else
+          %}Update Group{% endif %}
+        </button>
+      </form>
+      <div class="text-center mt-3">
+        <a href="/group/{{ group_id }}" class="btn btn-secondary"
+          >{% if session.get('lang') == 'de' %}Zurück zur Gruppe{% else %}Back
+          to Group{% endif %}</a
+        >
       </div>
     </div>
-    <footer class="bg-dark text-white text-center py-3 mt-5">© 2023 {% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  </body>
-</html>
+  </div>
+</div>
+{% endblock %}
