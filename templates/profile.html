@@ -277,24 +277,6 @@
         >{% if session.get('lang') == 'de' %}Profil bearbeiten{% else %}Edit
         Profile{% endif %}</a
       >
-      <div class="card mb-3">
-        <div class="card-body">
-          <h5 class="card-title">{% if session.get('lang') == 'de' %}Stripe-Verbindung{% else %}Stripe Connect{% endif %}</h5>
-          {% if stripe_account_id %}
-          <div class="alert alert-success">
-            {% if session.get('lang') == 'de' %}Ihr Stripe-Konto ist verbunden! Sie können Zahlungen erhalten.{% else %}Your Stripe account is connected! You can receive payments.{% endif %}
-          </div>
-          <a href="/disconnect/stripe" class="btn btn-danger"
-            >{% if session.get('lang') == 'de' %}Stripe trennen{% else %}Disconnect Stripe{% endif %}</a
-          >
-          {% else %}
-          <p class="card-text">{% if session.get('lang') == 'de' %}Verbinden Sie Ihr Stripe-Konto, um Zahlungen für Ihre Verkäufe zu erhalten.{% else %}Connect your Stripe account to receive payments for your sales.{% endif %}</p>
-          <a href="/connect/stripe" class="btn btn-primary"
-            >{% if session.get('lang') == 'de' %}Mit Stripe verbinden{% else %}Connect with Stripe{% endif %}</a
-          >
-          {% endif %}
-        </div>
-      </div>
       {% endif %}
               </div>
             </div>
@@ -306,6 +288,27 @@
           {% if session.get('lang') == 'de' %}Noch keine Beiträge.{% else %}No
           posts yet.{% endif %}
         </p>
+        {% endif %}
+        
+        {% if is_owner %}
+        <div class="card mb-3 mt-3">
+          <div class="card-body">
+            <h5 class="card-title">{% if session.get('lang') == 'de' %}Stripe-Verbindung{% else %}Stripe Connect{% endif %}</h5>
+            {% if stripe_account_id %}
+            <div class="alert alert-success">
+              {% if session.get('lang') == 'de' %}Ihr Stripe-Konto ist verbunden! Sie können Zahlungen erhalten.{% else %}Your Stripe account is connected! You can receive payments.{% endif %}
+            </div>
+            <a href="/disconnect/stripe" class="btn btn-danger"
+              >{% if session.get('lang') == 'de' %}Stripe trennen{% else %}Disconnect Stripe{% endif %}</a
+            >
+            {% else %}
+            <p class="card-text">{% if session.get('lang') == 'de' %}Verbinden Sie Ihr Stripe-Konto, um Zahlungen für Ihre Verkäufe zu erhalten.{% else %}Connect your Stripe account to receive payments for your sales.{% endif %}</p>
+            <a href="/connect/stripe" class="btn btn-primary"
+              >{% if session.get('lang') == 'de' %}Mit Stripe verbinden{% else %}Connect with Stripe{% endif %}</a
+            >
+            {% endif %}
+          </div>
+        </div>
         {% endif %}
       </div>
     </div>
