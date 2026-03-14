@@ -1701,6 +1701,7 @@ def create_checkout_session(post_id):
         
         if transfer_data:
             session_params['transfer_data'] = transfer_data
+            session_params['application_fee_amount'] = int(post[1] * 100 * 0.10)  # 10% platform fee
         
         session_stripe = stripe.checkout.Session.create(**session_params)
         return redirect(session_stripe.url, code=303)
