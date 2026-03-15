@@ -290,9 +290,9 @@
                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>
                   </form>
                 </div>
-                {% elif session.get('user_id') and session.get('user_id') != post[11] %}
+                {% elif session.get('user_id') and session.get('user_id') != post[8] %}
                 <div class="mt-2">
-                  {% if post[6] and (post[8] or post[9]) %}
+                  {% if post[6] %}
                   <a href="/checkout/{{ post[0] }}" class="btn btn-sm btn-success">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy Now{% endif %}</a>
                   {% endif %}
                   <a href="/messages?chat={{ username }}&post_id={{ post[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Nachricht{% else %}Message{% endif %}</a>

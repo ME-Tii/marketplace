@@ -493,7 +493,7 @@ def profile(username):
     profile_picture = user[2] or None
     stripe_account_id = user[3] or None
     # Regular posts
-    posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping, posts.shipping_cost, posts.user_id FROM posts WHERE posts.user_id = ?"
+    posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.user_id FROM posts WHERE posts.user_id = ?"
     params = [user_id]
     if query:
         posts_query += " AND (posts.title LIKE ? OR posts.description LIKE ?)"
