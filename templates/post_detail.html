@@ -31,8 +31,8 @@
       <p class="card-text">
         <small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[13] }}">{{ post[13] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small>
       </p>
-      {% set qty = post[13]|default('1')|int %}
-      {% set active = post[14]|default('1')|int %}
+      {% set qty = post[11]|default('1')|int %}
+      {% set active = post[12]|default('1')|int %}
       {% if active == 0 or qty <= 0 %}
       <div class="alert alert-danger mt-3">
         <h5>{% if session.get('lang') == 'de' %}Ausverkauft{% else %}Sold Out{% endif %}</h5>
