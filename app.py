@@ -763,7 +763,11 @@ def import_data():
             pass
     for o in orders:
         try:
-            c.execute("INSERT INTO orders (id, post_id, buyer_id, seller_id, amount, status, stripe_payment_id, tracking_number, shipped_at, delivered_at, dispute_status, shipping_method, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", o)
+            o_list = list(o)
+            # Handle both old (13 fields) and new (18 fields) backup formats
+            while len(o_list) < 18:
+                o_list.append(None)
+            c.execute("INSERT INTO orders (id, post_id, buyer_id, seller_id, amount, status, stripe_payment_id, tracking_number, shipped_at, delivered_at, dispute_status, shipping_method, created_at, dispute_reason, dispute_response, dispute_opened_at, dispute_resolved_at, dispute_resolution) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", o_list[:18])
         except sqlite3.IntegrityError:
             pass
     for a in addresses:
@@ -821,7 +825,7 @@ def export_all():
         group_members = c.fetchall()
         c.execute("SELECT id, group_id, user_id, title, content, image, created_at FROM group_posts")
         group_posts_data = c.fetchall()
-        c.execute("SELECT id, post_id, buyer_id, seller_id, amount, status, stripe_payment_id, tracking_number, shipped_at, delivered_at, dispute_status, shipping_method, created_at FROM orders")
+        c.execute("SELECT id, post_id, buyer_id, seller_id, amount, status, stripe_payment_id, tracking_number, shipped_at, delivered_at, dispute_status, shipping_method, created_at, dispute_reason, dispute_response, dispute_opened_at, dispute_resolved_at, dispute_resolution FROM orders")
         orders = c.fetchall()
         c.execute("SELECT id, user_id, order_id, full_name, street, city, state, zip_code, country, phone FROM addresses")
         addresses = c.fetchall()
