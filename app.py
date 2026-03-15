@@ -2076,7 +2076,7 @@ def mark_delivered(order_id):
         conn.close()
         return 'Access denied', 403
     
-    c.execute("UPDATE orders SET delivered_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
+    c.execute("UPDATE orders SET status = 'delivered', delivered_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
     conn.commit()
     conn.close()
     
