@@ -501,9 +501,16 @@ def profile(username):
     posts_query += " ORDER BY posts.timestamp DESC"
     c.execute(posts_query, params)
     posts = c.fetchall()
-    # Group posts
-    group_posts_query = "SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, gp.created_at, g.name, gp.local_pickup, gp.shipping, gp.shipping_cost, gp.user_id FROM group_posts gp JOIN groups g ON gp.group_id = g.id WHERE gp.user_id = ?"
-    params = [user_id]
+    # Group posts - only show public groups or private groups where user is a member
+    group_posts_query = """
+        SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, gp.created_at, g.name, gp.local_pickup, gp.shipping, gp.shipping_cost, gp.user_id 
+        FROM group_posts gp 
+        JOIN groups g ON gp.group_id = g.id 
+        LEFT JOIN group_members gm ON g.id = gm.group_id AND gm.user_id = ?
+        WHERE gp.user_id = ? AND (g.is_private = 0 OR gm.status = 'accepted')
+    """
+    current_user_id = session.get('user_id')
+    params = [current_user_id, user_id]
     if query:
         group_posts_query += " AND (gp.title LIKE ? OR gp.content LIKE ?)"
         params.extend(['%' + query + '%', '%' + query + '%'])
