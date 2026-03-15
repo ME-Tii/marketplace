@@ -1660,6 +1660,10 @@ def process_checkout(post_id):
     
     delivery_method = request.form.get('delivery_method')
     
+    if not delivery_method:
+        flash('Please select a delivery method.', 'danger')
+        return redirect(f'/checkout/{post_id}')
+    
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost FROM posts WHERE id = ?", (post_id,))
@@ -1673,6 +1677,14 @@ def process_checkout(post_id):
         conn.close()
         flash('You cannot buy your own item.', 'warning')
         return redirect(f'/post/{post_id}')
+    
+    # Validate delivery method matches available options
+    if delivery_method == 'local_pickup' and not post[3]:
+        flash('Local pickup is not available for this item.', 'danger')
+        return redirect(f'/checkout/{post_id}')
+    if delivery_method == 'shipping' and not post[4]:
+        flash('Shipping is not available for this item.', 'danger')
+        return redirect(f'/checkout/{post_id}')
     
     total_amount = post[1]
     if delivery_method == 'shipping' and post[4]:
@@ -1752,7 +1764,13 @@ def create_checkout_session(post_id):
     if seller and seller[0]:
         transfer_data = {'destination': seller[0]}
     
+    app.logger.info(f"Creating checkout session for order {order_id}, amount: {total_amount}, seller: {seller}")
+    
     try:
+        if not app.config['STRIPE_SECRET_KEY']:
+            flash('Stripe is not configured. Please contact the administrator.', 'danger')
+            return redirect(f'/post/{post_id}')
+        
         session_params = {
             'payment_method_types': ['card'],
             'line_items': [{
