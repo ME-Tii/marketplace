@@ -493,7 +493,7 @@ def profile(username):
     profile_picture = user[2] or None
     stripe_account_id = user[3] or None
     # Regular posts
-    posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp FROM posts WHERE posts.user_id = ?"
+    posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping, posts.shipping_cost, posts.user_id FROM posts WHERE posts.user_id = ?"
     params = [user_id]
     if query:
         posts_query += " AND (posts.title LIKE ? OR posts.description LIKE ?)"
@@ -502,7 +502,7 @@ def profile(username):
     c.execute(posts_query, params)
     posts = c.fetchall()
     # Group posts
-    group_posts_query = "SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, gp.created_at, g.name FROM group_posts gp JOIN groups g ON gp.group_id = g.id WHERE gp.user_id = ?"
+    group_posts_query = "SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, gp.created_at, g.name, gp.local_pickup, gp.shipping, gp.shipping_cost, gp.user_id FROM group_posts gp JOIN groups g ON gp.group_id = g.id WHERE gp.user_id = ?"
     params = [user_id]
     if query:
         group_posts_query += " AND (gp.title LIKE ? OR gp.content LIKE ?)"
