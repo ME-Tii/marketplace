@@ -311,6 +311,42 @@
           posts yet.{% endif %}
         </p>
         {% endif %}
+
+        {% if group_posts %}
+        <h2 class="mt-4">
+          {% if session.get('lang') == 'de' %}Gruppen-Beiträge{% else %}Group Posts{% endif %}
+        </h2>
+        <div class="row">
+          {% for post in group_posts %}
+          <div class="col-12 col-md-6 col-lg-4 mb-3">
+            <div class="card h-100">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">
+                  {{ post[1] }}
+                  <small class="text-muted">({{ post[8] }})</small>
+                </h5>
+                <p class="card-text">{{ post[2] }}</p>
+                {% if post[6] %}
+                <p><strong>Price: ${{ post[6] }}</strong></p>
+                {% endif %}
+                {% if post[4] %}
+                <img src="{{ post[4] }}" class="img-fluid mb-2" alt="Post Image" />
+                {% endif %}
+                {% if post[5] %}
+                <p>
+                  Links:
+                  <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a>
+                </p>
+                {% endif %}
+                <p class="card-text mt-auto">
+                  <small class="text-muted">Posted on {{ post[7] }}</small>
+                </p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
         
         {% if is_owner %}
         <a href="/edit_profile" class="btn btn-secondary mb-3 mt-3"
