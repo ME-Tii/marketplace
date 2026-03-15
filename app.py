@@ -979,11 +979,6 @@ def leave_group(group_id):
     flash('You have left the group.', 'success')
     conn.close()
     return redirect('/groups')
-            flash('Successfully joined the group!', 'success')
-    except sqlite3.IntegrityError:
-        flash('You are already a member or have a pending request.', 'warning')
-    conn.close()
-    return redirect('/groups')
 
 @app.route('/group/<int:group_id>')
 def view_group(group_id):
