@@ -503,7 +503,7 @@ def profile(username):
     posts = c.fetchall()
     # Group posts - only show public groups or private groups where user is a member
     group_posts_query = """
-        SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, gp.created_at, g.name, gp.local_pickup, gp.shipping, gp.shipping_cost, gp.user_id 
+        SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, gp.created_at, g.name, gp.user_id 
         FROM group_posts gp 
         JOIN groups g ON gp.group_id = g.id 
         LEFT JOIN group_members gm ON g.id = gm.group_id AND gm.user_id = ?
