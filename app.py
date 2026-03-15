@@ -1804,15 +1804,24 @@ def create_checkout_session(post_id):
     seller_id = post[2]
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT stripe_account_id FROM users WHERE id = ?", (seller_id,))
-    seller = c.fetchone()
+    c.execute("SELECT u.username, u.stripe_account_id FROM users u JOIN posts p ON p.user_id = u.id WHERE p.id = ?", (post_id,))
+    seller_info = c.fetchone()
     conn.close()
     
-    transfer_data = None
-    if seller and seller[0]:
-        transfer_data = {'destination': seller[0]}
+    seller_username = seller_info[0] if seller_info else None
+    seller_stripe = seller_info[1] if seller_info else None
     
-    app.logger.info(f"Creating checkout session for order {order_id}, amount: {total_amount}, seller: {seller}")
+    # Check if seller has Stripe connected for automatic payouts
+    use_seller_payout = seller_stripe
+    
+    if not use_seller_payout:
+        # Seller not connected - redirect to contact page for manual payment
+        flash('Seller has not set up online payments. Please contact seller to arrange payment.', 'info')
+        return redirect(f'/messages?chat={seller_username}&post_id={post_id}')
+    
+    transfer_data = {'destination': seller_stripe}
+    
+    app.logger.info(f"Creating checkout session for order {order_id}, amount: {total_amount}, seller: {seller_username}")
     
     try:
         if not app.config['STRIPE_SECRET_KEY']:
