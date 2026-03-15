@@ -1959,7 +1959,8 @@ def order_detail(order_id):
                  p.title, p.image, p.description,
                  buyer.username, buyer.email,
                  seller.username, seller.email,
-                 a.full_name, a.street, a.city, a.state, a.zip_code, a.country, a.phone
+                 a.full_name, a.street, a.city, a.state, a.zip_code, a.country, a.phone,
+                 o.dispute_reason, o.dispute_response, o.dispute_opened_at, o.dispute_resolved_at, o.dispute_resolution
                  FROM orders o
                  JOIN posts p ON o.post_id = p.id
                  JOIN users buyer ON o.buyer_id = buyer.id

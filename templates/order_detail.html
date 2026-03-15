@@ -1,10 +1,8 @@
-{% extends "base.html" %} {% block title %}Order #{{ order[0] }} - Marketplace{%
-endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Order #{{ order[0] }} - Marketplace{% endblock %}
+{% block content %}
 <div class="container mt-5">
-  <h2>
-    {% if session.get('lang') == 'de' %}Bestellung{% else %}Order{% endif %} #{{
-    order[0] }}
-  </h2>
+  <h2>{% if session.get('lang') == 'de' %}Bestellung{% else %}Order{% endif %} #{{ order[0] }}</h2>
 
   {% if order[10] %}
   <div class="alert alert-{% if order[10] == 'open' %}danger{% elif order[10] in ['refunded', 'resolved'] %}warning{% else %}info{% endif %} mt-3">
@@ -15,244 +13,153 @@ endblock %} {% block content %}
       {% elif order[10] == 'resolved' %}{% if session.get('lang') == 'de' %}Gelöst{% else %}Resolved{% endif %}
       {% else %}{{ order[10] }}{% endif %}
     </h5>
+    {% if order[25] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Käufer-Beschwerde:{% else %}Buyer's Complaint:{% endif %}</strong> {{ order[25] }}</p>
+    {% endif %}
+    {% if order[26] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Verkäufer-Antwort:{% else %}Seller's Response:{% endif %}</strong> {{ order[26] }}</p>
+    {% endif %}
+    {% if order[27] %}
+    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Eröffnet am{% else %}Opened{% endif %}: {{ order[27] }}</small></p>
+    {% endif %}
+    {% if order[28] %}
+    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Gelöst am{% else %}Resolved{% endif %}: {{ order[28] }}</small></p>
+    {% endif %}
   </div>
   {% endif %}
 
   <div class="card mt-4">
     <div class="card-header">
-      <h5>
-        {% if session.get('lang') == 'de' %}Bestelldetails{% else %}Order
-        Details{% endif %}
-      </h5>
+      <h5>{% if session.get('lang') == 'de' %}Bestelldetails{% else %}Order Details{% endif %}</h5>
     </div>
     <div class="card-body">
       <div class="row">
         <div class="col-md-6">
-          <p>
-            <strong
-              >{% if session.get('lang') == 'de' %}Artikel:{% else %}Item:{%
-              endif %}</strong
-            >
-            <a href="/post/{{ order[7] }}">{{ order[5] }}</a>
-          </p>
-          <p>
-            <strong
-              >{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{%
-              endif %}</strong
-            >
-            ${{ order[1] }}
-          </p>
-          <p>
-            <strong
-              >{% if session.get('lang') == 'de' %}Status:{% else %}Status:{%
-              endif %}</strong
-            >
-            <span
-              class="badge bg-{% if order[2] == 'paid' %}warning{% elif order[2] == 'shipped' %}info{% elif order[2] == 'delivered' %}success{% else %}secondary{% endif %}"
-              >{{ order[2] }}</span
-            >
-            {% if order[2] == 'pending' %}
-            <a
-              href="/checkout/{{ order[7] }}"
-              class="btn btn-primary btn-sm ms-2"
-              >{% if session.get('lang') == 'de' %}Zahlung fortsetzen{% else
-              %}Continue Payment{% endif %}</a
-            >
+          <p><strong>{% if session.get('lang') == 'de' %}Artikel:{% else %}Item:{% endif %}</strong> <a href="/post/{{ order[1] }}">{{ order[11] }}</a></p>
+          <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %}</strong> ${{ order[4] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Status:{% else %}Status:{% endif %}</strong>
+            <span class="badge bg-{% if order[5] == 'paid' %}warning{% elif order[5] == 'shipped' %}info{% elif order[5] == 'delivered' %}success{% elif order[5] == 'refunded' %}danger{% else %}secondary{% endif %}">{{ order[5] }}</span>
+            {% if order[5] == 'pending' %}
+            <a href="/checkout/{{ order[1] }}" class="btn btn-primary btn-sm ms-2">{% if session.get('lang') == 'de' %}Zahlung fortsetzen{% else %}Continue Payment{% endif %}</a>
             {% endif %}
           </p>
-          <p>
-            <strong
-              >{% if session.get('lang') == 'de' %}Datum:{% else %}Date:{% endif
-              %}</strong
-            >
-            {{ order[3] }}
-          </p>
+          <p><strong>{% if session.get('lang') == 'de' %}Datum:{% else %}Date:{% endif %}</strong> {{ order[6] }}</p>
         </div>
         <div class="col-md-6">
-          <p>
-            <strong
-              >{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{%
-              endif %}</strong
-            >
-            <a href="/profile/{{ order[8] }}">{{ order[8] }}</a>
-          </p>
-          <p>
-            <strong
-              >{% if session.get('lang') == 'de' %}Käufer:{% else %}Buyer:{%
-              endif %}</strong
-            >
-            <a href="/profile/{{ order[9] }}">{{ order[9] }}</a>
-          </p>
+          <p><strong>{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %}</strong> <a href="/profile/{{ order[16] }}">{{ order[16] }}</a></p>
+          <p><strong>{% if session.get('lang') == 'de' %}Käufer:{% else %}Buyer:{% endif %}</strong> <a href="/profile/{{ order[14] }}">{{ order[14] }}</a></p>
         </div>
       </div>
     </div>
   </div>
 
-  {% if order[2] == 'paid' and session.get('user_id') == order[15] %}
+  {% if order[5] == 'paid' and session.get('user_id') == order[3] %}
   <div class="card mt-4">
     <div class="card-header">
-      <h5>
-        {% if session.get('lang') == 'de' %}Als versandt markieren{% else %}Mark
-        as Shipped{% endif %}
-      </h5>
+      <h5>{% if session.get('lang') == 'de' %}Als versandt markieren{% else %}Mark as Shipped{% endif %}</h5>
     </div>
     <div class="card-body">
       <form method="POST" action="/order/{{ order[0] }}/ship">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="mb-3">
-          <label class="form-label"
-            >{% if session.get('lang') == 'de' %}Tracking-Nummer (optional){%
-            else %}Tracking Number (optional){% endif %}</label
-          >
-          <input
-            type="text"
-            class="form-control"
-            name="tracking_number"
-            value="{{ order[10] or '' }}"
-          />
+          <label class="form-label">{% if session.get('lang') == 'de' %}Tracking-Nummer (optional){% else %}Tracking Number (optional){% endif %}</label>
+          <input type="text" class="form-control" name="tracking_number" value="{{ order[7] or '' }}" />
         </div>
-        <button type="submit" class="btn btn-primary">
-          {% if session.get('lang') == 'de' %}Als versandt markieren{% else
-          %}Mark as Shipped{% endif %}
-        </button>
+        <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Als versandt markieren{% else %}Mark as Shipped{% endif %}</button>
       </form>
     </div>
   </div>
-  {% endif %} {% if order[2] == 'shipped' %}
+  {% endif %}
+
+  {% if order[5] == 'shipped' %}
   <div class="card mt-4">
     <div class="card-header">
-      <h5>
-        {% if session.get('lang') == 'de' %}Versandinformationen{% else
-        %}Shipping Information{% endif %}
-      </h5>
+      <h5>{% if session.get('lang') == 'de' %}Versandinformationen{% else %}Shipping Information{% endif %}</h5>
     </div>
     <div class="card-body">
-      {% if order[10] %}
-      <p>
-        <strong
-          >{% if session.get('lang') == 'de' %}Tracking-Nummer:{% else
-          %}Tracking Number:{% endif %}</strong
-        >
-        {{ order[10] }}
-      </p>
-      {% endif %} {% if order[11] %}
-      <p>
-        <strong
-          >{% if session.get('lang') == 'de' %}Versanddatum:{% else %}Shipped
-          Date:{% endif %}</strong
-        >
-        {{ order[11] }}
-      </p>
+      {% if order[7] %}
+      <p><strong>{% if session.get('lang') == 'de' %}Tracking-Nummer:{% else %}Tracking Number:{% endif %}</strong> {{ order[7] }}</p>
+      {% endif %}
+      {% if order[8] %}
+      <p><strong>{% if session.get('lang') == 'de' %}Versanddatum:{% else %}Shipped Date:{% endif %}</strong> {{ order[8] }}</p>
       {% endif %}
     </div>
   </div>
-  {% endif %} {% if order[2] == 'shipped' and session.get('user_id') ==
-  order[14] %}
+  {% endif %}
+
+  {% if order[5] == 'shipped' and session.get('user_id') == order[2] %}
   <div class="card mt-4 border-success">
     <div class="card-header bg-success text-white">
-      <h5>
-        {% if session.get('lang') == 'de' %}Lieferung bestätigen{% else
-        %}Confirm Delivery{% endif %}
-      </h5>
+      <h5>{% if session.get('lang') == 'de' %}Lieferung bestätigen{% else %}Confirm Delivery{% endif %}</h5>
     </div>
     <div class="card-body">
       <form method="POST" action="/order/{{ order[0] }}/delivered">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <p>
-          {% if session.get('lang') == 'de' %}Haben Sie das Produkt erhalten?{%
-          else %}Have you received the product?{% endif %}
-        </p>
-        <button type="submit" class="btn btn-success">
-          {% if session.get('lang') == 'de' %}Ja, ich habe es erhalten{% else
-          %}Yes, I received it{% endif %}
-        </button>
+        <p>{% if session.get('lang') == 'de' %}Haben Sie das Produkt erhalten?{% else %}Have you received the product?{% endif %}</p>
+        <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Ja, ich habe es erhalten{% else %}Yes, I received it{% endif %}</button>
       </form>
     </div>
   </div>
-  {% endif %} {% if order[2] in ['paid', 'shipped'] and session.get('user_id')
-  == order[14] and not order[13] %}
+  {% endif %}
+
+  {% if order[5] in ['paid', 'shipped'] and session.get('user_id') == order[2] and not order[10] %}
   <div class="card mt-4 border-danger">
     <div class="card-header bg-danger text-white">
-      <h5>
-        {% if session.get('lang') == 'de' %}Problem melden{% else %}Report
-        Issue{% endif %}
-      </h5>
+      <h5>{% if session.get('lang') == 'de' %}Problem melden{% else %}Report Issue{% endif %}</h5>
     </div>
     <div class="card-body">
       <form method="POST" action="/open_dispute/{{ order[0] }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="mb-3">
-          <label class="form-label"
-            >{% if session.get('lang') == 'de' %}Grund des Problems{% else
-            %}Reason for dispute{% endif %}</label
-          >
-          <textarea
-            class="form-control"
-            name="reason"
-            rows="3"
-            required
-          ></textarea>
+          <label class="form-label">{% if session.get('lang') == 'de' %}Grund des Problems{% else %}Reason for dispute{% endif %}</label>
+          <textarea class="form-control" name="reason" rows="3" required></textarea>
         </div>
-        <button type="submit" class="btn btn-danger">
-          {% if session.get('lang') == 'de' %}Streitfall eröffnen{% else %}Open
-          Dispute{% endif %}
-        </button>
+        <button type="submit" class="btn btn-danger">{% if session.get('lang') == 'de' %}Streitfall eröffnen{% else %}Open Dispute{% endif %}</button>
       </form>
     </div>
   </div>
   {% endif %}
 
-  {% if order[2] == 'delivered' %}
-  <div class="alert alert-success mt-4">
-    <h5>
-      {% if session.get('lang') == 'de' %}Bestellung abgeschlossen{% else
-      %}Order Completed{% endif %}
-    </h5>
-    <p>
-      {% if session.get('lang') == 'de' %}Dieses Datum wurde am {{ order[12] }}
-      geliefert.{% else %}This order was delivered on {{ order[12] }}.{% endif
-      %}
-    </p>
-  </div>
-  {% endif %} {% if address %}
-  <div class="card mt-4">
-    <div class="card-header">
-      <h5>
-        {% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping
-        Address{% endif %}
-      </h5>
+  {% if order[10] == 'open' and session.get('user_id') == order[3] and not order[26] %}
+  <div class="card mt-4 border-info">
+    <div class="card-header bg-info text-white">
+      <h5>{% if session.get('lang') == 'de' %}Auf Streitfall antworten{% else %}Respond to Dispute{% endif %}</h5>
     </div>
     <div class="card-body">
-      <p><strong>{{ address[0] }}</strong></p>
-      <p>{{ address[1] }}</p>
-      <p>{{ address[2] }}, {{ address[3] }} {{ address[4] }}</p>
-      <p>{{ address[5] }}</p>
-      <p>
-        <strong
-          >{% if session.get('lang') == 'de' %}Telefon:{% else %}Phone:{% endif
-          %}</strong
-        >
-        {{ address[6] }}
-      </p>
-    </div>
-  </div>
-  {% endif %} {% if order[4] %}
-  <div class="card mt-4">
-    <div class="card-header">
-      <h5>
-        {% if session.get('lang') == 'de' %}Zahlungsinformationen{% else
-        %}Payment Information{% endif %}
-      </h5>
-    </div>
-    <div class="card-body">
-      <p><strong>Stripe Payment ID:</strong> {{ order[4] }}</p>
+      <form method="POST" action="/order/{{ order[0] }}/dispute/respond">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Ihre Antwort{% else %}Your Response{% endif %}</label>
+          <textarea class="form-control" name="response" rows="3" required placeholder="{% if session.get('lang') == 'de' %}Erklären Sie Ihre Sicht der Situation...{% else %}Explain your side of the situation...{% endif %}"></textarea>
+        </div>
+        <button type="submit" class="btn btn-info">{% if session.get('lang') == 'de' %}Antwort senden{% else %}Submit Response{% endif %}</button>
+      </form>
     </div>
   </div>
   {% endif %}
 
-  <a href="/orders" class="btn btn-secondary mt-4"
-    >{% if session.get('lang') == 'de' %}Zurück zu Bestellungen{% else %}Back to
-    Orders{% endif %}</a
-  >
+  {% if order[5] == 'delivered' %}
+  <div class="alert alert-success mt-4">
+    <h5>{% if session.get('lang') == 'de' %}Bestellung abgeschlossen{% else %}Order Completed{% endif %}</h5>
+    <p>{% if session.get('lang') == 'de' %}Dieses Datum wurde am {{ order[9] }} geliefert.{% else %}This order was delivered on {{ order[9] }}.{% endif %}</p>
+  </div>
+  {% endif %}
+
+  {% if order[18] %}
+  <div class="card mt-4">
+    <div class="card-header">
+      <h5>{% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping Address{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <p><strong>{{ order[18] }}</strong></p>
+      <p>{{ order[19] }}</p>
+      <p>{{ order[20] }}, {{ order[21] }} {{ order[22] }}</p>
+      <p>{{ order[23] }}</p>
+      <p><strong>{% if session.get('lang') == 'de' %}Telefon:{% else %}Phone:{% endif %}</strong> {{ order[24] }}</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <a href="/orders" class="btn btn-secondary mt-4">{% if session.get('lang') == 'de' %}Zurück zu Bestellungen{% else %}Back to Orders{% endif %}</a>
 </div>
 {% endblock %}
