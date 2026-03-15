@@ -1848,9 +1848,11 @@ def create_checkout_session(post_id):
             'metadata': {'order_id': order_id, 'post_id': post_id}
         }
         
-        if transfer_data:
-            session_params['transfer_data'] = transfer_data
-            session_params['application_fee_amount'] = int(total_amount * 100 * 0.10)
+        if use_seller_payout:
+            session_params['payment_intent_data'] = {
+                'transfer_data': {'destination': seller_stripe},
+                'application_fee_amount': int(total_amount * 100 * 0.10)
+            }
         
         session_stripe = stripe.checkout.Session.create(**session_params)
         return redirect(session_stripe.url, code=303)
