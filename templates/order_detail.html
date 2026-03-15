@@ -6,13 +6,15 @@ endblock %} {% block content %}
     order[0] }}
   </h2>
 
-  {% if order[13] %}
-  <div class="alert alert-danger mt-3">
+  {% if order[10] %}
+  <div class="alert alert-{% if order[10] == 'open' %}danger{% elif order[10] in ['refunded', 'resolved'] %}warning{% else %}info{% endif %} mt-3">
     <h5>
-      {% if session.get('lang') == 'de' %}Streitfall eröffnet{% else %}Dispute
-      Opened{% endif %}
+      {% if session.get('lang') == 'de' %}Streitfall: {% else %}Dispute: {% endif %}
+      {% if order[10] == 'open' %}{% if session.get('lang') == 'de' %}Offen{% else %}Open{% endif %}
+      {% elif order[10] == 'refunded' %}{% if session.get('lang') == 'de' %}Erstattet{% else %}Refunded{% endif %}
+      {% elif order[10] == 'resolved' %}{% if session.get('lang') == 'de' %}Gelöst{% else %}Resolved{% endif %}
+      {% else %}{{ order[10] }}{% endif %}
     </h5>
-    <p>{{ order[13] }}</p>
   </div>
   {% endif %}
 
@@ -198,7 +200,9 @@ endblock %} {% block content %}
       </form>
     </div>
   </div>
-  {% endif %} {% if order[2] == 'delivered' %}
+  {% endif %}
+
+  {% if order[2] == 'delivered' %}
   <div class="alert alert-success mt-4">
     <h5>
       {% if session.get('lang') == 'de' %}Bestellung abgeschlossen{% else

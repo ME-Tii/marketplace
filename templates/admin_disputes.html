@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Streitfälle - Admin{% else %}Disputes - Admin{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h1>{% if session.get('lang') == 'de' %}Streitfälle{% else %}Dispute Management{% endif %}</h1>
+  
+  <div class="mb-4">
+    <a href="/profile/admin" class="btn btn-secondary">&larr; {% if session.get('lang') == 'de' %}Zurück zum Profil{% else %}Back to Profile{% endif %}</a>
+  </div>
+
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link {% if not status_filter %}active{% endif %}" href="/admin/disputes">{% if session.get('lang') == 'de' %}Alle{% else %}All{% endif %}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if status_filter == 'open' %}active{% endif %}" href="/admin/disputes?status=open">{% if session.get('lang') == 'de' %}Offene{% else %}Open{% endif %}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if status_filter == 'refunded' %}active{% endif %}" href="/admin/disputes?status=refunded">{% if session.get('lang') == 'de' %}Erstattet{% else %}Refunded{% endif %}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if status_filter == 'resolved' %}active{% endif %}" href="/admin/disputes?status=resolved">{% if session.get('lang') == 'de' %}Gelöst{% else %}Resolved{% endif %}</a>
+    </li>
+  </ul>
+
+  {% if disputes %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>{% if session.get('lang') == 'de' %}Bestellung{% else %}Order{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Artikel{% else %}Item{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Betrag{% else %}Amount{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Käufer{% else %}Buyer{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Verkäufer{% else %}Seller{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Status{% else %}Status{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Eröffnet{% else %}Opened{% endif %}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in disputes %}
+      <tr>
+        <td>#{{ d[0] }}</td>
+        <td>{{ d[7] }}</td>
+        <td>${{ d[1] }}</td>
+        <td>{{ d[5] }}</td>
+        <td>{{ d[6] }}</td>
+        <td>
+          {% if d[2] == 'open' %}
+          <span class="badge bg-danger">{% if session.get('lang') == 'de' %}Offen{% else %}Open{% endif %}</span>
+          {% elif d[2] == 'refunded' %}
+          <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Erstattet{% else %}Refunded{% endif %}</span>
+          {% elif d[2] == 'resolved' %}
+          <span class="badge bg-success">{% if session.get('lang') == 'de' %}Gelöst{% else %}Resolved{% endif %}</span>
+          {% else %}
+          <span class="badge bg-secondary">{{ d[2] }}</span>
+          {% endif %}
+        </td>
+        <td>{{ d[4] or '-' }}</td>
+        <td>
+          <a href="/admin/dispute/{{ d[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Ansehen{% else %}View{% endif %}</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Streitfälle gefunden.{% else %}No disputes found.{% endif %}</p>
+  {% endif %}
+</div>
+{% endblock %}

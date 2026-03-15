@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Streitfall #{{ order[0] }} - Admin{% else %}Dispute #{{ order[0] }} - Admin{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h1>{% if session.get('lang') == 'de' %}Streitfall #{{ order[0] }}{% else %}Dispute #{{ order[0] }}{% endif %}</h1>
+  
+  <div class="mb-4">
+    <a href="/admin/disputes" class="btn btn-secondary">&larr; {% if session.get('lang') == 'de' %}Zurück zu Streitfällen{% else %}Back to Disputes{% endif %}</a>
+    <a href="/order/{{ order[0] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Bestelldetails{% else %}Order Details{% endif %}</a>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>{% if session.get('lang') == 'de' %}Bestellinformationen{% else %}Order Information{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>{% if session.get('lang') == 'de' %}Artikel:{% else %}Item:{% endif %}</strong> {{ order[25] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Betrag:{% else %}Amount:{% endif %}</strong> ${{ order[4] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Status:{% else %}Status:{% endif %}</strong> 
+            <span class="badge bg-{% if order[5] == 'paid' %}warning{% elif order[5] == 'shipped' %}info{% elif order[5] == 'delivered' %}success{% elif order[5] == 'refunded' %}danger{% else %}secondary{% endif %}">{{ order[5] }}</span>
+          </p>
+          <p><strong>{% if session.get('lang') == 'de' %}Käufer:{% else %}Buyer:{% endif %}</strong> {{ order[22] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %}</strong> {{ order[23] }}</p>
+          {% if order[7] %}
+          <p><strong>{% if session.get('lang') == 'de' %}Tracking-Nummer:{% else %}Tracking Number:{% endif %}</strong> {{ order[7] }}</p>
+          {% endif %}
+          {% if order[3] %}
+          <p><strong>{% if session.get('lang') == 'de' %}Stripe Payment ID:{% else %}Stripe Payment ID:{% endif %}</strong> {{ order[3] }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>{% if session.get('lang') == 'de' %}Streitfall-Status{% else %}Dispute Status{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>{% if session.get('lang') == 'de' %}Status:{% else %}Status:{% endif %}</strong>
+            {% if order[10] == 'open' %}
+            <span class="badge bg-danger">{% if session.get('lang') == 'de' %}Offen{% else %}Open{% endif %}</span>
+            {% elif order[10] == 'refunded' %}
+            <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Erstattet{% else %}Refunded{% endif %}</span>
+            {% elif order[10] == 'resolved' %}
+            <span class="badge bg-success">{% if session.get('lang') == 'de' %}Gelöst{% else %}Resolved{% endif %}</span>
+            {% else %}
+            <span class="badge bg-secondary">{{ order[10] or 'None' }}</span>
+            {% endif %}
+          </p>
+          {% if order[27] %}
+          <p><strong>{% if session.get('lang') == 'de' %}Eröffnet am:{% else %}Opened:{% endif %}</strong> {{ order[27] }}</p>
+          {% endif %}
+          {% if order[29] %}
+          <p><strong>{% if session.get('lang') == 'de' %}Gelöst am:{% else %}Resolved:{% endif %}</strong> {{ order[29] }}</p>
+          {% endif %}
+          {% if order[30] %}
+          <p><strong>{% if session.get('lang') == 'de' %}Lösung:{% else %}Resolution:{% endif %}</strong> {{ order[30] }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5>{% if session.get('lang') == 'de' %}Käufer-Beschwerde{% else %}Buyer's Complaint{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          {% if order[25] %}
+          <p>{{ order[25] }}</p>
+          {% else %}
+          <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Beschwerde{% else %}No complaint recorded{% endif %}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if order[26] %}
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+          <h5>{% if session.get('lang') == 'de' %}Verkäufer-Antwort{% else %}Seller's Response{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <p>{{ order[26] }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if order[10] == 'open' %}
+      <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning">
+          <h5>{% if session.get('lang') == 'de' %}Streitfall lösen{% else %}Resolve Dispute{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Aktion{% else %}Action{% endif %}</label>
+              <div class="d-flex gap-2">
+                <button type="submit" name="action" value="refund" class="btn btn-danger">{% if session.get('lang') == 'de' %}Käufer erstatten{% else %}Refund Buyer{% endif %}</button>
+                <button type="submit" name="action" value="release" class="btn btn-success">{% if session.get('lang') == 'de' %}An Verkäufer zahlen{% else %}Pay Seller{% endif %}</button>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Notiz (optional){% else %}Note (optional){% endif %}</label>
+              <textarea name="resolution_note" class="form-control" rows="2" placeholder="{% if session.get('lang') == 'de' %}Grund für die Entscheidung...{% else %}Reason for decision...{% endif %}"></textarea>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

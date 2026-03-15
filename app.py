@@ -187,6 +187,26 @@ def init_db():
         c.execute("ALTER TABLE orders ADD COLUMN dispute_status TEXT")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN dispute_reason TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN dispute_response TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN dispute_opened_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN dispute_resolved_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN dispute_resolution TEXT")
+    except sqlite3.OperationalError:
+        pass
     # Shipping addresses
     c.execute('''CREATE TABLE IF NOT EXISTS addresses
                  (id INTEGER PRIMARY KEY, user_id INTEGER, order_id INTEGER,
@@ -1946,7 +1966,7 @@ def order_detail(order_id):
                  JOIN users seller ON o.seller_id = seller.id
                  LEFT JOIN addresses a ON a.order_id = o.id AND a.user_id = o.buyer_id
                  WHERE o.id = ? AND (o.buyer_id = ? OR o.seller_id = ?)""", 
-              (order_id, session['user_id'], session['user_id']))
+               (order_id, session['user_id'], session['user_id']))
     order = c.fetchone()
     conn.close()
     
@@ -2021,23 +2041,162 @@ def open_dispute(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT buyer_id, seller_id FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT buyer_id, seller_id, status FROM orders WHERE id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
         conn.close()
         return 'Order not found', 404
     
-    if session['user_id'] not in [order[0], order[1]]:
+    # Only buyer can open dispute, and only if paid or shipped
+    if session['user_id'] != order[0]:
         conn.close()
         return 'Access denied', 403
     
-    c.execute("UPDATE orders SET dispute_status = ? WHERE id = ?", (reason, order_id))
+    if order[2] not in ['paid', 'shipped']:
+        flash('Cannot open dispute for this order status.', 'warning')
+        conn.close()
+        return redirect(f'/order/{order_id}')
+    
+    c.execute("""UPDATE orders SET 
+                 dispute_status = 'open', 
+                 dispute_reason = ?,
+                 dispute_opened_at = CURRENT_TIMESTAMP 
+                 WHERE id = ?""", (reason, order_id))
     conn.commit()
     conn.close()
     
-    flash('Dispute opened!', 'warning')
+    flash('Dispute opened! An admin will review your case.', 'warning')
     return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/dispute/respond', methods=['POST'])
+def respond_to_dispute(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    response = request.form.get('response')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT buyer_id, seller_id, dispute_status FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[2] != 'open':
+        conn.close()
+        flash('No active dispute to respond to.', 'warning')
+        return redirect(f'/order/{order_id}')
+    
+    if session['user_id'] != order[1]:
+        conn.close()
+        return 'Access denied', 403
+    
+    c.execute("UPDATE orders SET dispute_response = ? WHERE id = ?", (response, order_id))
+    conn.commit()
+    conn.close()
+    
+    flash('Response submitted!', 'success')
+    return redirect(f'/order/{order_id}')
+
+# Dispute resolution routes for admin
+@app.route('/admin/disputes')
+def admin_disputes():
+    if 'user_id' not in session or session.get('username') != 'admin':
+        return 'Access denied', 403
+    
+    status_filter = request.args.get('status', '')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    query = """
+        SELECT o.id, o.amount, o.dispute_status, o.dispute_reason, o.dispute_opened_at,
+               buyer.username, seller.username, p.title
+        FROM orders o
+        JOIN users buyer ON o.buyer_id = buyer.id
+        JOIN users seller ON o.seller_id = seller.id
+        JOIN posts p ON o.post_id = p.id
+        WHERE o.dispute_status IS NOT NULL
+    """
+    params = []
+    
+    if status_filter:
+        query += " AND o.dispute_status = ?"
+        params.append(status_filter)
+    
+    query += " ORDER BY o.dispute_opened_at DESC"
+    
+    c.execute(query, params)
+    disputes = c.fetchall()
+    conn.close()
+    
+    return render_template('admin_disputes.html', disputes=disputes, status_filter=status_filter, unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/admin/dispute/<int:order_id>', methods=['GET', 'POST'])
+def admin_dispute_detail(order_id):
+    if 'user_id' not in session or session.get('username') != 'admin':
+        return 'Access denied', 403
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        resolution_note = request.form.get('resolution_note', '')
+        
+        if action in ['refund', 'release', 'partial']:
+            # Process the resolution
+            if action == 'refund':
+                new_status = 'refunded'
+                resolution = 'full_refund'
+            elif action == 'release':
+                new_status = 'completed'
+                resolution = 'released'
+            else:  # partial
+                new_status = 'refunded'
+                resolution = 'partial_refund'
+            
+            # Get payment info
+            c.execute("SELECT stripe_payment_id FROM orders WHERE id = ?", (order_id,))
+            payment = c.fetchone()
+            
+            if payment and payment[0] and app.config.get('STRIPE_SECRET_KEY'):
+                try:
+                    if action in ['refund', 'partial']:
+                        # Process Stripe refund
+                        stripe.Refund.create(payment_intent=payment[0])
+                except Exception as e:
+                    flash(f'Stripe refund failed: {str(e)}', 'danger')
+                    conn.close()
+                    return redirect(f'/admin/dispute/{order_id}')
+            
+            # Update order
+            c.execute("""UPDATE orders SET 
+                        dispute_status = ?, 
+                        dispute_resolution = ?,
+                        dispute_resolved_at = CURRENT_TIMESTAMP,
+                        status = ?
+                        WHERE id = ?""", 
+                      (new_status, resolution + ': ' + resolution_note, new_status, order_id))
+            conn.commit()
+            flash(f'Dispute resolved: {resolution}', 'success')
+            conn.close()
+            return redirect('/admin/disputes')
+    
+    # Get order details
+    c.execute("""SELECT o.*, buyer.username, seller.username, p.title, p.image
+                 FROM orders o
+                 JOIN users buyer ON o.buyer_id = buyer.id
+                 JOIN users seller ON o.seller_id = seller.id
+                 JOIN posts p ON o.post_id = p.id
+                 WHERE o.id = ?""", (order_id,))
+    order = c.fetchone()
+    conn.close()
+    
+    return render_template('admin_dispute_detail.html', order=order, unread_messages=get_unread_messages_count(session.get('user_id')))
 
 # One-time migration: update image paths
 conn = sqlite3.connect('database.db')
