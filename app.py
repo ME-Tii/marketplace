@@ -749,7 +749,7 @@ def export_all():
         c = conn.cursor()
         c.execute("SELECT id, username, email, description, profile_picture FROM users")
         users = c.fetchall()
-        c.execute("SELECT id, user_id, title, description, type, image, links, price, timestamp FROM posts")
+        c.execute("SELECT id, user_id, title, description, type, image, links, price, timestamp, local_pickup, shipping_available, shipping_cost FROM posts")
         posts = c.fetchall()
         c.execute("SELECT id, sender_id, receiver_id, message, timestamp FROM messages")
         messages = c.fetchall()
@@ -759,6 +759,14 @@ def export_all():
         group_members = c.fetchall()
         c.execute("SELECT id, group_id, user_id, title, content, image, created_at FROM group_posts")
         group_posts_data = c.fetchall()
+        c.execute("SELECT id, post_id, buyer_id, seller_id, amount, status, stripe_payment_id, tracking_number, shipped_at, delivered_at, dispute_status, shipping_method, created_at FROM orders")
+        orders = c.fetchall()
+        c.execute("SELECT id, user_id, order_id, full_name, street, city, state, zip_code, country, phone FROM addresses")
+        addresses = c.fetchall()
+        c.execute("SELECT user_id, post_id FROM notices")
+        notices = c.fetchall()
+        c.execute("SELECT user_id, noticed_user_id FROM noticed_users")
+        noticed_users = c.fetchall()
         conn.close()
         data = {
             'users': users,
@@ -766,7 +774,11 @@ def export_all():
             'messages': messages,
             'groups': groups,
             'group_members': group_members,
-            'group_posts': group_posts_data
+            'group_posts': group_posts_data,
+            'orders': orders,
+            'addresses': addresses,
+            'notices': notices,
+            'noticed_users': noticed_users
         }
         import json
         zip_file.writestr('data_export.json', json.dumps(data, default=str))
