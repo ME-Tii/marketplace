@@ -60,41 +60,22 @@ block content %}
             %}</label
           >
           <select class="form-control" id="type" name="type" required>
-            <option value="sell" {% if post[3]="" ="sell" %}selected{% endif %}>
-              {% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{%
-              endif %}
+            <option value="sell" {% if post[3] == 'sell' %}selected{% endif %}>
+              {% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}
             </option>
-            <option value="buy" {% if post[3]="" ="buy" %}selected{% endif %}>
+            <option value="buy" {% if post[3] == 'buy' %}selected{% endif %}>
               {% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}
             </option>
-            <option
-              value="trade"
-              {%
-              if
-              post[3]=""
-              ="trade"
-              %}selected{%
-              endif
-              %}
-            >
-              {% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{%
-              endif %}
+            <option value="trade" {% if post[3] == 'trade' %}selected{% endif %}>
+              {% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}
             </option>
-            <option
-              value="notification"
-              {%
-              if
-              post[3]=""
-              ="notification"
-              %}selected{%
-              endif
-              %}
-            >
-              {% if session.get('lang') == 'de' %}Benachrichtigung{% else
-              %}Notification{% endif %}
+            <option value="notification" {% if post[3] == 'notification' %}selected{% endif %}>
+              {% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}
             </option>
-            <option value="giveaway" {% if post[3]="" ="giveaway" %}selected{% endif %}>
+            <option value="giveaway" {% if post[3] == 'giveaway' %}selected{% endif %}>
               {% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}
+            </option>
+          </select>
             </option>
           </select>
         </div>
