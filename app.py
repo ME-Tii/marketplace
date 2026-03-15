@@ -121,6 +121,12 @@ def init_db():
         c.execute("ALTER TABLE posts ADD COLUMN is_active INTEGER DEFAULT 1")
     except sqlite3.OperationalError:
         pass
+    # Set default values for existing posts
+    try:
+        c.execute("UPDATE posts SET quantity = 1 WHERE quantity IS NULL")
+        c.execute("UPDATE posts SET is_active = 1 WHERE is_active IS NULL")
+    except sqlite3.OperationalError:
+        pass
     c.execute('''CREATE TABLE IF NOT EXISTS notices
                    (user_id INTEGER, post_id INTEGER, PRIMARY KEY (user_id, post_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS noticed_users
