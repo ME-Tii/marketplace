@@ -2021,12 +2021,42 @@ def mark_shipped(order_id):
         flash('Order must be paid before shipping.', 'warning')
         return redirect(f'/order/{order_id}')
     
-    c.execute("UPDATE orders SET tracking_number = ?, shipped_at = CURRENT_TIMESTAMP WHERE id = ?", (tracking_number, order_id))
+    c.execute("UPDATE orders SET status = 'shipped', tracking_number = ?, shipped_at = CURRENT_TIMESTAMP WHERE id = ?", (tracking_number, order_id))
     conn.commit()
     conn.close()
     
     flash('Order marked as shipped!', 'success')
     return redirect(f'/order/{order_id}')
+
+@app.route('/cancel_order/<int:order_id>', methods=['POST'])
+def cancel_order(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT buyer_id, status FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[1] not in ['pending', 'paid']:
+        flash('Cannot cancel order in current status.', 'warning')
+        conn.close()
+        return redirect(f'/order/{order_id}')
+    
+    c.execute("DELETE FROM orders WHERE id = ?", (order_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Order cancelled.', 'success')
+    return redirect('/orders')
 
 @app.route('/order/<int:order_id>/delivered', methods=['POST'])
 def mark_delivered(order_id):
