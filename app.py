@@ -874,6 +874,7 @@ def groups():
         LEFT JOIN users u ON g.creator_id = u.id
         LEFT JOIN group_members gm ON g.id = gm.group_id AND gm.status = 'accepted'
     """
+    # Backup/restore test commit
     conditions = []
     params = []
     if query:
