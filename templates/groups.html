@@ -34,7 +34,7 @@
           <p class="card-text">{{ group[2] }}</p>
           <p><small class="text-muted">
             {% if group[3] %}{% if session.get('lang') == 'de' %}Privat{% else %}Private{% endif %}{% else %}{% if session.get('lang') == 'de' %}Öffentlich{% else %}Public{% endif %}{% endif %}
-            - {{ group[5] }} {% if session.get('lang') == 'de' %}Mitglieder{% else %}members{% endif %}
+            - {{ group[6] }} {% if session.get('lang') == 'de' %}Mitglieder{% else %}members{% endif %}
           </small></p>
           {% if session.get('user_id') %}
           {% if user_groups.get(group[0]) == 'accepted' %}
@@ -43,6 +43,12 @@
           <button class="btn btn-secondary mt-auto" disabled>{% if session.get('lang') == 'de' %}Ausstehend{% else %}Pending{% endif %}</button>
           {% else %}
           <a href="/join_group/{{ group[0] }}" class="btn btn-success mt-auto">{% if session.get('lang') == 'de' %}Beitreten{% else %}Join{% endif %}</a>
+          {% endif %}
+          {% if group[4] == session.get('user_id') %}
+          <form method="POST" action="/delete_group/{{ group[0] }}" class="d-inline" onsubmit="return confirm('{% if session.get('lang') == 'de' %}Gruppe wirklich löschen?{% else %}Delete this group?{% endif %}')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-warning mt-2">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>
+          </form>
           {% endif %}
           {% endif %}
         </div>

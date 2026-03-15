@@ -876,7 +876,7 @@ def groups():
     c = conn.cursor()
     # Build query with filters
     base_query = """
-        SELECT g.id, g.name, g.description, g.is_private, u.username,
+        SELECT g.id, g.name, g.description, g.is_private, g.creator_id, u.username,
                COUNT(gm.id) as member_count
         FROM groups g
         LEFT JOIN users u ON g.creator_id = u.id
