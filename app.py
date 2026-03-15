@@ -101,6 +101,18 @@ def init_db():
         c.execute("ALTER TABLE posts ADD COLUMN price REAL")
     except sqlite3.OperationalError:
         pass  # column already exists
+    try:
+        c.execute("ALTER TABLE posts ADD COLUMN shipping_available INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE posts ADD COLUMN local_pickup INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE posts ADD COLUMN shipping_cost REAL DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
     c.execute('''CREATE TABLE IF NOT EXISTS notices
                    (user_id INTEGER, post_id INTEGER, PRIMARY KEY (user_id, post_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS noticed_users
@@ -136,6 +148,18 @@ def init_db():
         c.execute("ALTER TABLE group_posts ADD COLUMN price REAL")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE group_posts ADD COLUMN local_pickup INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE group_posts ADD COLUMN shipping_available INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE group_posts ADD COLUMN shipping_cost REAL DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
     # Orders table
     c.execute('''CREATE TABLE IF NOT EXISTS orders
                  (id INTEGER PRIMARY KEY, post_id INTEGER, buyer_id INTEGER, seller_id INTEGER,
@@ -153,6 +177,10 @@ def init_db():
         pass
     try:
         c.execute("ALTER TABLE orders ADD COLUMN delivered_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN shipping_method TEXT")
     except sqlite3.OperationalError:
         pass
     try:
@@ -428,6 +456,9 @@ def create_post():
     post_type = request.form.get('type')
     links = request.form.get('links')
     price = request.form.get('price')
+    local_pickup = 1 if request.form.get('local_pickup') else 0
+    shipping_available = 1 if request.form.get('shipping_available') else 0
+    shipping_cost = request.form.get('shipping_cost') or 0
     image_path = None
     if 'image' in request.files:
         file = request.files['image']
@@ -441,7 +472,8 @@ def create_post():
                 image_path = f'/static/pictures/{filename}'
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("INSERT INTO posts (user_id, title, description, type, image, links, price) VALUES (?, ?, ?, ?, ?, ?, ?)", (session['user_id'], title, description, post_type, image_path, links, price))
+    c.execute("INSERT INTO posts (user_id, title, description, type, image, links, price, local_pickup, shipping_available, shipping_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+              (session['user_id'], title, description, post_type, image_path, links, price, local_pickup, shipping_available, shipping_cost))
     conn.commit()
     conn.close()
     return redirect('/dashboard')
@@ -1132,6 +1164,9 @@ def post_in_group(group_id):
     post_type = request.form.get('type')
     links = request.form.get('links')
     price = request.form.get('price')
+    local_pickup = 1 if request.form.get('local_pickup') else 0
+    shipping_available = 1 if request.form.get('shipping_available') else 0
+    shipping_cost = request.form.get('shipping_cost') or 0
     if not title or not content:
         flash('Title and content are required.', 'danger')
         return redirect(f'/group/{group_id}')
@@ -1144,8 +1179,8 @@ def post_in_group(group_id):
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             file.save(file_path)
             image_path = f'/static/pictures/{filename}'
-    c.execute("INSERT INTO group_posts (group_id, user_id, title, content, type, image, links, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-              (group_id, session['user_id'], title, content, post_type, image_path, links, price))
+    c.execute("INSERT INTO group_posts (group_id, user_id, title, content, type, image, links, price, local_pickup, shipping_available, shipping_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              (group_id, session['user_id'], title, content, post_type, image_path, links, price, local_pickup, shipping_available, shipping_cost))
     conn.commit()
     conn.close()
     flash('Post created!', 'success')
@@ -1358,7 +1393,7 @@ def edit_post_page(post_id):
         return redirect('/login')
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT id, title, description, type, image, links, price FROM posts WHERE id = ? AND user_id = ?", (post_id, session['user_id']))
+    c.execute("SELECT id, title, description, type, image, links, price, local_pickup, shipping_available, shipping_cost FROM posts WHERE id = ? AND user_id = ?", (post_id, session['user_id']))
     post = c.fetchone()
     conn.close()
     if not post:
@@ -1374,6 +1409,9 @@ def edit_post(post_id):
     post_type = request.form.get('type')
     links = request.form.get('links')
     price = request.form.get('price')
+    local_pickup = 1 if request.form.get('local_pickup') else 0
+    shipping_available = 1 if request.form.get('shipping_available') else 0
+    shipping_cost = request.form.get('shipping_cost') or 0
     image_path = None
     if 'image' in request.files:
         file = request.files['image']
@@ -1388,9 +1426,11 @@ def edit_post(post_id):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     if image_path:
-        c.execute("UPDATE posts SET title = ?, description = ?, type = ?, image = ?, links = ?, price = ? WHERE id = ? AND user_id = ?", (title, description, post_type, image_path, links, price, post_id, session['user_id']))
+        c.execute("UPDATE posts SET title = ?, description = ?, type = ?, image = ?, links = ?, price = ?, local_pickup = ?, shipping_available = ?, shipping_cost = ? WHERE id = ? AND user_id = ?", 
+                  (title, description, post_type, image_path, links, price, local_pickup, shipping_available, shipping_cost, post_id, session['user_id']))
     else:
-        c.execute("UPDATE posts SET title = ?, description = ?, type = ?, links = ?, price = ? WHERE id = ? AND user_id = ?", (title, description, post_type, links, price, post_id, session['user_id']))
+        c.execute("UPDATE posts SET title = ?, description = ?, type = ?, links = ?, price = ?, local_pickup = ?, shipping_available = ?, shipping_cost = ? WHERE id = ? AND user_id = ?", 
+                  (title, description, post_type, links, price, local_pickup, shipping_available, shipping_cost, post_id, session['user_id']))
     conn.commit()
     conn.close()
     return redirect(f'/profile/{session.get("username")}')

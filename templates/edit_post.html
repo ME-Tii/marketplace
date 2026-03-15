@@ -99,6 +99,28 @@ content %}
           />
         </div>
         <div class="mb-3">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="local_pickup" name="local_pickup" value="1" {% if post[7] %}checked{% endif %} />
+            <label class="form-check-label" for="local_pickup">
+              {% if session.get('lang') == 'de' %}Abholung vor Ort möglich{% else %}Local pickup available{% endif %}
+            </label>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="shipping_available" name="shipping_available" value="1" {% if post[8] %}checked{% endif %} onchange="toggleShippingCost()" />
+            <label class="form-check-label" for="shipping_available">
+              {% if session.get('lang') == 'de' %}Versand möglich{% else %}Shipping available{% endif %}
+            </label>
+          </div>
+        </div>
+        <div class="mb-3" id="shipping_cost_div" {% if not post[8] %}style="display:none;"{% endif %}>
+          <label for="shipping_cost" class="form-label">
+            {% if session.get('lang') == 'de' %}Versandkosten{% else %}Shipping cost{% endif %}
+          </label>
+          <input type="number" step="0.01" class="form-control" id="shipping_cost" name="shipping_cost" value="{{ post[9] or '' }}" placeholder="0.00" />
+        </div>
+        <div class="mb-3">
           <label for="links" class="form-label"
             >{% if session.get('lang') == 'de' %}Links{% else %}Links{% endif
             %}</label
@@ -125,4 +147,15 @@ content %}
     </div>
   </div>
 </div>
+<script>
+function toggleShippingCost() {
+  var checkbox = document.getElementById('shipping_available');
+  var costDiv = document.getElementById('shipping_cost_div');
+  if (checkbox.checked) {
+    costDiv.style.display = 'block';
+  } else {
+    costDiv.style.display = 'none';
+  }
+}
+</script>
 {% endblock %}
