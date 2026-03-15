@@ -124,9 +124,25 @@ def init_db():
     # Set default values for existing posts
     try:
         c.execute("UPDATE posts SET quantity = 1 WHERE quantity IS NULL")
-        c.execute("UPDATE posts SET is_active = 1 WHERE is_active IS NULL")
-    except sqlite3.OperationalError:
+    except:
         pass
+    try:
+        c.execute("UPDATE posts SET is_active = 1 WHERE is_active IS NULL")
+    except:
+        pass
+    try:
+        c.execute("UPDATE posts SET local_pickup = 1 WHERE local_pickup IS NULL")
+    except:
+        pass
+    try:
+        c.execute("UPDATE posts SET shipping_available = 0 WHERE shipping_available IS NULL")
+    except:
+        pass
+    try:
+        c.execute("UPDATE posts SET shipping_cost = 0 WHERE shipping_cost IS NULL")
+    except:
+        pass
+    conn.commit()
     c.execute('''CREATE TABLE IF NOT EXISTS notices
                    (user_id INTEGER, post_id INTEGER, PRIMARY KEY (user_id, post_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS noticed_users
