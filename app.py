@@ -588,7 +588,7 @@ def export_data():
         conn.close()
         return 'Access denied', 403
     # Export data
-    c.execute("SELECT id, username, email, description, profile_picture FROM users")
+    c.execute("SELECT id, username, email, description, profile_picture, stripe_account_id FROM users")
     users = c.fetchall()
     c.execute("SELECT id, user_id, title, description, type, image, links, price, timestamp FROM posts")
     posts = c.fetchall()
@@ -747,7 +747,7 @@ def export_all():
         # Add data
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute("SELECT id, username, email, description, profile_picture FROM users")
+        c.execute("SELECT id, username, email, description, profile_picture, stripe_account_id FROM users")
         users = c.fetchall()
         c.execute("SELECT id, user_id, title, description, type, image, links, price, timestamp, local_pickup, shipping_available, shipping_cost FROM posts")
         posts = c.fetchall()
