@@ -1646,9 +1646,12 @@ def checkout(post_id):
     
     c.execute("SELECT * FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
     existing_order = c.fetchone()
+    
+    c.execute("SELECT * FROM addresses WHERE user_id = ? ORDER BY id DESC LIMIT 1", (session['user_id'],))
+    saved_address = c.fetchone()
     conn.close()
     
-    return render_template('checkout.html', post=post, post_id=post_id, existing_order=existing_order, unread_messages=get_unread_messages_count(session.get('user_id')))
+    return render_template('checkout.html', post=post, post_id=post_id, existing_order=existing_order, saved_address=saved_address, unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/process_checkout/<int:post_id>', methods=['POST'])
 def process_checkout(post_id):
