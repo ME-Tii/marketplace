@@ -674,6 +674,10 @@ def import_data():
     c.execute("DELETE FROM groups")
     c.execute("DELETE FROM group_members")
     c.execute("DELETE FROM group_posts")
+    c.execute("DELETE FROM orders")
+    c.execute("DELETE FROM addresses")
+    c.execute("DELETE FROM notices")
+    c.execute("DELETE FROM noticed_users")
 
     # Import data
     import json
@@ -683,12 +687,19 @@ def import_data():
     groups = data.get('groups', [])
     group_members = data.get('group_members', [])
     group_posts_data = data.get('group_posts', [])
+    orders = data.get('orders', [])
+    addresses = data.get('addresses', [])
+    notices = data.get('notices', [])
+    noticed_users = data.get('noticed_users', [])
     for u in users:
         try:
             u_list = list(u)
+            # Handle both old (5 fields) and new (6 fields) backup formats
+            while len(u_list) < 6:
+                u_list.append(None)
             if u_list[4]:  # profile_picture
                 u_list[4] = '/static/pictures/' + os.path.basename(u_list[4])
-            c.execute("INSERT INTO users (id, username, email, description, profile_picture) VALUES (?, ?, ?, ?, ?)", u_list)
+            c.execute("INSERT INTO users (id, username, email, description, profile_picture, stripe_account_id) VALUES (?, ?, ?, ?, ?, ?)", u_list[:6])
         except sqlite3.IntegrityError:
             pass
     for p in posts:
@@ -696,7 +707,10 @@ def import_data():
             p_list = list(p)
             if p_list[5]:  # image
                 p_list[5] = '/static/pictures/' + os.path.basename(p_list[5])
-            c.execute("INSERT INTO posts (id, user_id, title, description, type, image, links, price, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", p_list)
+            # Handle both old (9 fields) and new (12 fields) backup formats
+            while len(p_list) < 12:
+                p_list.append(None)
+            c.execute("INSERT INTO posts (id, user_id, title, description, type, image, links, price, timestamp, local_pickup, shipping_available, shipping_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", p_list[:12])
         except sqlite3.IntegrityError:
             pass
     for m in messages:
@@ -717,6 +731,26 @@ def import_data():
     for gp in group_posts_data:
         try:
             c.execute("INSERT INTO group_posts (id, group_id, user_id, title, content, image, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", gp)
+        except sqlite3.IntegrityError:
+            pass
+    for o in orders:
+        try:
+            c.execute("INSERT INTO orders (id, post_id, buyer_id, seller_id, amount, status, stripe_payment_id, tracking_number, shipped_at, delivered_at, dispute_status, shipping_method, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", o)
+        except sqlite3.IntegrityError:
+            pass
+    for a in addresses:
+        try:
+            c.execute("INSERT INTO addresses (id, user_id, order_id, full_name, street, city, state, zip_code, country, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", a)
+        except sqlite3.IntegrityError:
+            pass
+    for n in notices:
+        try:
+            c.execute("INSERT OR IGNORE INTO notices (user_id, post_id) VALUES (?, ?)", (n[0], n[1]))
+        except sqlite3.IntegrityError:
+            pass
+    for nu in noticed_users:
+        try:
+            c.execute("INSERT OR IGNORE INTO noticed_users (user_id, noticed_user_id) VALUES (?, ?)", nu)
         except sqlite3.IntegrityError:
             pass
     conn.commit()
