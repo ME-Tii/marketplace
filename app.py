@@ -1192,7 +1192,7 @@ def post_detail(post_id):
     try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping_available, posts.shipping_cost, users.username FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?", (post_id,))
+        c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping_available, posts.shipping_cost, users.username, posts.user_id FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?", (post_id,))
         post = c.fetchone()
         conn.close()
         if not post:

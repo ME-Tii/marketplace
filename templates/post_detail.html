@@ -11,15 +11,15 @@
         <strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong>
       </p>
       {% endif %}
-      {% if post[9] or post[10] %}
+      {% if post[8] or post[9] %}
       <div class="mb-3">
         <strong>{% if session.get('lang') == 'de' %}Lieferoptionen:{% else %}Delivery Options:{% endif %}</strong>
         <ul>
-          {% if post[9] %}
+          {% if post[8] %}
           <li>{% if session.get('lang') == 'de' %}Abholung vor Ort (kostenlos){% else %}Local Pickup (free){% endif %}</li>
           {% endif %}
-          {% if post[10] and post[11] %}
-          <li>{% if session.get('lang') == 'de' %}Versand (${{ post[11] }}){% else %}Shipping (${{ post[11] }}){% endif %}</li>
+          {% if post[9] and post[10] %}
+          <li>{% if session.get('lang') == 'de' %}Versand (${{ post[10] }}){% else %}Shipping (${{ post[10] }}){% endif %}</li>
           {% endif %}
         </ul>
       </div>
@@ -29,19 +29,19 @@
       <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
       {% endif %}
       <p class="card-text">
-        <small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[12] }}">{{ post[12] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small>
+        <small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[11] }}">{{ post[11] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small>
       </p>
       <div class="mt-3">
-        {% if session.get('user_id') and session.get('user_id') != post[13] and post[6] and (post[9] or post[10]) %}
+        {% if session.get('user_id') and session.get('user_id') != post[12] and post[6] and (post[8] or post[9]) %}
         <a href="/checkout/{{ post[0] }}" class="btn btn-success">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy Now{% endif %}</a>
         {% endif %}
-        {% if not (post[9] or post[10]) and post[6] %}
+        {% if not (post[8] or post[9]) and post[6] %}
         <p class="text-muted">{% if session.get('lang') == 'de' %}Wenden Sie sich an den Verkäufer für Lieferoptionen.{% else %}Contact seller for delivery options.{% endif %}</p>
         {% endif %}
         {% if session.get('user_id') %}
-        <a href="/messages?chat={{ post[12] }}&post_id={{ post[0] }}" class="btn btn-primary">{% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send Message{% endif %}</a>
+        <a href="/messages?chat={{ post[11] }}&post_id={{ post[0] }}" class="btn btn-primary">{% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send Message{% endif %}</a>
         {% endif %}
-        {% if session.get('user_id') != post[13] %}
+        {% if session.get('user_id') != post[12] %}
         <a href="/add_notice/{{ post[0] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
         <a href="/report_post/{{ post[0] }}" class="btn btn-danger">{% if session.get('lang') == 'de' %}Melden{% else %}Report{% endif %}</a>
         {% endif %}
