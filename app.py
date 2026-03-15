@@ -1811,6 +1811,8 @@ def create_checkout_session(post_id):
     seller_username = seller_info[0] if seller_info else None
     seller_stripe = seller_info[1] if seller_info else None
     
+    app.logger.info(f"DEBUG: seller_info={seller_info}, seller_username={seller_username}, seller_stripe={seller_stripe}")
+    
     # Check if seller has Stripe connected for automatic payouts
     use_seller_payout = seller_stripe
     
