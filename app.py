@@ -528,8 +528,13 @@ def profile(username):
     description = user[1] or ''
     profile_picture = user[2] or None
     stripe_account_id = user[3] or None
-    # Regular posts
-    posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.user_id FROM posts WHERE posts.user_id = ? AND (posts.is_active = 1 OR posts.is_active IS NULL)"
+    is_owner = session.get('user_id') == user_id
+    
+    # Regular posts - show all to owner, only active to others
+    if is_owner:
+        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.user_id FROM posts WHERE posts.user_id = ?"
+    else:
+        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.user_id FROM posts WHERE posts.user_id = ? AND (posts.is_active = 1 OR posts.is_active IS NULL)"
     params = [user_id]
     if query:
         posts_query += " AND (posts.title LIKE ? OR posts.description LIKE ?)"
@@ -585,7 +590,6 @@ def profile(username):
         c.execute("SELECT posts.id, posts.title, reports.reason, reports.description, reports.id, reports.timestamp, users_reporter.username FROM reports JOIN posts ON reports.post_id = posts.id JOIN users AS users_reporter ON reports.reporter_id = users_reporter.id ORDER BY reports.timestamp DESC")
         reports = c.fetchall()
     conn.close()
-    is_owner = session.get('user_id') == user_id
     success = request.args.get('success')
     total_pages = (total_users + per_page - 1) // per_page if total_users > 0 else 1
     return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query)
