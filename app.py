@@ -1565,6 +1565,60 @@ def delete_post(post_id):
     conn.close()
     return redirect(f'/profile/{session.get("username")}')
 
+@app.route('/restock_post/<int:post_id>', methods=['POST'])
+def restock_post(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    new_quantity = request.form.get('quantity')
+    if not new_quantity or int(new_quantity) < 1:
+        flash('Please enter a valid quantity.', 'danger')
+        return redirect(f'/profile/{session.get("username")}')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    # Verify ownership
+    c.execute("SELECT user_id FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post or post[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    c.execute("UPDATE posts SET quantity = ?, is_active = 1 WHERE id = ?", (int(new_quantity), post_id))
+    conn.commit()
+    conn.close()
+    
+    flash(f'Post restocked! New quantity: {new_quantity}', 'success')
+    return redirect(f'/profile/{session.get("username")}')
+
+@app.route('/edit_quantity/<int:post_id>', methods=['POST'])
+def edit_quantity(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    new_quantity = request.form.get('quantity')
+    if not new_quantity or int(new_quantity) < 1:
+        flash('Please enter a valid quantity.', 'danger')
+        return redirect(f'/profile/{session.get("username")}')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    # Verify ownership
+    c.execute("SELECT user_id FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post or post[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    c.execute("UPDATE posts SET quantity = ? WHERE id = ?", (int(new_quantity), post_id))
+    conn.commit()
+    conn.close()
+    
+    flash(f'Quantity updated to {new_quantity}!', 'success')
+    return redirect(f'/profile/{session.get("username")}')
+
 @app.route('/edit_profile')
 def edit_profile_page():
     if 'user_id' not in session:

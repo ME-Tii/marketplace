@@ -264,6 +264,17 @@
                 {% if post[6] %}
                 <p><strong>Price: ${{ post[6] }}</strong></p>
                 {% endif %}
+                <p>
+                  <small class="text-muted">
+                    {% set qty = post[8]|default('1')|int %}
+                    {% set active = post[9]|default('1')|int %}
+                    {% if active == 0 or qty <= 0 %}
+                    <span class="text-danger">{% if session.get('lang') == 'de' %}Ausverkauft{% else %}Sold Out{% endif %}</span>
+                    {% else %}
+                    {% if session.get('lang') == 'de' %}Verfügbar: {% else %}Available: {% endif %}{{ qty }}
+                    {% endif %}
+                  </small>
+                </p>
                 <img
                   src="{{ post[4] or '/static/pictures/placeholder.png' }}"
                   class="img-fluid mb-2"
@@ -280,6 +291,59 @@
                 </p>
                 {% if is_owner %}
                 <div class="mt-2">
+                  {% set qty = post[8]|default('1')|int %}
+                  {% set active = post[9]|default('1')|int %}
+                  {% if active == 0 or qty <= 0 %}
+                  <!-- Restock form -->
+                  <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#restockModal{{ post[0] }}">{% if session.get('lang') == 'de' %}Wiederauffüllen{% else %}Restock{% endif %}</button>
+                  <div class="modal fade" id="restockModal{{ post[0] }}" tabindex="-1">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">{% if session.get('lang') == 'de' %}Wiederauffüllen{% else %}Restock{% endif %}</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form action="/restock_post/{{ post[0] }}" method="POST">
+                          <div class="modal-body">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <div class="mb-3">
+                              <label class="form-label">{% if session.get('lang') == 'de' %}Neue Anzahl{% else %}New Quantity{% endif %}</label>
+                              <input type="number" name="quantity" class="form-control" min="1" value="1" required />
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Wiederauffüllen{% else %}Restock{% endif %}</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% else %}
+                  <!-- Edit quantity button -->
+                  <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editQtyModal{{ post[0] }}">{% if session.get('lang') == 'de' %}Anzahl ändern{% else %}Edit Quantity{% endif %}</button>
+                  <div class="modal fade" id="editQtyModal{{ post[0] }}" tabindex="-1">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">{% if session.get('lang') == 'de' %}Anzahl ändern{% else %}Edit Quantity{% endif %}</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form action="/edit_quantity/{{ post[0] }}" method="POST">
+                          <div class="modal-body">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <div class="mb-3">
+                              <label class="form-label">{% if session.get('lang') == 'de' %}Neue Anzahl{% else %}New Quantity{% endif %}</label>
+                              <input type="number" name="quantity" class="form-control" min="1" value="{{ post[8]|default('1') }}" required />
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Speichern{% else %}Save{% endif %}</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
                   <a href="/edit_post/{{ post[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Bearbeiten{% else %}Edit{% endif %}</a>
                   <form action="/delete_post/{{ post[0] }}" method="POST" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -288,7 +352,9 @@
                 </div>
                 {% elif session.get('user_id') and session.get('user_id') != post[8] %}
                 <div class="mt-2">
-                  {% if post[6] %}
+                  {% set qty = post[8]|default('1')|int %}
+                  {% set active = post[9]|default('1')|int %}
+                  {% if active == 1 and qty > 0 and post[6] %}
                   <a href="/checkout/{{ post[0] }}" class="btn btn-sm btn-success">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy Now{% endif %}</a>
                   {% endif %}
                   <a href="/messages?chat={{ username }}&post_id={{ post[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Nachricht{% else %}Message{% endif %}</a>
