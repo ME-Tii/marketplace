@@ -1846,6 +1846,90 @@ def order_detail(order_id):
     
     return render_template('order_detail.html', order=order, unread_messages=get_unread_messages_count(session.get('user_id')))
 
+@app.route('/order/<int:order_id>/ship', methods=['POST'])
+def mark_shipped(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    tracking_number = request.form.get('tracking_number')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT seller_id, status FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[1] != 'paid':
+        conn.close()
+        flash('Order must be paid before shipping.', 'warning')
+        return redirect(f'/order/{order_id}')
+    
+    c.execute("UPDATE orders SET tracking_number = ?, shipped_at = CURRENT_TIMESTAMP WHERE id = ?", (tracking_number, order_id))
+    conn.commit()
+    conn.close()
+    
+    flash('Order marked as shipped!', 'success')
+    return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/delivered', methods=['POST'])
+def mark_delivered(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT buyer_id, status FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    c.execute("UPDATE orders SET delivered_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Order marked as delivered!', 'success')
+    return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/dispute', methods=['POST'])
+def open_dispute(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    reason = request.form.get('reason')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT buyer_id, seller_id FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if session['user_id'] not in [order[0], order[1]]:
+        conn.close()
+        return 'Access denied', 403
+    
+    c.execute("UPDATE orders SET dispute_status = ? WHERE id = ?", (reason, order_id))
+    conn.commit()
+    conn.close()
+    
+    flash('Dispute opened!', 'warning')
+    return redirect(f'/order/{order_id}')
+
 # One-time migration: update image paths
 conn = sqlite3.connect('database.db')
 c = conn.cursor()

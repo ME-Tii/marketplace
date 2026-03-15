@@ -95,7 +95,7 @@ endblock %} {% block content %}
       </h5>
     </div>
     <div class="card-body">
-      <form method="POST" action="/ship_order/{{ order[0] }}">
+      <form method="POST" action="/order/{{ order[0] }}/ship">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="mb-3">
           <label class="form-label"
@@ -154,7 +154,7 @@ endblock %} {% block content %}
       </h5>
     </div>
     <div class="card-body">
-      <form method="POST" action="/confirm_delivery/{{ order[0] }}">
+      <form method="POST" action="/order/{{ order[0] }}/delivered">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <p>
           {% if session.get('lang') == 'de' %}Haben Sie das Produkt erhalten?{%
