@@ -1943,17 +1943,29 @@ def orders():
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
+    # Get purchases (orders where user is buyer)
     c.execute("""SELECT o.id, o.post_id, o.buyer_id, o.seller_id, o.amount, o.status, o.created_at,
                  p.title, p.image, u.username as seller_username
                  FROM orders o
                  JOIN posts p ON o.post_id = p.id
                  JOIN users u ON o.seller_id = u.id
-                 WHERE o.buyer_id = ? OR o.seller_id = ?
-                 ORDER BY o.created_at DESC""", (user_id, user_id))
-    orders = c.fetchall()
-    app.logger.info(f"Orders query returned: {len(orders)} orders for user_id {user_id}")
+                 WHERE o.buyer_id = ?
+                 ORDER BY o.created_at DESC""", (user_id,))
+    purchases = c.fetchall()
+    
+    # Get sales (orders where user is seller)
+    c.execute("""SELECT o.id, o.post_id, o.buyer_id, o.seller_id, o.amount, o.status, o.created_at,
+                 p.title, p.image, u.username as buyer_username
+                 FROM orders o
+                 JOIN posts p ON o.post_id = p.id
+                 JOIN users u ON o.buyer_id = u.id
+                 WHERE o.seller_id = ?
+                 ORDER BY o.created_at DESC""", (user_id,))
+    sales = c.fetchall()
+    
+    app.logger.info(f"Orders: {len(purchases)} purchases, {len(sales)} sales for user_id {user_id}")
     conn.close()
-    return render_template('orders.html', orders=orders, unread_messages=get_unread_messages_count(session.get('user_id')))
+    return render_template('orders.html', purchases=purchases, sales=sales, unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/order/<int:order_id>')
 def order_detail(order_id):

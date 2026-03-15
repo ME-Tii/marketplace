@@ -33,34 +33,19 @@ content %}
     <tbody>
       {% for p in purchases %}
       <tr>
-        <td><a href="/post/{{ p[5] }}">{{ p[4] }}</a></td>
-        <td>${{ p[1] }}</td>
+        <td><a href="/post/{{ p[1] }}">{{ p[7] }}</a></td>
+        <td>${{ p[4] }}</td>
         <td>
-          <span
-            class="badge bg-{% if p[2] == 'paid' %}warning{% elif p[2] == 'shipped' %}info{% elif p[2] == 'delivered' %}success{% else %}secondary{% endif %}"
-            >{{ p[2] }}</span
-          >
+          <span class="badge bg-{% if p[5] == 'paid' %}warning{% elif p[5] == 'shipped' %}info{% elif p[5] == 'delivered' %}success{% else %}secondary{% endif %}">{{ p[5] }}</span>
         </td>
-        <td>{{ p[3] }}</td>
+        <td>{{ p[6] }}</td>
         <td>
-          <a href="/order/{{ p[0] }}" class="btn btn-sm btn-primary"
-            >{% if session.get('lang') == 'de' %}Details{% else %}Details{%
-            endif %}</a
-          >
-          {% if p[2] == 'pending' %}
-          <form
-            method="post"
-            action="/cancel_order/{{ p[0] }}"
-            class="d-inline"
-          >
+          <a href="/order/{{ p[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Details{% else %}Details{% endif %}</a>
+          {% if p[5] == 'pending' %}
+          <form method="post" action="/cancel_order/{{ p[0] }}" class="d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button
-              type="submit"
-              class="btn btn-sm btn-danger"
-              onclick="return confirm('{% if session.get('lang') == 'de' %}Bestellung wirklich abbrechen?{% else %}Cancel this order?{% endif %}')"
-            >
-              {% if session.get('lang') == 'de' %}Abbrechen{% else %}Cancel{%
-              endif %}
+            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{% if session.get('lang') == 'de' %}Bestellung wirklich abbrechen?{% else %}Cancel this order?{% endif %}')">
+              {% if session.get('lang') == 'de' %}Abbrechen{% else %}Cancel{% endif %}
             </button>
           </form>
           {% endif %}
@@ -105,21 +90,15 @@ content %}
     <tbody>
       {% for s in sales %}
       <tr>
-        <td><a href="/post/{{ s[5] }}">{{ s[4] }}</a></td>
-        <td>${{ s[1] }}</td>
+        <td><a href="/post/{{ s[1] }}">{{ s[7] }}</a></td>
+        <td>${{ s[4] }}</td>
+        <td>{{ s[8] }}</td>
+        <td>
+          <span class="badge bg-{% if s[5] == 'paid' %}warning{% elif s[5] == 'shipped' %}info{% elif s[5] == 'delivered' %}success{% else %}secondary{% endif %}">{{ s[5] }}</span>
+        </td>
         <td>{{ s[6] }}</td>
         <td>
-          <span
-            class="badge bg-{% if s[2] == 'paid' %}warning{% elif s[2] == 'shipped' %}info{% elif s[2] == 'delivered' %}success{% else %}secondary{% endif %}"
-            >{{ s[2] }}</span
-          >
-        </td>
-        <td>{{ s[3] }}</td>
-        <td>
-          <a href="/order/{{ s[0] }}" class="btn btn-sm btn-primary"
-            >{% if session.get('lang') == 'de' %}Details{% else %}Details{%
-            endif %}</a
-          >
+          <a href="/order/{{ s[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Details{% else %}Details{% endif %}</a>
         </td>
       </tr>
       {% endfor %}
