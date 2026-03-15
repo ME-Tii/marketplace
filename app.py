@@ -588,7 +588,7 @@ def export_data():
         conn.close()
         return 'Access denied', 403
     # Export data
-    c.execute("SELECT id, username, email, description, profile_picture, stripe_account_id FROM users")
+    c.execute("SELECT id, username, email, password, description, profile_picture, stripe_account_id FROM users")
     users = c.fetchall()
     c.execute("SELECT id, user_id, title, description, type, image, links, price, timestamp FROM posts")
     posts = c.fetchall()
@@ -694,12 +694,13 @@ def import_data():
     for u in users:
         try:
             u_list = list(u)
-            # Handle both old (5 fields) and new (6 fields) backup formats
-            while len(u_list) < 6:
+            # Handle backup formats with/without password and stripe_account_id
+            # Fields: id, username, email, password, description, profile_picture, stripe_account_id
+            while len(u_list) < 7:
                 u_list.append(None)
-            if u_list[4]:  # profile_picture
-                u_list[4] = '/static/pictures/' + os.path.basename(u_list[4])
-            c.execute("INSERT INTO users (id, username, email, description, profile_picture, stripe_account_id) VALUES (?, ?, ?, ?, ?, ?)", u_list[:6])
+            if u_list[5]:  # profile_picture
+                u_list[5] = '/static/pictures/' + os.path.basename(u_list[5])
+            c.execute("INSERT INTO users (id, username, email, password, description, profile_picture, stripe_account_id) VALUES (?, ?, ?, ?, ?, ?, ?)", u_list[:7])
         except sqlite3.IntegrityError:
             pass
     for p in posts:
@@ -781,7 +782,7 @@ def export_all():
         # Add data
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute("SELECT id, username, email, description, profile_picture, stripe_account_id FROM users")
+        c.execute("SELECT id, username, email, password, description, profile_picture, stripe_account_id FROM users")
         users = c.fetchall()
         c.execute("SELECT id, user_id, title, description, type, image, links, price, timestamp, local_pickup, shipping_available, shipping_cost FROM posts")
         posts = c.fetchall()
@@ -874,7 +875,6 @@ def groups():
         LEFT JOIN users u ON g.creator_id = u.id
         LEFT JOIN group_members gm ON g.id = gm.group_id AND gm.status = 'accepted'
     """
-    # Backup/restore test commit
     conditions = []
     params = []
     if query:
