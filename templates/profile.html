@@ -97,13 +97,6 @@
             >
               <div class="flex-grow-1">
                 <strong>{{ user[0] }}</strong> - {{ user[1] }}<br />
-                <small class="text-muted"
-                  >{% if session.get('lang') == 'de' %}Passwort-Hash:{% else
-                  %}Password Hash:{% endif %}<br /><code
-                    style="word-break: break-all; font-size: 0.8em"
-                    >{{ user[2] }}</code
-                  ></small
-                >
               </div>
               {% if user[0] != 'admin' %}
               <form
