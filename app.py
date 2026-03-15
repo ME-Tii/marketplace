@@ -113,6 +113,14 @@ def init_db():
         c.execute("ALTER TABLE posts ADD COLUMN shipping_cost REAL DEFAULT 0")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE posts ADD COLUMN quantity INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE posts ADD COLUMN is_active INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
     c.execute('''CREATE TABLE IF NOT EXISTS notices
                    (user_id INTEGER, post_id INTEGER, PRIMARY KEY (user_id, post_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS noticed_users
@@ -440,7 +448,7 @@ def dashboard():
     try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        base_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username FROM posts JOIN users ON posts.user_id = users.id"
+        base_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, users.username FROM posts JOIN users ON posts.user_id = users.id WHERE (posts.is_active = 1 OR posts.is_active IS NULL)"
         conditions = []
         params = []
         if query:
@@ -450,7 +458,7 @@ def dashboard():
             conditions.append("posts.type = ?")
             params.append(type_filter)
         if conditions:
-            base_query += " WHERE " + " AND ".join(conditions)
+            base_query += " AND " + " AND ".join(conditions)
         base_query += " ORDER BY posts.timestamp DESC"
         c.execute(base_query, params)
         posts = c.fetchall()
@@ -479,6 +487,8 @@ def create_post():
     local_pickup = 1 if request.form.get('local_pickup') else 0
     shipping_available = 1 if request.form.get('shipping_available') else 0
     shipping_cost = request.form.get('shipping_cost') or 0
+    quantity = int(request.form.get('quantity') or 1)
+    is_active = 1 if quantity > 0 else 0
     image_path = None
     if 'image' in request.files:
         file = request.files['image']
@@ -492,8 +502,8 @@ def create_post():
                 image_path = f'/static/pictures/{filename}'
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("INSERT INTO posts (user_id, title, description, type, image, links, price, local_pickup, shipping_available, shipping_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-              (session['user_id'], title, description, post_type, image_path, links, price, local_pickup, shipping_available, shipping_cost))
+    c.execute("INSERT INTO posts (user_id, title, description, type, image, links, price, local_pickup, shipping_available, shipping_cost, quantity, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+              (session['user_id'], title, description, post_type, image_path, links, price, local_pickup, shipping_available, shipping_cost, quantity, is_active))
     conn.commit()
     conn.close()
     return redirect('/dashboard')
@@ -513,7 +523,7 @@ def profile(username):
     profile_picture = user[2] or None
     stripe_account_id = user[3] or None
     # Regular posts
-    posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.user_id FROM posts WHERE posts.user_id = ?"
+    posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.user_id FROM posts WHERE posts.user_id = ? AND (posts.is_active = 1 OR posts.is_active IS NULL)"
     params = [user_id]
     if query:
         posts_query += " AND (posts.title LIKE ? OR posts.description LIKE ?)"
@@ -1291,7 +1301,7 @@ def post_detail(post_id):
     try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping_available, posts.shipping_cost, users.username, posts.user_id FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?", (post_id,))
+        c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping_available, posts.shipping_cost, posts.quantity, posts.is_active, users.username, posts.user_id FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?", (post_id,))
         post = c.fetchone()
         conn.close()
         if not post:
@@ -1731,12 +1741,17 @@ def checkout(post_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost FROM posts WHERE id = ?", (post_id,))
+    c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost, quantity, is_active FROM posts WHERE id = ?", (post_id,))
     post = c.fetchone()
     
     if not post or not post[1]:
         conn.close()
         return 'Post not found or has no price', 404
+    
+    if post[7] == 0 or (post[6] is not None and post[6] <= 0):
+        conn.close()
+        flash('This item is no longer available.', 'danger')
+        return redirect(f'/post/{post_id}')
     
     if post[2] == session['user_id']:
         conn.close()
@@ -1923,6 +1938,13 @@ def payment_success():
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
         c.execute("UPDATE orders SET status = 'paid' WHERE id = ?", (order_id,))
+        
+        # Decrement quantity after payment
+        c.execute("UPDATE posts SET quantity = quantity - 1 WHERE id = ?", (post_id,))
+        
+        # Check if quantity is 0, then deactivate post
+        c.execute("UPDATE posts SET is_active = 0 WHERE id = ? AND quantity <= 0", (post_id,))
+        
         conn.commit()
         conn.close()
     

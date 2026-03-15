@@ -91,6 +91,27 @@ content %}
             />
           </div>
           <div class="mb-3">
+            <label for="quantity" class="form-label"
+              >{% if session.get('lang') == 'de' %}Anzahl (1 = einmaliger Verkauf){% else %}Quantity (1 = one-time sale){% endif %}</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="quantity"
+              name="quantity"
+              value="1"
+              min="1"
+              required
+            />
+            <small class="text-muted">
+              {% if session.get('lang') == 'de' %}
+              - Auf 1 setzen für einmaligen Verkauf (wird nach Kauf unsichtbar)
+              {% else %}
+              - Set to 1 for one-time sale (will hide after purchase)
+              {% endif %}
+            </small>
+          </div>
+          <div class="mb-3">
             <div class="form-check">
               <input type="checkbox" class="form-check-input" id="local_pickup" name="local_pickup" value="1" checked />
               <label class="form-check-label" for="local_pickup">
