@@ -1938,6 +1938,9 @@ def orders():
     if 'user_id' not in session:
         return redirect('/login')
     
+    user_id = int(session['user_id'])
+    app.logger.info(f"Orders page - user_id: {user_id}")
+    
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("""SELECT o.id, o.post_id, o.buyer_id, o.seller_id, o.amount, o.status, o.created_at,
@@ -1946,8 +1949,9 @@ def orders():
                  JOIN posts p ON o.post_id = p.id
                  JOIN users u ON o.seller_id = u.id
                  WHERE o.buyer_id = ? OR o.seller_id = ?
-                 ORDER BY o.created_at DESC""", (session['user_id'], session['user_id']))
+                 ORDER BY o.created_at DESC""", (user_id, user_id))
     orders = c.fetchall()
+    app.logger.info(f"Orders query returned: {len(orders)} orders for user_id {user_id}")
     conn.close()
     return render_template('orders.html', orders=orders, unread_messages=get_unread_messages_count(session.get('user_id')))
 
