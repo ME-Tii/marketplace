@@ -1808,6 +1808,10 @@ def create_checkout_session(post_id):
     seller = c.fetchone()
     conn.close()
     
+    transfer_data = None
+    if seller and seller[0]:
+        transfer_data = {'destination': seller[0]}
+    
     app.logger.info(f"Creating checkout session for order {order_id}, amount: {total_amount}, seller: {seller}")
     
     try:
@@ -1833,8 +1837,9 @@ def create_checkout_session(post_id):
             'metadata': {'order_id': order_id, 'post_id': post_id}
         }
         
-        # Note: Seller payouts disabled - payments go to platform account
-        # To re-enable, need proper Stripe Connect setup
+        if transfer_data:
+            session_params['transfer_data'] = transfer_data
+            session_params['application_fee_amount'] = int(total_amount * 100 * 0.10)
         
         session_stripe = stripe.checkout.Session.create(**session_params)
         return redirect(session_stripe.url, code=303)
