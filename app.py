@@ -954,6 +954,31 @@ def join_group(group_id):
         if status == 'pending':
             flash('Join request sent. Waiting for approval.', 'info')
         else:
+            flash('You have joined the group!', 'success')
+    except sqlite3.IntegrityError:
+        flash('You are already a member.', 'info')
+    conn.close()
+    return redirect('/groups')
+
+@app.route('/leave_group/<int:group_id>')
+def leave_group(group_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    # Check if user is the creator (can't leave)
+    c.execute("SELECT creator_id FROM groups WHERE id = ?", (group_id,))
+    group = c.fetchone()
+    if group and group[0] == session['user_id']:
+        flash('You cannot leave a group you created. Delete it instead.', 'danger')
+        conn.close()
+        return redirect('/groups')
+    c.execute("DELETE FROM group_members WHERE group_id = ? AND user_id = ?", 
+              (group_id, session['user_id']))
+    conn.commit()
+    flash('You have left the group.', 'success')
+    conn.close()
+    return redirect('/groups')
             flash('Successfully joined the group!', 'success')
     except sqlite3.IntegrityError:
         flash('You are already a member or have a pending request.', 'warning')
