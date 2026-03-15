@@ -1192,7 +1192,7 @@ def post_detail(post_id):
     try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?", (post_id,))
+        c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping_available, posts.shipping_cost, users.username FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?", (post_id,))
         post = c.fetchone()
         conn.close()
         if not post:
@@ -1632,7 +1632,7 @@ def checkout(post_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT title, price, user_id FROM posts WHERE id = ?", (post_id,))
+    c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost FROM posts WHERE id = ?", (post_id,))
     post = c.fetchone()
     
     if not post or not post[1]:
@@ -1655,22 +1655,11 @@ def process_checkout(post_id):
     if 'user_id' not in session:
         return redirect('/login')
     
-    full_name = request.form.get('full_name')
-    street = request.form.get('street')
-    city = request.form.get('city')
-    state = request.form.get('state')
-    zip_code = request.form.get('zip_code')
-    country = request.form.get('country')
-    phone = request.form.get('phone')
-    save_address = request.form.get('save_address')
-    
-    if not all([full_name, street, city, zip_code, country, phone]):
-        flash('Please fill in all required fields.', 'danger')
-        return redirect(f'/checkout/{post_id}')
+    delivery_method = request.form.get('delivery_method')
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT title, price, user_id FROM posts WHERE id = ?", (post_id,))
+    c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost FROM posts WHERE id = ?", (post_id,))
     post = c.fetchone()
     
     if not post or not post[1]:
@@ -1682,13 +1671,37 @@ def process_checkout(post_id):
         flash('You cannot buy your own item.', 'warning')
         return redirect(f'/post/{post_id}')
     
-    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status) VALUES (?, ?, ?, ?, 'pending')",
-              (post_id, session['user_id'], post[2], post[1]))
+    total_amount = post[1]
+    if delivery_method == 'shipping' and post[4]:
+        total_amount += (post[5] or 0)
+    
+    if delivery_method == 'local_pickup':
+        full_name = request.form.get('full_name')
+        street = ''
+        city = ''
+        state = ''
+        zip_code = ''
+        country = ''
+        phone = request.form.get('phone') or ''
+    else:
+        full_name = request.form.get('full_name')
+        street = request.form.get('street')
+        city = request.form.get('city')
+        state = request.form.get('state')
+        zip_code = request.form.get('zip_code')
+        country = request.form.get('country')
+        phone = request.form.get('phone')
+    
+    save_address = request.form.get('save_address')
+    
+    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method) VALUES (?, ?, ?, ?, 'pending', ?)",
+              (post_id, session['user_id'], post[2], total_amount, delivery_method))
     order_id = c.lastrowid
     
-    c.execute("""INSERT INTO addresses (user_id, order_id, full_name, street, city, state, zip_code, country, phone)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-              (session['user_id'], order_id, full_name, street, city, state, zip_code, country, phone))
+    if save_address and full_name:
+        c.execute("""INSERT INTO addresses (user_id, order_id, full_name, street, city, state, zip_code, country, phone)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                  (session['user_id'], order_id, full_name, street, city, state, zip_code, country, phone))
     
     conn.commit()
     conn.close()
@@ -1711,12 +1724,17 @@ def create_checkout_session(post_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
+    c.execute("SELECT amount, shipping_method FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
     c.execute("SELECT title, price, user_id FROM posts WHERE id = ?", (post_id,))
     post = c.fetchone()
     conn.close()
     
-    if not post or not post[1]:
-        return 'Post not found or has no price', 404
+    if not post or not post[1] or not order:
+        return 'Post or order not found', 404
+    
+    total_amount = order[0]
+    shipping_method = order[1]
     
     session.pop('current_order_id', None)
     
@@ -1740,7 +1758,7 @@ def create_checkout_session(post_id):
                     'product_data': {
                         'name': post[0]
                     },
-                    'unit_amount': int(post[1] * 100),
+                    'unit_amount': int(total_amount * 100),
                 },
                 'quantity': 1,
             }],
@@ -1752,7 +1770,7 @@ def create_checkout_session(post_id):
         
         if transfer_data:
             session_params['transfer_data'] = transfer_data
-            session_params['application_fee_amount'] = int(post[1] * 100 * 0.10)  # 10% platform fee
+            session_params['application_fee_amount'] = int(total_amount * 100 * 0.10)  # 10% platform fee
         
         session_stripe = stripe.checkout.Session.create(**session_params)
         return redirect(session_stripe.url, code=303)

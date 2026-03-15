@@ -1,141 +1,94 @@
 {% extends "base.html" %} {% block title %}Checkout - Marketplace{% endblock %}
 {% block content %}
 <div class="container mt-5">
-  <h2>
-    {% if session.get('lang') == 'de' %}Kasse{% else %}Checkout{% endif %}
-  </h2>
+  <h2>{% if session.get('lang') == 'de' %}Kasse{% else %}Checkout{% endif %}</h2>
   <div class="card mt-3">
     <div class="card-body">
       <h5 class="card-title">{{ post[0] }}</h5>
       <p class="card-text">
-        <strong
-          >{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif
-          %}</strong
-        >
-        ${{ post[1] }}
+        <strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %}</strong> ${{ post[1] }}
       </p>
     </div>
   </div>
   <form method="POST" action="/process_checkout/{{ post_id }}" class="mt-4">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-    <h4>
-      {% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping
-      Address{% endif %}
-    </h4>
-    <div class="row mt-3">
-      <div class="col-md-6 mb-3">
-        <label class="form-label"
-          >{% if session.get('lang') == 'de' %}Vollständiger Name{% else %}Full
-          Name{% endif %} *</label
-        >
-        <input
-          type="text"
-          class="form-control"
-          name="full_name"
-          value="{{ saved_address[4] if saved_address else '' }}"
-          required
-        />
-      </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label"
-          >{% if session.get('lang') == 'de' %}Telefon{% else %}Phone{% endif %}
-          *</label
-        >
-        <input
-          type="tel"
-          class="form-control"
-          name="phone"
-          value="{{ saved_address[9] if saved_address else '' }}"
-          required
-        />
-      </div>
-    </div>
+    
+    <h4>{% if session.get('lang') == 'de' %}Lieferoption{% else %}Delivery Option{% endif %}</h4>
     <div class="mb-3">
-      <label class="form-label"
-        >{% if session.get('lang') == 'de' %}Straße{% else %}Street Address{%
-        endif %} *</label
-      >
-      <input
-        type="text"
-        class="form-control"
-        name="street"
-        value="{{ saved_address[5] if saved_address else '' }}"
-        required
-      />
-    </div>
-    <div class="row">
-      <div class="col-md-4 mb-3">
-        <label class="form-label"
-          >{% if session.get('lang') == 'de' %}Stadt{% else %}City{% endif %}
-          *</label
-        >
-        <input
-          type="text"
-          class="form-control"
-          name="city"
-          value="{{ saved_address[6] if saved_address else '' }}"
-          required
-        />
+      {% if post[3] and post[4] %}
+      <div class="form-check">
+        <input type="radio" class="form-check-input" name="delivery_method" id="local_pickup" value="local_pickup" onchange="toggleAddress()" checked />
+        <label class="form-check-label" for="local_pickup">{% if session.get('lang') == 'de' %}Abholung vor Ort (kostenlos){% else %}Local Pickup (free){% endif %}</label>
       </div>
-      <div class="col-md-4 mb-3">
-        <label class="form-label"
-          >{% if session.get('lang') == 'de' %}Bundesland{% else
-          %}State/Province{% endif %}</label
-        >
-        <input
-          type="text"
-          class="form-control"
-          name="state"
-          value="{{ saved_address[7] if saved_address else '' }}"
-        />
+      <div class="form-check">
+        <input type="radio" class="form-check-input" name="delivery_method" id="shipping" value="shipping" onchange="toggleAddress()" />
+        <label class="form-check-label" for="shipping">{% if session.get('lang') == 'de' %}Versand (${{ post[5] }}){% else %}Shipping (${{ post[5] }}){% endif %}</label>
       </div>
-      <div class="col-md-4 mb-3">
-        <label class="form-label"
-          >{% if session.get('lang') == 'de' %}Postleitzahl{% else %}ZIP/Postal
-          Code{% endif %} *</label
-        >
-        <input
-          type="text"
-          class="form-control"
-          name="zip_code"
-          value="{{ saved_address[8] if saved_address else '' }}"
-          required
-        />
+      {% elif post[3] %}
+      <input type="hidden" name="delivery_method" value="local_pickup" />
+      <p class="text-muted">{% if session.get('lang') == 'de' %}Nur Abholung vor Ort verfügbar{% else %}Local pickup only{% endif %}</p>
+      {% elif post[4] %}
+      <input type="hidden" name="delivery_method" value="shipping" />
+      <p class="text-muted">{% if session.get('lang') == 'de' %}Nur Versand verfügbar{% else %}Shipping only{% endif %}</p>
+      {% endif %}
+    </div>
+    
+    <div id="address_fields">
+      <h4>{% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping Address{% endif %}</h4>
+      <div class="row mt-3">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Vollständiger Name{% else %}Full Name{% endif %} *</label>
+          <input type="text" class="form-control" name="full_name" value="{{ saved_address[4] if saved_address else '' }}" required />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Telefon{% else %}Phone{% endif %} *</label>
+          <input type="tel" class="form-control" name="phone" value="{{ saved_address[9] if saved_address else '' }}" required />
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">{% if session.get('lang') == 'de' %}Straße{% else %}Street Address{% endif %} *</label>
+        <input type="text" class="form-control" name="street" value="{{ saved_address[5] if saved_address else '' }}" required />
+      </div>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Stadt{% else %}City{% endif %} *</label>
+          <input type="text" class="form-control" name="city" value="{{ saved_address[6] if saved_address else '' }}" required />
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Bundesland{% else %}State/Province{% endif %}</label>
+          <input type="text" class="form-control" name="state" value="{{ saved_address[7] if saved_address else '' }}" />
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Postleitzahl{% else %}ZIP/Postal Code{% endif %} *</label>
+          <input type="text" class="form-control" name="zip_code" value="{{ saved_address[8] if saved_address else '' }}" required />
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">{% if session.get('lang') == 'de' %}Land{% else %}Country{% endif %} *</label>
+        <input type="text" class="form-control" name="country" value="{{ saved_address[10] if saved_address else '' }}" required />
       </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label"
-        >{% if session.get('lang') == 'de' %}Land{% else %}Country{% endif %}
-        *</label
-      >
-      <input
-        type="text"
-        class="form-control"
-        name="country"
-        value="{{ saved_address[9] if saved_address else '' }}"
-        required
-      />
-    </div>
+    
     <div class="mb-3 form-check">
-      <input
-        type="checkbox"
-        class="form-check-input"
-        name="save_address"
-        id="save_address"
-        checked
-      />
-      <label class="form-check-label" for="save_address"
-        >{% if session.get('lang') == 'de' %}Adresse für zukünftige Käufe
-        speichern{% else %}Save address for future purchases{% endif %}</label
-      >
+      <input type="checkbox" class="form-check-input" name="save_address" id="save_address" checked />
+      <label class="form-check-label" for="save_address">{% if session.get('lang') == 'de' %}Adresse für zukünftige Käufe speichern{% else %}Save address for future purchases{% endif %}</label>
     </div>
+    
     <button type="submit" class="btn btn-primary btn-lg">
-      {% if session.get('lang') == 'de' %}Weiter zur Zahlung{% else %}Proceed to
-      Payment{% endif %}
+      {% if session.get('lang') == 'de' %}Weiter zur Zahlung{% else %}Proceed to Payment{% endif %}
     </button>
-    <a href="/post/{{ post_id }}" class="btn btn-secondary btn-lg"
-      >{% if session.get('lang') == 'de' %}Zurück{% else %}Back{% endif %}</a
-    >
+    <a href="/post/{{ post_id }}" class="btn btn-secondary btn-lg">{% if session.get('lang') == 'de' %}Zurück{% else %}Back{% endif %}</a>
   </form>
 </div>
+<script>
+function toggleAddress() {
+  var method = document.querySelector('input[name="delivery_method"]:checked').value;
+  var addressDiv = document.getElementById('address_fields');
+  if (method === 'local_pickup') {
+    addressDiv.style.display = 'none';
+  } else {
+    addressDiv.style.display = 'block';
+  }
+}
+</script>
 {% endblock %}

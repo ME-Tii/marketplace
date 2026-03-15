@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %}{{ post[1] }} - Marketplace{%
-endblock %} {% block content %}
+{% extends "base.html" %} {% block title %}{{ post[1] }} - Marketplace{% endblock %} {% block content %}
 <div class="container mt-5">
   <div class="card">
     <div class="card-body">
@@ -9,59 +8,45 @@ endblock %} {% block content %}
       <p class="card-text">{{ post[2] }}</p>
       {% if post[6] %}
       <p>
-        <strong
-          >{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %}
-          ${{ post[6] }}</strong
-        >
+        <strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong>
       </p>
       {% endif %}
-      <img
-        src="{{ post[4] or '/static/pictures/placeholder.png' }}"
-        class="img-fluid mb-3"
-        alt="Post Image"
-      />
+      {% if post[9] or post[10] %}
+      <div class="mb-3">
+        <strong>{% if session.get('lang') == 'de' %}Lieferoptionen:{% else %}Delivery Options:{% endif %}</strong>
+        <ul>
+          {% if post[9] %}
+          <li>{% if session.get('lang') == 'de' %}Abholung vor Ort (kostenlos){% else %}Local Pickup (free){% endif %}</li>
+          {% endif %}
+          {% if post[10] and post[11] %}
+          <li>{% if session.get('lang') == 'de' %}Versand (${{ post[11] }}){% else %}Shipping (${{ post[11] }}){% endif %}</li>
+          {% endif %}
+        </ul>
+      </div>
+      {% endif %}
+      <img src="{{ post[4] or '/static/pictures/placeholder.png' }}" class="img-fluid mb-3" alt="Post Image" />
       {% if post[5] %}
       <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
       {% endif %}
       <p class="card-text">
-        <small class="text-muted"
-          >{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{%
-          endif %} <a href="/profile/{{ post[8] }}">{{ post[8] }}</a> {% if
-          session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7]
-          }}</small
-        >
+        <small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[12] }}">{{ post[12] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small>
       </p>
       <div class="mt-3">
-        {% if session.get('user_id') and session.get('user_id') != post[9] and
-        post[6] %}
-        <a href="/checkout/{{ post[0] }}" class="btn btn-success"
-          >{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy Now{% endif
-          %}</a
-        >
-        {% endif %} {% if session.get('user_id') %}
-        <a
-          href="/messages?chat={{ post[8] }}&post_id={{ post[0] }}"
-          class="btn btn-primary"
-          >{% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send
-          Message{% endif %}</a
-        >
+        {% if session.get('user_id') and session.get('user_id') != post[13] and post[6] and (post[9] or post[10]) %}
+        <a href="/checkout/{{ post[0] }}" class="btn btn-success">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy Now{% endif %}</a>
         {% endif %}
-        <a href="/add_notice/{{ post[0] }}" class="btn btn-info"
-          >{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif
-          %}</a
-        >
-        <a href="/report_post/{{ post[0] }}" class="btn btn-danger"
-          >{% if session.get('lang') == 'de' %}Melden{% else %}Report{% endif
-          %}</a
-        >
+        {% if not (post[9] or post[10]) and post[6] %}
+        <p class="text-muted">{% if session.get('lang') == 'de' %}Wenden Sie sich an den Verkäufer für Lieferoptionen.{% else %}Contact seller for delivery options.{% endif %}</p>
+        {% endif %}
+        {% if session.get('user_id') %}
+        <a href="/messages?chat={{ post[12] }}&post_id={{ post[0] }}" class="btn btn-primary">{% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send Message{% endif %}</a>
+        {% endif %}
+        {% if session.get('user_id') != post[13] %}
+        <a href="/add_notice/{{ post[0] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
+        <a href="/report_post/{{ post[0] }}" class="btn btn-danger">{% if session.get('lang') == 'de' %}Melden{% else %}Report{% endif %}</a>
+        {% endif %}
       </div>
     </div>
-  </div>
-  <div class="mt-3">
-    <a href="/dashboard" class="btn btn-secondary"
-      >{% if session.get('lang') == 'de' %}Zurück zum Dashboard{% else %}Back to
-      Dashboard{% endif %}</a
-    >
   </div>
 </div>
 {% endblock %}
