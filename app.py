@@ -69,7 +69,9 @@ def stripe_webhook():
             c = conn.cursor()
             c.execute("UPDATE orders SET status = 'paid', stripe_payment_id = ? WHERE id = ?",
                      (payment_id, order_id))
-            c.execute("""SELECT o.buyer_id, o.seller_id, o.amount, p.title, buyer.email, seller.email, buyer.email_notifications, buyer.notify_order, seller.email_notifications, seller.notify_order
+            c.execute("""SELECT o.buyer_id, o.seller_id, o.amount, p.title, buyer.email, seller.email, 
+                         COALESCE(buyer.email_notifications, 1), COALESCE(buyer.notify_order, 1),
+                         COALESCE(seller.email_notifications, 1), COALESCE(seller.notify_order, 1)
                          FROM orders o
                          JOIN posts p ON o.post_id = p.id
                          JOIN users buyer ON o.buyer_id = buyer.id
@@ -150,7 +152,7 @@ def send_email(to_email, subject, body, html_body=None):
 def get_user_notification_prefs(user_id):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT email_notifications, notify_order, notify_dispute, notify_return, notify_message FROM users WHERE id = ?", (user_id,))
+    c.execute("SELECT COALESCE(email_notifications, 1), COALESCE(notify_order, 1), COALESCE(notify_dispute, 1), COALESCE(notify_return, 1), COALESCE(notify_message, 1) FROM users WHERE id = ?", (user_id,))
     row = c.fetchone()
     conn.close()
     if row:
@@ -440,6 +442,23 @@ def inject_user():
             return {'current_username': user[0]}
     return {'current_username': None}
 
+
+@app.route('/fix_notifications')
+def fix_notifications():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("UPDATE users SET email_notifications = 1 WHERE email_notifications IS NULL")
+    c.execute("UPDATE users SET notify_order = 1 WHERE notify_order IS NULL")
+    c.execute("UPDATE users SET notify_dispute = 1 WHERE notify_dispute IS NULL")
+    c.execute("UPDATE users SET notify_return = 1 WHERE notify_return IS NULL")
+    c.execute("UPDATE users SET notify_message = 1 WHERE notify_message IS NULL")
+    conn.commit()
+    rows = c.rowcount
+    conn.close()
+    return f'Fixed notification preferences for {rows} users'
 
 @app.route('/test_email')
 def test_email():
