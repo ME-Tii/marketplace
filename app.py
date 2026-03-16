@@ -2431,7 +2431,8 @@ def request_return(order_id):
     c.execute("""UPDATE orders SET 
                  return_status = 'requested', 
                  return_reason = ?,
-                 return_requested_at = CURRENT_TIMESTAMP 
+                 return_requested_at = CURRENT_TIMESTAMP,
+                 status = 'return_requested'
                  WHERE id = ?""", (reason, order_id))
     conn.commit()
     conn.close()

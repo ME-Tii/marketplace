@@ -38,7 +38,7 @@
           <p><strong>{% if session.get('lang') == 'de' %}Artikel:{% else %}Item:{% endif %}</strong> <a href="/post/{{ order[1] }}">{{ order[11] }}</a></p>
           <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %}</strong> ${{ order[4] }}</p>
           <p><strong>{% if session.get('lang') == 'de' %}Status:{% else %}Status:{% endif %}</strong>
-            <span class="badge bg-{% if order[5] == 'paid' %}warning{% elif order[5] == 'shipped' %}info{% elif order[5] == 'delivered' %}success{% elif order[5] == 'refunded' %}danger{% else %}secondary{% endif %}">{{ order[5] }}</span>
+            <span class="badge bg-{% if order[5] == 'paid' %}warning{% elif order[5] == 'shipped' %}info{% elif order[5] == 'delivered' %}success{% elif order[5] == 'refunded' %}danger{% elif order[5] == 'return_requested' %}warning{% else %}secondary{% endif %}">{{ order[5] }}</span>
             {% if order[5] == 'pending' %}
             <a href="/checkout/{{ order[1] }}" class="btn btn-primary btn-sm ms-2">{% if session.get('lang') == 'de' %}Zahlung fortsetzen{% else %}Continue Payment{% endif %}</a>
             {% endif %}
@@ -139,7 +139,7 @@
   {% endif %}
 
   {# Return Section - for buyers #}
-  {% if order[5] in ['shipped', 'delivered'] and session.get('user_id') == order[2] and not order[30] %}
+  {% if order[5] in ['shipped', 'delivered', 'return_requested'] and session.get('user_id') == order[2] and not order[30] %}
   <div class="card mt-4 border-warning">
     <div class="card-header bg-warning">
       <h5>{% if session.get('lang') == 'de' %}Artikel zurücksenden{% else %}Request Return{% endif %}</h5>
