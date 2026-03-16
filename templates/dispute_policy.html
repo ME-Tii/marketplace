@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Streitbeilegungsrichtlinie{% else %}Dispute Resolution Policy{% endif %} - ME-Tii{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h1>{% if session.get('lang') == 'de' %}Streitbeilegungsrichtlinie{% else %}Dispute Resolution Policy{% endif %}</h1>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}1. Eröffnung eines Streitfalls{% else %}1. Opening a Dispute{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}Käufer können einen Streitfall eröffnen bei:{% else %}Buyers can open a dispute when:{% endif %}</p>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Artikel nicht erhalten{% else %}Item not received{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Artikel entspricht nicht der Beschreibung{% else %}Item not as described{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Andere erhebliche Probleme mit der Bestellung{% else %}Other significant issues with the order{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}2. Streitbeilegungsprozess{% else %}2. Dispute Process{% endif %}</h3>
+  <ol>
+    <li>{% if session.get('lang') == 'de' %}Käufer eröffnet Streitfall mit Beschreibung des Problems{% else %}Buyer opens dispute with description of issue{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Verkäufer kann mit Erklärung antworten{% else %}Seller can respond with explanation{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Admin prüft Beweise von beiden Parteien{% else %}Admin reviews evidence from both parties{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Admin trifft endgültige Entscheidung{% else %}Admin issues final decision{% endif %}</li>
+  </ol>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}3. Lösungsmöglichkeiten{% else %}3. Resolution Options{% endif %}</h3>
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{% if session.get('lang') == 'de' %}Volle Erstattung an Käufer{% else %}Full refund to buyer{% endif %}</h5>
+      <p class="card-text">{% if session.get('lang') == 'de' %}Wenn Käufer recht hat, wird der volle Betrag erstattet (Verkäufer erhält nichts).{% else %}If buyer is right, full amount refunded (seller receives nothing).{% endif %}</p>
+    </div>
+  </div>
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{% if session.get('lang') == 'de' %}Zahlung an Verkäufer{% else %}Payment to seller{% endif %}</h5>
+      <p class="card-text">{% if session.get('lang') == 'de' %}Wenn Verkäufer recht hat, werden Mittel an Verkäufer freigegeben, Käufer behält Artikel.{% else %}If seller is right, funds released to seller, buyer keeps item.{% endif %}</p>
+    </div>
+  </div>
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{% if session.get('lang') == 'de' %}Teilerstattung{% else %}Partial refund{% endif %}</h5>
+      <p class="card-text">{% if session.get('lang') == 'de' %}Für teilweise gerechtfertigte Streitfälle.{% else %}For partially justified disputes.{% endif %}</p>
+    </div>
+  </div>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}4. Erforderliche Nachweise{% else %}4. Evidence Required{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Fotos des Artikels bei Defekt/Beschädigung{% else %}Photos of item if defective/damaged{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Versandnachweise (Trackingnummern){% else %}Shipping proof (tracking numbers){% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Kommunikationsverlauf zwischen Käufer/Verkäufer{% else %}Communication history between buyer/seller{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Relevante Dokumentation{% else %}Any relevant documentation{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}5. Zeitrahmen{% else %}5. Timeline{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Verkäufer hat 3 Tage Zeit zu antworten{% else %}Seller has 3 days to respond to dispute{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Admin wird innerhalb von 7 Tagen entscheiden{% else %}Admin will resolve within 7 days of dispute opening{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Entscheidung ist endgültig und bindend{% else %}Decision is final and binding{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}6. Nach der Lösung{% else %}6. After Resolution{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Bei Erstattung: Bestellstatus ändert sich zu "erstattet"{% else %}If refunded, order status changes to "refunded"{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Bei Auszahlung an Verkäufer: Käufer kann Artikel noch versenden, falls nicht erhalten{% else %}If released to seller, buyer can still ship item if not received{% endif %}</li>
+  </ul>
+</div>
+{% endblock %}

@@ -323,6 +323,22 @@ def inject_user():
 def terms():
     return render_template('terms.html', unread_messages=get_unread_messages_count(session.get('user_id')))
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html', unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/refund-policy')
+def refund_policy():
+    return render_template('refund_policy.html', unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/dispute-policy')
+def dispute_policy():
+    return render_template('dispute_policy.html', unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/shipping-policy')
+def shipping_policy():
+    return render_template('shipping_policy.html', unread_messages=get_unread_messages_count(session.get('user_id')))
+
 @app.route('/connect/stripe')
 def connect_stripe():
     if 'user_id' not in session:

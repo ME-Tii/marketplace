@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Versandrichtlinie{% else %}Shipping Policy{% endif %} - ME-Tii{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h1>{% if session.get('lang') == 'de' %}Versandrichtlinie{% else %}Shipping Policy{% endif %}</h1>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}1. Liefermethoden{% else %}1. Delivery Methods{% endif %}</h3>
+
+  <div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">{% if session.get('lang') == 'de' %}Abholung vor Ort{% else %}Local Pickup{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <p>{% if session.get('lang') == 'de' %}Käufer und Verkäufer vereinbaren den Abholort über Nachrichten. Keine Versandkosten. Käufer muss Abholung innerhalb des vereinbarten Zeitraums bestätigen.{% else %}Buyer and seller coordinate pickup location via messages. No shipping costs applies. Buyer must confirm pickup within agreed timeframe.{% endif %}</p>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <p>{% if session.get('lang') == 'de' %}Artikel werden an die beim Checkout angegebene Adresse versendet. Verkäufer sollte Tracking-Nummer bereitstellen. Käufer ist für korrekte Lieferadresse verantwortlich.{% else %}Items shipped to address provided at checkout. Seller should provide tracking number. Buyer responsible for accurate shipping address.{% endif %}</p>
+    </div>
+  </div>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}2. Versandkosten{% else %}2. Shipping Costs{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}Vom Verkäufer pro Artikel festgelegt. Werden beim Checkout vor der Zahlung angezeigt.{% else %}Set by seller per item. Displayed at checkout before payment.{% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}3. Lieferzeit{% else %}3. Delivery Timeframe{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Verkäufer sollte innerhalb von 5 Werktagen versenden{% else %}Seller should ship within 5 business days{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Lieferzeiten variieren je nach Ort und Versanddienstleister{% else %}Delivery times vary by location and carrier{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Tracking-Informationen sollten bereitgestellt werden{% else %}Tracking information should be provided{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}4. Verlorene oder beschädigte Artikel{% else %}4. Lost or Damaged Items{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Wenn Artikel im Transport verloren geht: Kontaktieren Sie Verkäufer und eröffnen Sie ggf. einen Streitfall{% else %}If item lost in transit: Contact seller and open dispute if needed{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Wenn Artikel beschädigt: Mit Fotos dokumentieren und Streitfall eröffnen{% else %}If item damaged: Document with photos and open dispute{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}5. Internationaler Versand{% else %}5. International Shipping{% endif %}</p>
+  <p>{% if session.get('lang') == 'de' %}Derzeit nur inländischer Versand verfügbar. Kontaktieren Sie Verkäufer für internationale Versandanfragen.{% else %}Currently only domestic shipping available. Contact seller for international shipping inquiries.{% endif %}</p>
+</div>
+{% endblock %}

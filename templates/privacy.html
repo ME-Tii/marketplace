@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Datenschutzrichtlinie{% else %}Privacy Policy{% endif %} - ME-Tii{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h1>{% if session.get('lang') == 'de' %}Datenschutzrichtlinie{% else %}Privacy Policy{% endif %}</h1>
+  <p class="text-muted">Last updated: {% if session.get('lang') == 'de' %}Aktualisiert am {% endif %}{% if session.get('lang') != 'de' %}March 2026{% else %}März 2026{% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}1. Einleitung{% else %}1. Introduction{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}ME-Tii betreibt einen Marktplatz, der Käufer und Verkäufer verbindet. Diese Richtlinie erklärt, wie wir Ihre persönlichen Daten erheben, verwenden und schützen.{% else %}ME-Tii operates a marketplace connecting buyers and sellers. This policy explains how we collect, use, and protect your personal information.{% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}2. Informationen, die wir erheben{% else %}2. Information We Collect{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Kontoinformationen (Benutzername, E-Mail, Profilbild){% else %}Account information (username, email, profile picture){% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Bestellhistorie und Transaktionsdaten{% else %}Order history and transaction data{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Lieferadressen{% else %}Shipping addresses{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Nachrichten zwischen Nutzern{% else %}Messages between users{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Zahlungsinformationen (verarbeitet über Stripe){% else %}Payment information (processed via Stripe){% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}3. Wie wir Ihre Informationen verwenden{% else %}3. How We Use Your Information{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Zur Abwicklung von Bestellungen und Zahlungen{% else %}To process orders and payments{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Zur Vermittlung der Kommunikation zwischen Käufern und Verkäufern{% else %}To facilitate communication between buyers and sellers{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Zur Erfüllung rechtlicher Verpflichtungen{% else %}To comply with legal obligations{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Zur Verbesserung unserer Dienste{% else %}To improve our services{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}4. Datenspeicherung{% else %}4. Data Storage{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}Alle Daten werden auf sicheren Servern gespeichert. Zahlungsdaten werden ausschließlich von Stripe bearbeitet - wir speichern keine Kreditkartendaten. Sie können die Löschung Ihres Kontos und der zugehörigen Daten beantragen.{% else %}All data is stored on secure servers. Payment data is handled exclusively by Stripe - we do not store credit card details. You can request deletion of your account and associated data.{% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}5. Drittanbieter-Dienste{% else %}5. Third-Party Services{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}Stripe: Zahlungsabwicklung. Wir verkaufen Ihre Daten nicht an Dritte.{% else %}Stripe: Payment processing. We do not sell your data to third parties.{% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}6. Kontakt{% else %}6. Contact{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}Bei Fragen zum Datenschutz: contact@me-tii.com{% else %}For privacy questions: contact@me-tii.com{% endif %}</p>
+</div>
+{% endblock %}

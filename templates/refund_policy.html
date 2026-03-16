@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Rückgabe- und Erstattungsrichtlinie{% else %}Return & Refund Policy{% endif %} - ME-Tii{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h1>{% if session.get('lang') == 'de' %}Rückgabe- und Erstattungsrichtlinie{% else %}Return & Refund Policy{% endif %}</h1>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}1. Rückgabeberechtigung{% else %}1. Return Eligibility{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}Rückgaben können beantragt werden, wenn der Bestellstatus "versendet" oder "zugestellt" ist. Der Käufer muss einen gültigen Grund für die Rückgabe angeben.{% else %}Returns can be requested when order status is "shipped" or "delivered". Buyer must provide a valid reason for return.{% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}2. Kosten für Rückversand{% else %}2. Return Shipping Costs{% endif %}</h3>
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{% if session.get('lang') == 'de' %}Verkäuferfehler{% else %}Seller at Fault{% endif %}</h5>
+      <p class="card-text">{% if session.get('lang') == 'de' %}(defekter Artikel, nicht wie beschrieben): Verkäufer übernimmt Rückversand - Käufer erhält volle Erstattung + ursprüngliche Versandkosten{% else %}(item defective, not as described): Seller covers return shipping - buyer receives full refund + original shipping costs{% endif %}</p>
+    </div>
+  </div>
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{% if session.get('lang') == 'de' %}Käuferfehler{% else %}Buyer at Fault{% endif %}</h5>
+      <p class="card-text">{% if session.get('lang') == 'de' %}(Meinungsänderung, kein Problem mit Artikel): Käufer zahlt Rückversand - Erstattung nur Artikelpreis{% else %}(changed mind, no issue with item): Buyer pays return shipping - refund is item price only{% endif %}</p>
+    </div>
+  </div>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}3. Erstattungsprozess{% else %}3. Refund Process{% endif %}</h3>
+  <ol>
+    <li>{% if session.get('lang') == 'de' %}Käufer beantragt Rückgabe und gibt Grund an{% else %}Buyer requests return and provides reason{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Verkäufer genehmigt oder lehnt innerhalb angemessener Zeit ab{% else %}Seller approves or rejects within reasonable time{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Falls genehmigt, Käufer sendet Artikel zurück{% else %}If approved, buyer ships item back{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Verkäufer bestätigt Erhalt und erstellt Erstattung{% else %}Seller verifies receipt and issues refund{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Erstattung über ursprüngliche Zahlungsmethode (Stripe){% else %}Refund processed via original payment method (Stripe){% endif %}</li>
+  </ol>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}4. Zeitrahmen{% else %}4. Timeline{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Käufer muss Rückgabe innerhalb von 14 Tagen nach Genehmigung versenden{% else %}Buyer must ship return within 14 days of approval{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Verkäufer muss Erstattung innerhalb von 7 Tagen nach Erhalt bearbeiten{% else %}Seller must process refund within 7 days of receiving return{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}5. Nicht erstattungsfähig{% else %}5. Non-Refundable{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Ursprüngliche Versandkosten (außer bei Verkäuferfehler){% else %}Original shipping costs (unless seller at fault){% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Plattformgebühren (10%){% else %}Platform fees (10%){% endif %}</li>
+  </ul>
+</div>
+{% endblock %}
