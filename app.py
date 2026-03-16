@@ -2548,30 +2548,31 @@ def refund_return(order_id):
     seller_at_fault = order[5] or 0
     
     # Calculate refund:
-    # - Seller at fault: refund = amount + shipping_cost (full refund + extra for return shipping)
-    # - Buyer at fault: refund = amount - shipping_cost (buyer pays return shipping)
+    # - Seller at fault: refund = item_price + 2x shipping (full refund + extra for return shipping)
+    # - Buyer at fault: refund = item_price only (buyer pays return shipping)
+    item_price = total_amount - shipping_cost
     if seller_at_fault:
-        refund_amount = total_amount + shipping_cost
+        refund_amount = item_price + (shipping_cost * 2)
     else:
-        refund_amount = total_amount - shipping_cost
+        refund_amount = item_price
     
     # Process Stripe refund if payment exists
     if order[2] and app.config.get('STRIPE_SECRET_KEY'):
         try:
             stripe.Refund.create(payment_intent=order[2], amount=int(refund_amount * 100))
             if seller_at_fault:
-                flash(f'Refund issued: ${refund_amount:.2f} (includes ${shipping_cost:.2f} for return shipping)', 'success')
+                flash(f'Refund issued: ${refund_amount:.2f} (item ${item_price:.2f} + return shipping ${shipping_cost:.2f} x2)', 'success')
             else:
-                flash(f'Refund issued: ${refund_amount:.2f} (return shipping deducted)', 'success')
+                flash(f'Refund issued: ${refund_amount:.2f} (item price, buyer pays return shipping)', 'success')
         except Exception as e:
             flash(f'Stripe refund failed: {str(e)}', 'danger')
             conn.close()
             return redirect(f'/order/{order_id}')
     else:
         if seller_at_fault:
-            flash(f'Refund issued: ${refund_amount:.2f} (includes ${shipping_cost:.2f} for return shipping)', 'success')
+            flash(f'Refund issued: ${refund_amount:.2f} (item ${item_price:.2f} + return shipping ${shipping_cost:.2f} x2)', 'success')
         else:
-            flash(f'Refund issued: ${refund_amount:.2f} (return shipping deducted)', 'success')
+            flash(f'Refund issued: ${refund_amount:.2f} (item price, buyer pays return shipping)', 'success')
     
     c.execute("""UPDATE orders SET 
                  return_status = 'completed',
