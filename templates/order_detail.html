@@ -184,8 +184,8 @@
     {% if order[30] in ['approved', 'shipped_back', 'completed'] and order[37] and order[37] > 0 %}
     <p class="mt-2">
       {% if order[38] == 1 %}
-      <span class="badge bg-success">{% if session.get('lang') == 'de' %}Verkäufer übernimmt Rückversand{% else %}Seller covers return shipping{% endif %}</span>
-      {% else %}
+      <span class="badge bg-success">{% if session.get('lang') == 'de' %}Verkäuferfehler (volle Erstattung + Rückversand){% else %}Seller at fault (full refund + return shipping){% endif %}</span>
+      {% elif order[37] and order[37] > 0 %}
       <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Käufer zahlt Rückversand (${% else %}Buyer pays return shipping (${% endif %}{{ order[37] }})</span>
       {% endif %}
     </p>
@@ -227,12 +227,12 @@
         </div>
         {% if order[37] and order[37] > 0 %}
         <div class="mb-3 form-check">
-          <input type="checkbox" class="form-check-input" id="cover_shipping" name="cover_shipping" />
-          <label class="form-check-label" for="cover_shipping">
-            {% if session.get('lang') == 'de' %}Ich übernehme die Rückversandkosten (${% else %}I will cover return shipping (${% endif %}{{ order[37] }})
+          <input type="checkbox" class="form-check-input" id="seller_at_fault" name="seller_at_fault" />
+          <label class="form-check-label" for="seller_at_fault">
+            {% if session.get('lang') == 'de' %}Fehler liegt beim Verkäufer (volle Erstattung + Versandkosten){% else %}Seller's fault (full refund + ${{ order[37] }} for return shipping){% endif %}
           </label>
         </div>
-        <p class="text-muted small">{% if session.get('lang') == 'de' %}Wenn nicht angeklickt, werden die Rückversandkosten vom Erstattungsbetrag abgezogen.{% else %}If unchecked, return shipping cost will be deducted from refund.{% endif %}</p>
+        <p class="text-muted small">{% if session.get('lang') == 'de' %}Wenn nicht angeklickt, zahlt der Käufer den Rückversand.{% else %}If unchecked, buyer pays for return shipping.{% endif %}</p>
         {% endif %}
         <button type="submit" name="action" value="approve" class="btn btn-success">{% if session.get('lang') == 'de' %}Genehmigen{% else %}Approve Return{% endif %}</button>
         <button type="submit" name="action" value="reject" class="btn btn-danger">{% if session.get('lang') == 'de' %}Ablehnen{% else %}Reject Return{% endif %}</button>
@@ -248,10 +248,12 @@
       <h5>{% if session.get('lang') == 'de' %}Rückerstattung verarbeiten{% else %}Process Refund{% endif %}</h5>
     </div>
     <div class="card-body">
-      {% if order[38] == 1 or order[37] == 0 or order[37] is none %}
-      <p>{% if session.get('lang') == 'de' %}Klicken Sie hier, um dem Käufer eine Rückerstattung zu gewähren.{% else %}Click here to issue full refund to buyer.{% endif %}</p>
+      {% if order[38] == 1 %}
+      <p class="text-success">{% if session.get('lang') == 'de' %}Verkäuferfehler: volle Erstattung + ${{ order[37] }} für Rückversand = ${{ (order[4] + (order[37] or 0))|round(2) }}{% else %}Seller at fault: Full refund + ${{ order[37] }} for return shipping = ${{ (order[4] + (order[37] or 0))|round(2) }}{% endif %}</p>
+      {% elif order[37] == 0 or order[37] is none %}
+      <p>{% if session.get('lang') == 'de' %}Klicken Sie hier, um dem Käufer eine Rückerstattung zu gewähren.{% else %}Click here to issue refund to buyer.{% endif %}</p>
       {% else %}
-      <p class="text-warning">{% if session.get('lang') == 'de' %}Rückversandkosten werden vom Erstattungsbetrag abgezogen: ${% else %}Return shipping will be deducted from refund: ${% endif %}{{ (order[4] - (order[37] or 0))|round(2) }} (Original: ${{ order[4] }} - Versand: ${{ order[37] }})</p>
+      <p class="text-warning">{% if session.get('lang') == 'de' %}Käufer zahlt Rückversand: ${{ (order[4] - (order[37] or 0))|round(2) }} (Original: ${{ order[4] }} - Rückversand: ${{ order[37] }}){% else %}Buyer pays return shipping: ${{ (order[4] - (order[37] or 0))|round(2) }} (Original: ${{ order[4] }} - Return shipping: ${{ order[37] }}){% endif %}</p>
       {% endif %}
       <form method="POST" action="/order/{{ order[0] }}/return/refund">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
