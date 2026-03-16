@@ -2352,7 +2352,7 @@ def admin_dispute_detail(order_id):
                 new_status = 'refunded'
                 resolution = 'full_refund'
             elif action == 'release':
-                new_status = 'completed'
+                new_status = 'paid'
                 resolution = 'released'
             else:  # partial
                 new_status = 'refunded'
