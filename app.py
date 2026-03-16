@@ -2091,24 +2091,20 @@ def orders():
     c = conn.cursor()
     # Get purchases (orders where user is buyer)
     c.execute("""SELECT o.id, o.post_id, o.buyer_id, o.seller_id, o.amount, o.status, o.created_at,
-                 p.title, p.image, u.username as seller_username, o.shipping_method, o.tracking_number,
-                 a.full_name, a.street, a.city, a.state, a.zip_code, a.country, a.phone
+                 p.title, p.image, u.username as seller_username
                  FROM orders o
                  JOIN posts p ON o.post_id = p.id
                  JOIN users u ON o.seller_id = u.id
-                 LEFT JOIN addresses a ON a.order_id = o.id AND a.user_id = o.buyer_id
                  WHERE o.buyer_id = ?
                  ORDER BY o.created_at DESC""", (user_id,))
     purchases = c.fetchall()
     
     # Get sales (orders where user is seller)
     c.execute("""SELECT o.id, o.post_id, o.buyer_id, o.seller_id, o.amount, o.status, o.created_at,
-                 p.title, p.image, u.username as buyer_username, o.shipping_method, o.tracking_number,
-                 a.full_name, a.street, a.city, a.state, a.zip_code, a.country, a.phone
+                 p.title, p.image, u.username as buyer_username
                  FROM orders o
                  JOIN posts p ON o.post_id = p.id
                  JOIN users u ON o.buyer_id = u.id
-                 LEFT JOIN addresses a ON a.order_id = o.id AND a.user_id = o.buyer_id
                  WHERE o.seller_id = ?
                  ORDER BY o.created_at DESC""", (user_id,))
     sales = c.fetchall()

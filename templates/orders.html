@@ -23,9 +23,6 @@ content %}
           {% if session.get('lang') == 'de' %}Preis{% else %}Price{% endif %}
         </th>
         <th>
-          {% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}
-        </th>
-        <th>
           {% if session.get('lang') == 'de' %}Status{% else %}Status{% endif %}
         </th>
         <th>
@@ -39,14 +36,6 @@ content %}
       <tr>
         <td><a href="/post/{{ p[1] }}">{{ p[7] }}</a></td>
         <td>${{ p[4] }}</td>
-        <td>
-          {% if p[10] == 'shipping' %}
-            {% if p[12] %}{{ p[12] }}<br>{{ p[14] }}, {{ p[15] }} {{ p[16] }}{% else %}{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}{% endif %}
-            {% if p[11] %}<br><small class="text-muted">{{ p[11] }}</small>{% endif %}
-          {% else %}
-            {% if session.get('lang') == 'de' %}Abholung{% else %}Local Pickup{% endif %}
-          {% endif %}
-        </td>
         <td>
           <span class="badge bg-{% if p[5] == 'paid' %}warning{% elif p[5] == 'shipped' %}info{% elif p[5] == 'delivered' %}success{% else %}secondary{% endif %}">{{ p[5] }}</span>
         </td>
@@ -93,9 +82,6 @@ content %}
           {% if session.get('lang') == 'de' %}Käufer{% else %}Buyer{% endif %}
         </th>
         <th>
-          {% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}
-        </th>
-        <th>
           {% if session.get('lang') == 'de' %}Status{% else %}Status{% endif %}
         </th>
         <th>
@@ -110,14 +96,6 @@ content %}
         <td><a href="/post/{{ s[1] }}">{{ s[7] }}</a></td>
         <td>${{ s[4] }}</td>
         <td>{{ s[9] }}</td>
-        <td>
-          {% if s[10] == 'shipping' %}
-            {% if s[12] %}{{ s[12] }}<br>{{ s[14] }}, {{ s[15] }} {{ s[16] }}{% else %}{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}{% endif %}
-            {% if s[11] %}<br><small class="text-muted">{{ s[11] }}</small>{% endif %}
-          {% else %}
-            {% if session.get('lang') == 'de' %}Abholung{% else %}Local Pickup{% endif %}
-          {% endif %}
-        </td>
         <td>
           <span class="badge bg-{% if s[5] == 'paid' %}warning{% elif s[5] == 'shipped' %}info{% elif s[5] == 'delivered' %}success{% else %}secondary{% endif %}">{{ s[5] }}</span>
         </td>
