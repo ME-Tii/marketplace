@@ -144,6 +144,8 @@
     <footer class="bg-dark text-white text-center py-3">
       <p class="mb-1">© 2023 {% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}</p>
       <a href="/terms" class="text-white">{% if session.get('lang') == 'de' %}Nutzungsbedingungen{% else %}Terms of Use{% endif %}</a>
+      <span class="text-white"> | </span>
+      <a href="/chat/admin" class="text-white">{% if session.get('lang') == 'de' %}Brauchen Sie Hilfe?{% else %}Need Help?{% endif %}</a>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
