@@ -266,6 +266,14 @@ def init_db():
         c.execute("ALTER TABLE orders ADD COLUMN return_completed_at DATETIME")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN shipping_cost REAL DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN return_shipping_covered INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
     # Shipping addresses
     c.execute('''CREATE TABLE IF NOT EXISTS addresses
                  (id INTEGER PRIMARY KEY, user_id INTEGER, order_id INTEGER,
@@ -1910,8 +1918,10 @@ def process_checkout(post_id):
         return redirect(f'/checkout/{post_id}')
     
     total_amount = post[1]
+    shipping_cost = 0
     if delivery_method == 'shipping' and post[4]:
-        total_amount += (post[5] or 0)
+        shipping_cost = post[5] or 0
+        total_amount += shipping_cost
     
     if delivery_method == 'local_pickup':
         full_name = request.form.get('full_name')
@@ -1932,8 +1942,8 @@ def process_checkout(post_id):
     
     save_address = request.form.get('save_address')
     
-    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method) VALUES (?, ?, ?, ?, 'pending', ?)",
-              (post_id, session['user_id'], post[2], total_amount, delivery_method))
+    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost) VALUES (?, ?, ?, ?, 'pending', ?, ?)",
+              (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost))
     order_id = c.lastrowid
     
     # Only save address for shipping orders, not local pickup
@@ -2113,7 +2123,8 @@ def order_detail(order_id):
                  seller.username, seller.email,
                  a.full_name, a.street, a.city, a.state, a.zip_code, a.country, a.phone,
                  o.dispute_reason, o.dispute_response, o.dispute_opened_at, o.dispute_resolved_at, o.dispute_resolution,
-                 o.return_status, o.return_reason, o.return_response, o.return_tracking_number, o.return_requested_at, o.return_shipped_at, o.return_completed_at
+                 o.return_status, o.return_reason, o.return_response, o.return_tracking_number, o.return_requested_at, o.return_shipped_at, o.return_completed_at,
+                 o.shipping_cost, o.return_shipping_covered
                  FROM orders o
                  JOIN posts p ON o.post_id = p.id
                  JOIN users buyer ON o.buyer_id = buyer.id
@@ -2431,6 +2442,7 @@ def respond_return(order_id):
     
     action = request.form.get('action')
     response = request.form.get('response')
+    cover_shipping = request.form.get('cover_shipping') == 'on'
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -2454,11 +2466,13 @@ def respond_return(order_id):
         new_status = 'approved'
     else:
         new_status = 'rejected'
+        cover_shipping = False
     
     c.execute("""UPDATE orders SET 
                  return_status = ?, 
-                 return_response = ?
-                 WHERE id = ?""", (new_status, response, order_id))
+                 return_response = ?,
+                 return_shipping_covered = ?
+                 WHERE id = ?""", (new_status, response, 1 if cover_shipping else 0, order_id))
     conn.commit()
     conn.close()
     
@@ -2507,7 +2521,7 @@ def refund_return(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT seller_id, return_status, stripe_payment_id, amount FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT seller_id, return_status, stripe_payment_id, amount, shipping_cost, return_shipping_covered FROM orders WHERE id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -2524,14 +2538,34 @@ def refund_return(order_id):
         flash('Return must be approved before refund.', 'warning')
         return redirect(f'/order/{order_id}')
     
+    total_amount = order[3] or 0
+    shipping_cost = order[4] or 0
+    return_shipping_covered = order[5] or 0
+    
+    # Calculate refund: if seller doesn't cover shipping, deduct it from refund
+    if return_shipping_covered or shipping_cost == 0:
+        refund_amount = total_amount
+    else:
+        refund_amount = total_amount - shipping_cost
+    
     # Process Stripe refund if payment exists
     if order[2] and app.config.get('STRIPE_SECRET_KEY'):
         try:
-            stripe.Refund.create(payment_intent=order[2])
+            if refund_amount < total_amount:
+                stripe.Refund.create(payment_intent=order[2], amount=int(refund_amount * 100))
+                flash(f'Refund issued: ${refund_amount:.2f} (minus ${shipping_cost:.2f} return shipping not covered)', 'success')
+            else:
+                stripe.Refund.create(payment_intent=order[2])
+                flash('Full refund issued! Return completed.', 'success')
         except Exception as e:
             flash(f'Stripe refund failed: {str(e)}', 'danger')
             conn.close()
             return redirect(f'/order/{order_id}')
+    else:
+        if refund_amount < total_amount:
+            flash(f'Refund issued: ${refund_amount:.2f} (minus ${shipping_cost:.2f} return shipping not covered)', 'success')
+        else:
+            flash('Refund issued! Return completed.', 'success')
     
     c.execute("""UPDATE orders SET 
                  return_status = 'completed',
@@ -2541,7 +2575,6 @@ def refund_return(order_id):
     conn.commit()
     conn.close()
     
-    flash('Refund issued! Return completed.', 'success')
     return redirect(f'/order/{order_id}')
 
 # One-time migration: update image paths

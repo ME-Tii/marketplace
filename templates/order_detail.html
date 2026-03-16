@@ -181,6 +181,15 @@
     {% if order[36] %}
     <p><small class="text-muted">{% if session.get('lang') == 'de' %}Zurückgesendet am{% else %}Item shipped back on{% endif %}: {{ order[36] }}</small></p>
     {% endif %}
+    {% if order[30] in ['approved', 'shipped_back', 'completed'] and order[37] and order[37] > 0 %}
+    <p class="mt-2">
+      {% if order[38] == 1 %}
+      <span class="badge bg-success">{% if session.get('lang') == 'de' %}Verkäufer übernimmt Rückversand{% else %}Seller covers return shipping{% endif %}</span>
+      {% else %}
+      <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Käufer zahlt Rückversand (${% else %}Buyer pays return shipping (${% endif %}{{ order[37] }})</span>
+      {% endif %}
+    </p>
+    {% endif %}
   </div>
   {% endif %}
 
@@ -216,6 +225,15 @@
           <label class="form-label">{% if session.get('lang') == 'de' %}Antwort (optional){% else %}Response (optional){% endif %}</label>
           <textarea class="form-control" name="response" rows="2" placeholder="{% if session.get('lang') == 'de' %}Optionale Antwort...{% else %}Optional response...{% endif %}"></textarea>
         </div>
+        {% if order[37] and order[37] > 0 %}
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="cover_shipping" name="cover_shipping" />
+          <label class="form-check-label" for="cover_shipping">
+            {% if session.get('lang') == 'de' %}Ich übernehme die Rückversandkosten (${% else %}I will cover return shipping (${% endif %}{{ order[37] }})
+          </label>
+        </div>
+        <p class="text-muted small">{% if session.get('lang') == 'de' %}Wenn nicht angeklickt, werden die Rückversandkosten vom Erstattungsbetrag abgezogen.{% else %}If unchecked, return shipping cost will be deducted from refund.{% endif %}</p>
+        {% endif %}
         <button type="submit" name="action" value="approve" class="btn btn-success">{% if session.get('lang') == 'de' %}Genehmigen{% else %}Approve Return{% endif %}</button>
         <button type="submit" name="action" value="reject" class="btn btn-danger">{% if session.get('lang') == 'de' %}Ablehnen{% else %}Reject Return{% endif %}</button>
       </form>
@@ -230,7 +248,11 @@
       <h5>{% if session.get('lang') == 'de' %}Rückerstattung verarbeiten{% else %}Process Refund{% endif %}</h5>
     </div>
     <div class="card-body">
-      <p>{% if session.get('lang') == 'de' %}Klicken Sie hier, um dem Käufer eine Rückerstattung zu gewähren.{% else %}Click here to issue refund to buyer.{% endif %}</p>
+      {% if order[38] == 1 or order[37] == 0 or order[37] is none %}
+      <p>{% if session.get('lang') == 'de' %}Klicken Sie hier, um dem Käufer eine Rückerstattung zu gewähren.{% else %}Click here to issue full refund to buyer.{% endif %}</p>
+      {% else %}
+      <p class="text-warning">{% if session.get('lang') == 'de' %}Rückversandkosten werden vom Erstattungsbetrag abgezogen: ${% else %}Return shipping will be deducted from refund: ${% endif %}{{ (order[4] - (order[37] or 0))|round(2) }} (Original: ${{ order[4] }} - Versand: ${{ order[37] }})</p>
+      {% endif %}
       <form method="POST" action="/order/{{ order[0] }}/return/refund">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Rückerstattung gewähren{% else %}Issue Refund{% endif %}</button>
