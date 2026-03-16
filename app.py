@@ -14,6 +14,9 @@ import requests
 import io
 import base64
 import stripe
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,6 +27,13 @@ app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production
 app.config['STRIPE_PUBLIC_KEY'] = os.environ.get('STRIPE_PUBLIC_KEY', 'pk_test_51T8PWW8gWUxTvhfMrWiSGibJDmrQslPZlxNN25Gpxup3pBVQoBg50DGh3pIGbXfJdIhfyzJ1G9bMraRfcIraBjSL00wJ9BQESt')
 app.config['STRIPE_SECRET_KEY'] = os.environ.get('STRIPE_SECRET_KEY', '')
 app.config['STRIPE_CONNECT_CLIENT_ID'] = os.environ.get('STRIPE_CONNECT_CLIENT_ID', '')
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'thomasseitz22@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
+app.config['ADMIN_EMAIL'] = 'thomasseitz22@gmail.com'
+app.config['DEFAULT_FROM_EMAIL'] = 'ME-Tii Marketplace <noreply@me-tii.com>'
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 csrf = CSRFProtect(app)
 if os.environ.get('FLASK_ENV') == 'production':
@@ -59,6 +69,27 @@ def stripe_webhook():
             c = conn.cursor()
             c.execute("UPDATE orders SET status = 'paid', stripe_payment_id = ? WHERE id = ?",
                      (payment_id, order_id))
+            c.execute("""SELECT o.buyer_id, o.seller_id, o.amount, p.title, buyer.email, seller.email, buyer.notify_order, seller.notify_order
+                         FROM orders o
+                         JOIN posts p ON o.post_id = p.id
+                         JOIN users buyer ON o.buyer_id = buyer.id
+                         JOIN users seller ON o.seller_id = seller.id
+                         WHERE o.id = ?""", (order_id,))
+            order_info = c.fetchone()
+            if order_info:
+                buyer_email = order_info[4]
+                seller_email = order_info[5]
+                buyer_notify = order_info[6]
+                seller_notify = order_info[7]
+                post_title = order_info[3]
+                amount = order_info[2]
+                
+                if buyer_notify:
+                    send_email(buyer_email, 'Payment Confirmed - ME-Tii', 
+                              f'Your payment of ${amount:.2f} for "{post_title}" has been confirmed. The seller will ship your order soon.')
+                if seller_notify:
+                    send_email(seller_email, 'New Order - ME-Tii', 
+                              f'You have a new order for "{post_title}". Payment of ${amount:.2f} received. Please ship the item.')
             conn.commit()
             conn.close()
     
@@ -66,6 +97,57 @@ def stripe_webhook():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
+
+def send_email(to_email, subject, body, html_body=None):
+    if not app.config.get('MAIL_PASSWORD'):
+        app.logger.warning("Email not configured - MAIL_PASSWORD not set")
+        return False
+    
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = app.config.get('DEFAULT_FROM_EMAIL', 'ME-Tii Marketplace <noreply@me-tii.com>')
+        msg['To'] = to_email
+        
+        part1 = MIMEText(body, 'plain')
+        msg.attach(part1)
+        
+        if html_body:
+            part2 = MIMEText(html_body, 'html')
+            msg.attach(part2)
+        
+        with smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
+            server.starttls()
+            server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+            server.send_message(msg)
+        
+        app.logger.info(f"Email sent to {to_email}: {subject}")
+        return True
+    except Exception as e:
+        app.logger.error(f"Failed to send email to {to_email}: {str(e)}")
+        return False
+
+def get_user_notification_prefs(user_id):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT email_notifications, notify_order, notify_dispute, notify_return, notify_message FROM users WHERE id = ?", (user_id,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return {
+            'email_notifications': row[0],
+            'notify_order': row[1],
+            'notify_dispute': row[2],
+            'notify_return': row[3],
+            'notify_message': row[4]
+        }
+    return {
+        'email_notifications': 1,
+        'notify_order': 1,
+        'notify_dispute': 1,
+        'notify_return': 1,
+        'notify_message': 1
+    }
 
 def get_unread_messages_count(user_id):
     if not user_id:
@@ -94,6 +176,26 @@ def init_db():
         c.execute("ALTER TABLE users ADD COLUMN stripe_account_id TEXT")
     except sqlite3.OperationalError:
         pass  # column already exists
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN email_notifications INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN notify_order INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN notify_dispute INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN notify_return INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN notify_message INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
     c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123')))
     c.execute('''CREATE TABLE IF NOT EXISTS posts
                  (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, description TEXT, type TEXT, image TEXT, links TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
@@ -639,6 +741,12 @@ def profile(username):
     all_users = []
     total_users = 0
     reports = []
+    
+    # Get notification preferences if owner
+    notification_prefs = None
+    if is_owner:
+        notification_prefs = get_user_notification_prefs(user_id)
+    
     search_term = request.args.get('search', '').strip()
     page = int(request.args.get('page', 1))
     per_page = 5
@@ -665,7 +773,34 @@ def profile(username):
     conn.close()
     success = request.args.get('success')
     total_pages = (total_users + per_page - 1) // per_page if total_users > 0 else 1
-    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query)
+    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query, notification_prefs=notification_prefs)
+
+@app.route('/settings/notifications', methods=['POST'])
+def update_notifications():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    email_notifications = 1 if request.form.get('email_notifications') else 0
+    notify_order = 1 if request.form.get('notify_order') else 0
+    notify_dispute = 1 if request.form.get('notify_dispute') else 0
+    notify_return = 1 if request.form.get('notify_return') else 0
+    notify_message = 1 if request.form.get('notify_message') else 0
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""UPDATE users SET 
+                 email_notifications = ?,
+                 notify_order = ?,
+                 notify_dispute = ?,
+                 notify_return = ?,
+                 notify_message = ?
+                 WHERE id = ?""",
+              (email_notifications, notify_order, notify_dispute, notify_return, notify_message, session['user_id']))
+    conn.commit()
+    conn.close()
+    
+    flash('Notification preferences updated!', 'success')
+    return redirect(f'/profile/{session.get("username")}')
 
 @app.route('/delete_user/<username>', methods=['POST'])
 def delete_user(username):
@@ -1815,6 +1950,17 @@ def send_message(username):
         return 'User not found', 404
     receiver_id = user[0]
     c.execute("INSERT INTO messages (sender_id, receiver_id, message, attachment) VALUES (?, ?, ?, ?)", (session['user_id'], receiver_id, message, attachment_path))
+    
+    # Check if receiver is admin - notify admin of new message
+    if username == 'admin':
+        c.execute("SELECT notify_message FROM users WHERE username = 'admin'")
+        notify = c.fetchone()
+        if not notify or notify[0]:
+            c.execute("SELECT username FROM users WHERE id = ?", (session['user_id'],))
+            sender = c.fetchone()
+            send_email(app.config['ADMIN_EMAIL'], 'New Message Received - ME-Tii', 
+                      f'You have a new message from {sender[0] if sender else "Unknown"}: {message[:100]}...')
+    
     conn.commit()
     conn.close()
     return redirect(request.referrer or f'/messages?chat={username}')
@@ -2186,6 +2332,18 @@ def mark_shipped(order_id):
         return redirect(f'/order/{order_id}')
     
     c.execute("UPDATE orders SET status = 'shipped', tracking_number = ?, shipped_at = CURRENT_TIMESTAMP WHERE id = ?", (tracking_number, order_id))
+    
+    # Get buyer email for notification
+    c.execute("""SELECT buyer.email, buyer.notify_order, p.title
+                 FROM orders o
+                 JOIN users buyer ON o.buyer_id = buyer.id
+                 JOIN posts p ON o.post_id = p.id
+                 WHERE o.id = ?""", (order_id,))
+    buyer_info = c.fetchone()
+    if buyer_info and buyer_info[1]:
+        send_email(buyer_info[0], 'Your Order Has Been Shipped - ME-Tii', 
+                  f'Your order "{buyer_info[2]}" has been shipped! Tracking: {tracking_number or "Not provided"}')
+    
     conn.commit()
     conn.close()
     
@@ -2278,6 +2436,15 @@ def open_dispute(order_id):
                  dispute_reason = ?,
                  dispute_opened_at = CURRENT_TIMESTAMP 
                  WHERE id = ?""", (reason, order_id))
+    
+    # Get order info for admin notification
+    c.execute("""SELECT p.title FROM orders o JOIN posts p ON o.post_id = p.id WHERE o.id = ?""", (order_id,))
+    order_info = c.fetchone()
+    
+    # Notify admin
+    send_email(app.config['ADMIN_EMAIL'], 'New Dispute Opened - ME-Tii', 
+              f'A dispute has been opened for order #{order_id}: "{order_info[0] if order_info else "Unknown"}". Reason: {reason}')
+    
     conn.commit()
     conn.close()
     
@@ -2450,6 +2617,22 @@ def request_return(order_id):
                  return_requested_at = CURRENT_TIMESTAMP,
                  status = 'return_requested'
                  WHERE id = ?""", (reason, order_id))
+    
+    # Get seller and admin info for notifications
+    c.execute("""SELECT seller.email, seller.notify_return, p.title
+                 FROM orders o
+                 JOIN users seller ON o.seller_id = seller.id
+                 JOIN posts p ON o.post_id = p.id
+                 WHERE o.id = ?""", (order_id,))
+    seller_info = c.fetchone()
+    if seller_info and seller_info[1]:
+        send_email(seller_info[0], 'Return Requested - ME-Tii', 
+                  f'A buyer has requested a return for "{seller_info[2]}". Please review the request in your order details.')
+    
+    # Notify admin
+    send_email(app.config['ADMIN_EMAIL'], 'New Return Request - ME-Tii', 
+              f'A return request has been made for order #{order_id}: "{seller_info[2] if seller_info else "Unknown"}"')
+    
     conn.commit()
     conn.close()
     
@@ -2494,6 +2677,22 @@ def respond_return(order_id):
                  return_response = ?,
                  seller_at_fault = ?
                  WHERE id = ?""", (new_status, response, 1 if seller_at_fault else 0, order_id))
+    
+    # Get buyer info for notification
+    c.execute("""SELECT buyer.email, buyer.notify_return, p.title
+                 FROM orders o
+                 JOIN users buyer ON o.buyer_id = buyer.id
+                 JOIN posts p ON o.post_id = p.id
+                 WHERE o.id = ?""", (order_id,))
+    buyer_info = c.fetchone()
+    if buyer_info and buyer_info[1]:
+        if new_status == 'approved':
+            send_email(buyer_info[0], 'Return Approved - ME-Tii', 
+                      f'Your return request for "{buyer_info[2]}" has been APPROVED. Please ship the item back to the seller.')
+        else:
+            send_email(buyer_info[0], 'Return Rejected - ME-Tii', 
+                      f'Your return request for "{buyer_info[2]}" has been REJECTED. Contact the seller for more details.')
+    
     conn.commit()
     conn.close()
     
@@ -2595,6 +2794,18 @@ def refund_return(order_id):
                  return_completed_at = CURRENT_TIMESTAMP,
                  status = 'refunded'
                  WHERE id = ?""", (order_id,))
+    
+    # Notify buyer of refund
+    c.execute("""SELECT buyer.email, buyer.notify_return, p.title
+                 FROM orders o
+                 JOIN users buyer ON o.buyer_id = buyer.id
+                 JOIN posts p ON o.post_id = p.id
+                 WHERE o.id = ?""", (order_id,))
+    buyer_info = c.fetchone()
+    if buyer_info and buyer_info[1]:
+        send_email(buyer_info[0], 'Refund Issued - ME-Tii', 
+                  f'Your refund of ${refund_amount:.2f} for "{buyer_info[2]}" has been processed. The refund will appear on your payment method within 5-10 business days.')
+    
     conn.commit()
     conn.close()
     

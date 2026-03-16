@@ -24,6 +24,48 @@
         >{% if session.get('lang') == 'de' %}Profil bearbeiten{% else %}Edit
         Profile{% endif %}</a
       >
+      
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>{% if session.get('lang') == 'de' %}Benachrichtigungseinstellungen{% else %}Notification Settings{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="/settings/notifications">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="form-check mb-2">
+              <input type="checkbox" class="form-check-input" id="email_notifications" name="email_notifications" {% if notification_prefs and notification_prefs.email_notifications %}checked{% endif %} />
+              <label class="form-check-label" for="email_notifications">
+                {% if session.get('lang') == 'de' %}E-Mail-Benachrichtigungen aktivieren{% else %}Enable email notifications{% endif %}
+              </label>
+            </div>
+            <div class="form-check mb-2">
+              <input type="checkbox" class="form-check-input" id="notify_order" name="notify_order" {% if notification_prefs and notification_prefs.notify_order %}checked{% endif %} />
+              <label class="form-check-label" for="notify_order">
+                {% if session.get('lang') == 'de' %}Bestellbenachrichtigungen (Versand, Lieferung){% else %}Order notifications (shipped, delivered){% endif %}
+              </label>
+            </div>
+            <div class="form-check mb-2">
+              <input type="checkbox" class="form-check-input" id="notify_return" name="notify_return" {% if notification_prefs and notification_prefs.notify_return %}checked{% endif %} />
+              <label class="form-check-label" for="notify_return">
+                {% if session.get('lang') == 'de' %}Rückgabebenachrichtigungen{% else %}Return notifications{% endif %}
+              </label>
+            </div>
+            <div class="form-check mb-2">
+              <input type="checkbox" class="form-check-input" id="notify_dispute" name="notify_dispute" {% if notification_prefs and notification_prefs.notify_dispute %}checked{% endif %} />
+              <label class="form-check-label" for="notify_dispute">
+                {% if session.get('lang') == 'de' %}Streitfallbenachrichtigungen{% else %}Dispute notifications{% endif %}
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input type="checkbox" class="form-check-input" id="notify_message" name="notify_message" {% if notification_prefs and notification_prefs.notify_message %}checked{% endif %} />
+              <label class="form-check-label" for="notify_message">
+                {% if session.get('lang') == 'de' %}Nachrichtenbenachrichtigungen{% else %}Message notifications{% endif %}
+              </label>
+            </div>
+            <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Speichern{% else %}Save{% endif %}</button>
+          </form>
+        </div>
+      </div>
       {% endif %} {% if description %}
       <p class="lead">{{ description }}</p>
       {% endif %} {% if username == 'admin' and is_owner %}
