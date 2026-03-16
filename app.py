@@ -440,8 +440,13 @@ def inject_user():
 
 @app.route('/test_email')
 def test_email():
+    app.logger.info("Test email route accessed")
     if 'user_id' not in session:
+        app.logger.info("Not logged in, redirecting to login")
         return redirect('/login')
+    
+    username = session.get('username') or 'admin'
+    app.logger.info(f"User: {username}, user_id: {session.get('user_id')}")
     
     # Get email from database
     conn = sqlite3.connect('database.db')
@@ -451,20 +456,24 @@ def test_email():
     conn.close()
     
     user_email = user[0] if user else None
+    app.logger.info(f"User email: {user_email}")
     
     if not user_email:
         flash('No email address on your account. Please contact admin.', 'danger')
-        return redirect('/profile/' + session.get('username', ''))
+        return redirect('/profile/' + username)
     
+    app.logger.info(f"Sending email to {user_email}")
     success = send_email(user_email, 'Test Email - ME-Tii', 
                         'This is a test email from ME-Tii Marketplace. If you received this, email is working!')
+    app.logger.info(f"Email send result: {success}")
     
     if success:
         flash(f'Test email sent to {user_email}!', 'success')
     else:
         flash('Failed to send test email. Check logs or environment variables.', 'danger')
     
-    return redirect('/profile/' + session.get('username', ''))
+    app.logger.info("Redirecting to profile")
+    return redirect('/profile/' + username)
 
 @app.route('/terms')
 def terms():
