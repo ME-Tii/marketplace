@@ -432,7 +432,15 @@ def test_email():
     if 'user_id' not in session:
         return redirect('/login')
     
-    user_email = session.get('email')
+    # Get email from database
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT email FROM users WHERE id = ?", (session['user_id'],))
+    user = c.fetchone()
+    conn.close()
+    
+    user_email = user[0] if user else None
+    
     if not user_email:
         flash('No email address on your account. Please contact admin.', 'danger')
         return redirect('/profile/' + session.get('username', ''))
