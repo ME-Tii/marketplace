@@ -237,6 +237,35 @@ def init_db():
         c.execute("ALTER TABLE orders ADD COLUMN dispute_resolution TEXT")
     except sqlite3.OperationalError:
         pass
+    # Return fields
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN return_status TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN return_reason TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN return_response TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN return_tracking_number TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN return_requested_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN return_shipped_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN return_completed_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
     # Shipping addresses
     c.execute('''CREATE TABLE IF NOT EXISTS addresses
                  (id INTEGER PRIMARY KEY, user_id INTEGER, order_id INTEGER,
@@ -2082,14 +2111,15 @@ def order_detail(order_id):
                  buyer.username, buyer.email,
                  seller.username, seller.email,
                  a.full_name, a.street, a.city, a.state, a.zip_code, a.country, a.phone,
-                 o.dispute_reason, o.dispute_response, o.dispute_opened_at, o.dispute_resolved_at, o.dispute_resolution
+                 o.dispute_reason, o.dispute_response, o.dispute_opened_at, o.dispute_resolved_at, o.dispute_resolution,
+                 o.return_status, o.return_reason, o.return_response, o.return_tracking_number, o.return_requested_at, o.return_shipped_at, o.return_completed_at
                  FROM orders o
                  JOIN posts p ON o.post_id = p.id
                  JOIN users buyer ON o.buyer_id = buyer.id
                  JOIN users seller ON o.seller_id = seller.id
                  LEFT JOIN addresses a ON a.order_id = o.id AND a.user_id = o.buyer_id
                  WHERE o.id = ? AND (o.buyer_id = ? OR o.seller_id = ?)""", 
-               (order_id, session['user_id'], session['user_id']))
+                (order_id, session['user_id'], session['user_id']))
     order = c.fetchone()
     conn.close()
     
@@ -2350,6 +2380,168 @@ def admin_dispute_detail(order_id):
     conn.close()
     
     return render_template('admin_dispute_detail.html', order=order, unread_messages=get_unread_messages_count(session.get('user_id')))
+
+# Return routes
+@app.route('/order/<int:order_id>/return', methods=['POST'])
+def request_return(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    reason = request.form.get('reason')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT buyer_id, seller_id, status, return_status FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[2] not in ['shipped', 'delivered']:
+        flash('Cannot request return for this order status.', 'warning')
+        conn.close()
+        return redirect(f'/order/{order_id}')
+    
+    if order[3] in ['requested', 'approved']:
+        flash('Return already requested.', 'warning')
+        conn.close()
+        return redirect(f'/order/{order_id}')
+    
+    c.execute("""UPDATE orders SET 
+                 return_status = 'requested', 
+                 return_reason = ?,
+                 return_requested_at = CURRENT_TIMESTAMP 
+                 WHERE id = ?""", (reason, order_id))
+    conn.commit()
+    conn.close()
+    
+    flash('Return requested! The seller will review your request.', 'success')
+    return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/return/respond', methods=['POST'])
+def respond_return(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    action = request.form.get('action')
+    response = request.form.get('response')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT seller_id, return_status FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[1] != 'requested':
+        conn.close()
+        flash('No return request to respond to.', 'warning')
+        return redirect(f'/order/{order_id}')
+    
+    if action == 'approve':
+        new_status = 'approved'
+    else:
+        new_status = 'rejected'
+    
+    c.execute("""UPDATE orders SET 
+                 return_status = ?, 
+                 return_response = ?
+                 WHERE id = ?""", (new_status, response, order_id))
+    conn.commit()
+    conn.close()
+    
+    flash(f'Return {new_status}!', 'success')
+    return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/return/mark_shipped', methods=['POST'])
+def mark_return_shipped(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    tracking_number = request.form.get('tracking_number')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT buyer_id, return_status FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[1] != 'approved':
+        conn.close()
+        flash('Return must be approved first.', 'warning')
+        return redirect(f'/order/{order_id}')
+    
+    c.execute("""UPDATE orders SET 
+                 return_tracking_number = ?,
+                 return_shipped_at = CURRENT_TIMESTAMP 
+                 WHERE id = ?""", (tracking_number, order_id))
+    conn.commit()
+    conn.close()
+    
+    flash('Return shipment marked! The seller will process your refund.', 'success')
+    return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/return/refund', methods=['POST'])
+def refund_return(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT seller_id, return_status, stripe_payment_id, amount FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    # Only seller or admin can issue refund
+    if session.get('username') != 'admin' and order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[1] not in ['approved', 'shipped_back']:
+        conn.close()
+        flash('Return must be approved before refund.', 'warning')
+        return redirect(f'/order/{order_id}')
+    
+    # Process Stripe refund if payment exists
+    if order[2] and app.config.get('STRIPE_SECRET_KEY'):
+        try:
+            stripe.Refund.create(payment_intent=order[2])
+        except Exception as e:
+            flash(f'Stripe refund failed: {str(e)}', 'danger')
+            conn.close()
+            return redirect(f'/order/{order_id}')
+    
+    c.execute("""UPDATE orders SET 
+                 return_status = 'completed',
+                 return_completed_at = CURRENT_TIMESTAMP,
+                 status = 'refunded'
+                 WHERE id = ?""", (order_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Refund issued! Return completed.', 'success')
+    return redirect(f'/order/{order_id}')
 
 # One-time migration: update image paths
 conn = sqlite3.connect('database.db')

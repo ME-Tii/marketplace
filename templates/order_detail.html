@@ -138,6 +138,107 @@
   </div>
   {% endif %}
 
+  {# Return Section - for buyers #}
+  {% if order[5] in ['shipped', 'delivered'] and session.get('user_id') == order[2] and not order[30] %}
+  <div class="card mt-4 border-warning">
+    <div class="card-header bg-warning">
+      <h5>{% if session.get('lang') == 'de' %}Artikel zurücksenden{% else %}Request Return{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/order/{{ order[0] }}/return">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Grund für Rückgabe{% else %}Reason for return{% endif %}</label>
+          <textarea class="form-control" name="reason" rows="3" required placeholder="{% if session.get('lang') == 'de' %}Erklären Sie das Problem...{% else %}Explain the issue...{% endif %}"></textarea>
+        </div>
+        <button type="submit" class="btn btn-warning">{% if session.get('lang') == 'de' %}Rückgabe beantragen{% else %}Request Return{% endif %}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Return Status Display - for both buyer and seller #}
+  {% if order[30] %}
+  <div class="alert alert-{% if order[30] == 'requested' %}warning{% elif order[30] == 'approved' %}info{% elif order[30] == 'rejected' %}danger{% elif order[30] == 'completed' %}success{% else %}secondary{% endif %} mt-4">
+    <h5>
+      {% if session.get('lang') == 'de' %}Rückgabestatus: {% else %}Return Status: {% endif %}
+      {% if order[30] == 'requested' %}{% if session.get('lang') == 'de' %}Ausstehend{% else %}Pending Approval{% endif %}
+      {% elif order[30] == 'approved' %}{% if session.get('lang') == 'de' %}Genehmigt{% else %}Approved - Ship Item Back{% endif %}
+      {% elif order[30] == 'rejected' %}{% if session.get('lang') == 'de' %}Abgelehnt{% else %}Rejected{% endif %}
+      {% elif order[30] == 'shipped_back' %}{% if session.get('lang') == 'de' %}Zurückgesendet{% else %}Item Shipped Back{% endif %}
+      {% elif order[30] == 'completed' %}{% if session.get('lang') == 'de' %}Abgeschlossen{% else %}Completed{% endif %}
+      {% endif %}
+    </h5>
+    {% if order[31] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Käufer-Grund:{% else %}Buyer's Reason:{% endif %}</strong> {{ order[31] }}</p>
+    {% endif %}
+    {% if order[32] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Verkäufer-Antwort:{% else %}Seller's Response:{% endif %}</strong> {{ order[32] }}</p>
+    {% endif %}
+    {% if order[35] %}
+    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Rückgabe angefordert am{% else %}Return requested on{% endif %}: {{ order[35] }}</small></p>
+    {% endif %}
+    {% if order[36] %}
+    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Zurückgesendet am{% else %}Item shipped back on{% endif %}: {{ order[36] }}</small></p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# Buyer: Ship return after approval #}
+  {% if order[30] == 'approved' and session.get('user_id') == order[2] %}
+  <div class="card mt-4 border-info">
+    <div class="card-header bg-info text-white">
+      <h5>{% if session.get('lang') == 'de' %}Artikel zurücksenden{% else %}Ship Returned Item{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/order/{{ order[0] }}/return/mark_shipped">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Tracking-Nummer (optional){% else %}Tracking Number (optional){% endif %}</label>
+          <input type="text" class="form-control" name="tracking_number" placeholder="{% if session.get('lang') == 'de' %}Geben Sie die Tracking-Nummer ein...{% else %}Enter tracking number...{% endif %}" />
+        </div>
+        <button type="submit" class="btn btn-info">{% if session.get('lang') == 'de' %}Als zurückgesendet markieren{% else %}Mark as Shipped Back{% endif %}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Seller: Approve/Reject return #}
+  {% if order[30] == 'requested' and session.get('user_id') == order[3] %}
+  <div class="card mt-4 border-warning">
+    <div class="card-header bg-warning">
+      <h5>{% if session.get('lang') == 'de' %}Rückgabe antworten{% else %}Respond to Return Request{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/order/{{ order[0] }}/return/respond">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Antwort (optional){% else %}Response (optional){% endif %}</label>
+          <textarea class="form-control" name="response" rows="2" placeholder="{% if session.get('lang') == 'de' %}Optionale Antwort...{% else %}Optional response...{% endif %}"></textarea>
+        </div>
+        <button type="submit" name="action" value="approve" class="btn btn-success">{% if session.get('lang') == 'de' %}Genehmigen{% else %}Approve Return{% endif %}</button>
+        <button type="submit" name="action" value="reject" class="btn btn-danger">{% if session.get('lang') == 'de' %}Ablehnen{% else %}Reject Return{% endif %}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Seller: Issue refund after return shipped #}
+  {% if order[30] in ['approved', 'shipped_back'] and session.get('user_id') == order[3] %}
+  <div class="card mt-4 border-success">
+    <div class="card-header bg-success text-white">
+      <h5>{% if session.get('lang') == 'de' %}Rückerstattung verarbeiten{% else %}Process Refund{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <p>{% if session.get('lang') == 'de' %}Klicken Sie hier, um dem Käufer eine Rückerstattung zu gewähren.{% else %}Click here to issue refund to buyer.{% endif %}</p>
+      <form method="POST" action="/order/{{ order[0] }}/return/refund">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Rückerstattung gewähren{% else %}Issue Refund{% endif %}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
   {% if order[5] == 'delivered' %}
   <div class="alert alert-success mt-4">
     <h5>{% if session.get('lang') == 'de' %}Bestellung abgeschlossen{% else %}Order Completed{% endif %}</h5>
