@@ -108,7 +108,7 @@
       <h5>{% if session.get('lang') == 'de' %}Problem melden{% else %}Report Issue{% endif %}</h5>
     </div>
     <div class="card-body">
-      <form method="POST" action="/open_dispute/{{ order[0] }}">
+      <form method="POST" action="/order/{{ order[0] }}/dispute">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="mb-3">
           <label class="form-label">{% if session.get('lang') == 'de' %}Grund des Problems{% else %}Reason for dispute{% endif %}</label>
