@@ -469,6 +469,27 @@ def test_email():
     
     return redirect('/profile/' + username)
 
+@app.route('/update_admin_email')
+def update_admin_email():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    # Only allow admin to update
+    if session.get('username') != 'admin':
+        return 'Access denied', 403
+    
+    new_email = request.args.get('email')
+    if not new_email:
+        return 'Email parameter required', 400
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("UPDATE users SET email = ? WHERE username = 'admin'", (new_email,))
+    conn.commit()
+    conn.close()
+    
+    return f'Admin email updated to {new_email}'
+
 @app.route('/terms')
 def terms():
     return render_template('terms.html', unread_messages=get_unread_messages_count(session.get('user_id')))
