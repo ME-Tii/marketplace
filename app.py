@@ -102,7 +102,11 @@ def allowed_file(filename):
 
 def send_email(to_email, subject, body, html_body=None):
     if not app.config.get('MAIL_PASSWORD'):
-        app.logger.warning("Email not configured - MAIL_PASSWORD not set")
+        app.logger.warning(f"Email not configured - MAIL_PASSWORD not set. Cannot send to {to_email}")
+        return False
+    
+    if not to_email:
+        app.logger.warning(f"No recipient email provided for: {subject}")
         return False
     
     try:
@@ -422,6 +426,26 @@ def inject_user():
             return {'current_username': user[0]}
     return {'current_username': None}
 
+
+@app.route('/test_email')
+def test_email():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    user_email = session.get('email')
+    if not user_email:
+        flash('No email address on your account. Please contact admin.', 'danger')
+        return redirect('/profile/' + session.get('username', ''))
+    
+    success = send_email(user_email, 'Test Email - ME-Tii', 
+                        'This is a test email from ME-Tii Marketplace. If you received this, email is working!')
+    
+    if success:
+        flash(f'Test email sent to {user_email}!', 'success')
+    else:
+        flash('Failed to send test email. Check logs or environment variables.', 'danger')
+    
+    return redirect('/profile/' + session.get('username', ''))
 
 @app.route('/terms')
 def terms():
