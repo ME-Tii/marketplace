@@ -350,7 +350,7 @@
                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>
                   </form>
                 </div>
-                {% elif session.get('user_id') and session.get('user_id') != post[8] %}
+                {% elif not is_owner %}
                 <div class="mt-2">
                   {% set qty = post[8]|default('1')|int %}
                   {% set active = post[9]|default('1')|int %}
