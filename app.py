@@ -28,8 +28,8 @@ app.config['STRIPE_PUBLIC_KEY'] = os.environ.get('STRIPE_PUBLIC_KEY', 'pk_test_5
 app.config['STRIPE_SECRET_KEY'] = os.environ.get('STRIPE_SECRET_KEY', '')
 app.config['STRIPE_CONNECT_CLIENT_ID'] = os.environ.get('STRIPE_CONNECT_CLIENT_ID', '')
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'thomasseitz22@gmail.com')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
 app.config['ADMIN_EMAIL'] = 'thomasseitz22@gmail.com'
@@ -127,10 +127,12 @@ def send_email(to_email, subject, body, html_body=None):
             msg.attach(part2)
         
         app.logger.info("Connecting to SMTP server...")
-        server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'], timeout=10)
+        if app.config.get('MAIL_USE_SSL'):
+            server = smtplib.SMTP_SSL(app.config['MAIL_SERVER'], app.config['MAIL_PORT'], timeout=10)
+        else:
+            server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'], timeout=10)
+            server.starttls()
         server.set_debuglevel(1)
-        server.starttls()
-        server.timeout = 10
         app.logger.info("Logging in to SMTP...")
         server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
         app.logger.info("Sending message...")
