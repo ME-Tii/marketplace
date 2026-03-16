@@ -127,9 +127,10 @@ def send_email(to_email, subject, body, html_body=None):
             msg.attach(part2)
         
         app.logger.info("Connecting to SMTP server...")
-        server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
-        server.set_debuglevel(1)  # Add debug output
+        server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'], timeout=10)
+        server.set_debuglevel(1)
         server.starttls()
+        server.timeout = 10
         app.logger.info("Logging in to SMTP...")
         server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
         app.logger.info("Sending message...")
@@ -458,8 +459,14 @@ def test_email():
         flash('No email address on your account.', 'danger')
         return redirect('/profile/' + username)
     
-    # Skip actual email sending for now - just show success
-    flash(f'Test would send to: {user_email}', 'success')
+    success = send_email(user_email, 'Test Email - ME-Tii', 
+                        'This is a test email from ME-Tii Marketplace.')
+    
+    if success:
+        flash(f'Test email sent to {user_email}!', 'success')
+    else:
+        flash('Failed to send test email. Check Render logs.', 'danger')
+    
     return redirect('/profile/' + username)
 
 @app.route('/terms')
