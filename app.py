@@ -101,6 +101,10 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
 
 def send_email(to_email, subject, body, html_body=None):
+    app.logger.info(f"Attempting to send email to {to_email}")
+    app.logger.info(f"MAIL_PASSWORD set: {bool(app.config.get('MAIL_PASSWORD'))}")
+    app.logger.info(f"MAIL_USERNAME: {app.config.get('MAIL_USERNAME')}")
+    
     if not app.config.get('MAIL_PASSWORD'):
         app.logger.warning(f"Email not configured - MAIL_PASSWORD not set. Cannot send to {to_email}")
         return False
@@ -122,15 +126,22 @@ def send_email(to_email, subject, body, html_body=None):
             part2 = MIMEText(html_body, 'html')
             msg.attach(part2)
         
-        with smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
-            server.starttls()
-            server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
-            server.send_message(msg)
+        app.logger.info("Connecting to SMTP server...")
+        server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
+        server.set_debuglevel(1)  # Add debug output
+        server.starttls()
+        app.logger.info("Logging in to SMTP...")
+        server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+        app.logger.info("Sending message...")
+        server.send_message(msg)
+        server.quit()
         
         app.logger.info(f"Email sent to {to_email}: {subject}")
         return True
     except Exception as e:
         app.logger.error(f"Failed to send email to {to_email}: {str(e)}")
+        import traceback
+        app.logger.error(traceback.format_exc())
         return False
 
 def get_user_notification_prefs(user_id):
