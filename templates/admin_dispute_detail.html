@@ -16,13 +16,13 @@
           <h5>{% if session.get('lang') == 'de' %}Bestellinformationen{% else %}Order Information{% endif %}</h5>
         </div>
         <div class="card-body">
-          <p><strong>{% if session.get('lang') == 'de' %}Artikel:{% else %}Item:{% endif %}</strong> {{ order[25] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Artikel:{% else %}Item:{% endif %}</strong> {{ order[29] }}</p>
           <p><strong>{% if session.get('lang') == 'de' %}Betrag:{% else %}Amount:{% endif %}</strong> ${{ order[4] }}</p>
           <p><strong>{% if session.get('lang') == 'de' %}Status:{% else %}Status:{% endif %}</strong> 
             <span class="badge bg-{% if order[5] == 'paid' %}warning{% elif order[5] == 'shipped' %}info{% elif order[5] == 'delivered' %}success{% elif order[5] == 'refunded' %}danger{% else %}secondary{% endif %}">{{ order[5] }}</span>
           </p>
-          <p><strong>{% if session.get('lang') == 'de' %}Käufer:{% else %}Buyer:{% endif %}</strong> {{ order[22] }}</p>
-          <p><strong>{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %}</strong> {{ order[23] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Käufer:{% else %}Buyer:{% endif %}</strong> {{ order[27] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %}</strong> {{ order[28] }}</p>
           {% if order[7] %}
           <p><strong>{% if session.get('lang') == 'de' %}Tracking-Nummer:{% else %}Tracking Number:{% endif %}</strong> {{ order[7] }}</p>
           {% endif %}
@@ -67,21 +67,21 @@
           <h5>{% if session.get('lang') == 'de' %}Käufer-Beschwerde{% else %}Buyer's Complaint{% endif %}</h5>
         </div>
         <div class="card-body">
-          {% if order[25] %}
-          <p>{{ order[25] }}</p>
+          {% if order[13] %}
+          <p>{{ order[13] }}</p>
           {% else %}
           <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Beschwerde{% else %}No complaint recorded{% endif %}</p>
           {% endif %}
         </div>
       </div>
 
-      {% if order[26] %}
+      {% if order[14] %}
       <div class="card mb-4">
         <div class="card-header bg-info text-white">
           <h5>{% if session.get('lang') == 'de' %}Verkäufer-Antwort{% else %}Seller's Response{% endif %}</h5>
         </div>
         <div class="card-body">
-          <p>{{ order[26] }}</p>
+          <p>{{ order[14] }}</p>
         </div>
       </div>
       {% endif %}
