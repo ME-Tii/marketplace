@@ -246,7 +246,7 @@
   </div>
   {% endif %}
 
-  {% if order[18] %}
+  {% if order[18] and order[19] %}
   <div class="card mt-4">
     <div class="card-header">
       <h5>{% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping Address{% endif %}</h5>

@@ -1936,7 +1936,8 @@ def process_checkout(post_id):
               (post_id, session['user_id'], post[2], total_amount, delivery_method))
     order_id = c.lastrowid
     
-    if save_address and full_name:
+    # Only save address for shipping orders, not local pickup
+    if save_address and full_name and delivery_method == 'shipping':
         c.execute("""INSERT INTO addresses (user_id, order_id, full_name, street, city, state, zip_code, country, phone)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                   (session['user_id'], order_id, full_name, street, city, state, zip_code, country, phone))
