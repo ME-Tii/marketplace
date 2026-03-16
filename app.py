@@ -69,7 +69,7 @@ def stripe_webhook():
             c = conn.cursor()
             c.execute("UPDATE orders SET status = 'paid', stripe_payment_id = ? WHERE id = ?",
                      (payment_id, order_id))
-            c.execute("""SELECT o.buyer_id, o.seller_id, o.amount, p.title, buyer.email, seller.email, buyer.notify_order, seller.notify_order
+            c.execute("""SELECT o.buyer_id, o.seller_id, o.amount, p.title, buyer.email, seller.email, buyer.email_notifications, buyer.notify_order, seller.email_notifications, seller.notify_order
                          FROM orders o
                          JOIN posts p ON o.post_id = p.id
                          JOIN users buyer ON o.buyer_id = buyer.id
@@ -79,15 +79,17 @@ def stripe_webhook():
             if order_info:
                 buyer_email = order_info[4]
                 seller_email = order_info[5]
-                buyer_notify = order_info[6]
-                seller_notify = order_info[7]
+                buyer_email_notif = order_info[6]
+                buyer_notify = order_info[7]
+                seller_email_notif = order_info[8]
+                seller_notify = order_info[9]
                 post_title = order_info[3]
                 amount = order_info[2]
                 
-                if buyer_notify:
+                if buyer_email_notif and buyer_notify:
                     send_email(buyer_email, 'Payment Confirmed - ME-Tii', 
                               f'Your payment of ${amount:.2f} for "{post_title}" has been confirmed. The seller will ship your order soon.')
-                if seller_notify:
+                if seller_email_notif and seller_notify:
                     send_email(seller_email, 'New Order - ME-Tii', 
                               f'You have a new order for "{post_title}". Payment of ${amount:.2f} received. Please ship the item.')
             conn.commit()
@@ -2334,15 +2336,15 @@ def mark_shipped(order_id):
     c.execute("UPDATE orders SET status = 'shipped', tracking_number = ?, shipped_at = CURRENT_TIMESTAMP WHERE id = ?", (tracking_number, order_id))
     
     # Get buyer email for notification
-    c.execute("""SELECT buyer.email, buyer.notify_order, p.title
+    c.execute("""SELECT buyer.email, buyer.email_notifications, buyer.notify_order, p.title
                  FROM orders o
                  JOIN users buyer ON o.buyer_id = buyer.id
                  JOIN posts p ON o.post_id = p.id
                  WHERE o.id = ?""", (order_id,))
     buyer_info = c.fetchone()
-    if buyer_info and buyer_info[1]:
+    if buyer_info and buyer_info[1] and buyer_info[2]:
         send_email(buyer_info[0], 'Your Order Has Been Shipped - ME-Tii', 
-                  f'Your order "{buyer_info[2]}" has been shipped! Tracking: {tracking_number or "Not provided"}')
+                  f'Your order "{buyer_info[3]}" has been shipped! Tracking: {tracking_number or "Not provided"}')
     
     conn.commit()
     conn.close()
@@ -2619,15 +2621,15 @@ def request_return(order_id):
                  WHERE id = ?""", (reason, order_id))
     
     # Get seller and admin info for notifications
-    c.execute("""SELECT seller.email, seller.notify_return, p.title
+    c.execute("""SELECT seller.email, seller.email_notifications, seller.notify_return, p.title
                  FROM orders o
                  JOIN users seller ON o.seller_id = seller.id
                  JOIN posts p ON o.post_id = p.id
                  WHERE o.id = ?""", (order_id,))
     seller_info = c.fetchone()
-    if seller_info and seller_info[1]:
+    if seller_info and seller_info[1] and seller_info[2]:
         send_email(seller_info[0], 'Return Requested - ME-Tii', 
-                  f'A buyer has requested a return for "{seller_info[2]}". Please review the request in your order details.')
+                  f'A buyer has requested a return for "{seller_info[3]}". Please review the request in your order details.')
     
     # Notify admin
     send_email(app.config['ADMIN_EMAIL'], 'New Return Request - ME-Tii', 
@@ -2679,19 +2681,19 @@ def respond_return(order_id):
                  WHERE id = ?""", (new_status, response, 1 if seller_at_fault else 0, order_id))
     
     # Get buyer info for notification
-    c.execute("""SELECT buyer.email, buyer.notify_return, p.title
+    c.execute("""SELECT buyer.email, buyer.email_notifications, buyer.notify_return, p.title
                  FROM orders o
                  JOIN users buyer ON o.buyer_id = buyer.id
                  JOIN posts p ON o.post_id = p.id
                  WHERE o.id = ?""", (order_id,))
     buyer_info = c.fetchone()
-    if buyer_info and buyer_info[1]:
+    if buyer_info and buyer_info[1] and buyer_info[2]:
         if new_status == 'approved':
             send_email(buyer_info[0], 'Return Approved - ME-Tii', 
-                      f'Your return request for "{buyer_info[2]}" has been APPROVED. Please ship the item back to the seller.')
+                      f'Your return request for "{buyer_info[3]}" has been APPROVED. Please ship the item back to the seller.')
         else:
             send_email(buyer_info[0], 'Return Rejected - ME-Tii', 
-                      f'Your return request for "{buyer_info[2]}" has been REJECTED. Contact the seller for more details.')
+                      f'Your return request for "{buyer_info[3]}" has been REJECTED. Contact the seller for more details.')
     
     conn.commit()
     conn.close()
@@ -2796,15 +2798,15 @@ def refund_return(order_id):
                  WHERE id = ?""", (order_id,))
     
     # Notify buyer of refund
-    c.execute("""SELECT buyer.email, buyer.notify_return, p.title
+    c.execute("""SELECT buyer.email, buyer.email_notifications, buyer.notify_return, p.title
                  FROM orders o
                  JOIN users buyer ON o.buyer_id = buyer.id
                  JOIN posts p ON o.post_id = p.id
                  WHERE o.id = ?""", (order_id,))
     buyer_info = c.fetchone()
-    if buyer_info and buyer_info[1]:
+    if buyer_info and buyer_info[1] and buyer_info[2]:
         send_email(buyer_info[0], 'Refund Issued - ME-Tii', 
-                  f'Your refund of ${refund_amount:.2f} for "{buyer_info[2]}" has been processed. The refund will appear on your payment method within 5-10 business days.')
+                  f'Your refund of ${refund_amount:.2f} for "{buyer_info[3]}" has been processed. The refund will appear on your payment method within 5-10 business days.')
     
     conn.commit()
     conn.close()
