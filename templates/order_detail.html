@@ -270,17 +270,21 @@
   </div>
   {% endif %}
 
-  {% if order[18] and order[19] %}
+  {% if order[18] %}
   <div class="card mt-4">
     <div class="card-header">
       <h5>{% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping Address{% endif %}</h5>
     </div>
     <div class="card-body">
       <p><strong>{{ order[18] }}</strong></p>
+      {% if order[19] %}
       <p>{{ order[19] }}</p>
       <p>{{ order[20] }}, {{ order[21] }} {{ order[22] }}</p>
       <p>{{ order[23] }}</p>
+      {% endif %}
+      {% if order[24] %}
       <p><strong>{% if session.get('lang') == 'de' %}Telefon:{% else %}Phone:{% endif %}</strong> {{ order[24] }}</p>
+      {% endif %}
     </div>
   </div>
   {% endif %}
