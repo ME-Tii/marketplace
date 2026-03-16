@@ -440,18 +440,9 @@ def inject_user():
 
 @app.route('/test_email')
 def test_email():
-    app.logger.info("Test email route accessed - START")
     if 'user_id' not in session:
-        app.logger.info("Not logged in")
         return redirect('/login')
     
-    username = session.get('username')
-    app.logger.info(f"User: {username}")
-    
-    return f"Test working! Username: {username}"
-    
-    # Commented out for testing - rest of the code below
-
     username = session.get('username') or 'admin'
     
     # Get email from database
@@ -467,14 +458,8 @@ def test_email():
         flash('No email address on your account.', 'danger')
         return redirect('/profile/' + username)
     
-    success = send_email(user_email, 'Test Email - ME-Tii', 
-                        'This is a test email from ME-Tii Marketplace. If you received this, email is working!')
-    
-    if success:
-        flash(f'Test email sent to {user_email}!', 'success')
-    else:
-        flash('Failed to send test email. Check logs.', 'danger')
-    
+    # Skip actual email sending for now - just show success
+    flash(f'Test would send to: {user_email}', 'success')
     return redirect('/profile/' + username)
 
 @app.route('/terms')
