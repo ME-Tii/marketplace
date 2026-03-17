@@ -4,6 +4,7 @@
   <div class="row">
     <div class="col-md-12">
       <h1>
+        <img src="{{ profile_picture or '/static/pictures/placeholder.png' }}" class="rounded-circle me-2" style="width: 50px; height: 50px; object-fit: cover" alt="{{ username }}">
         {{ username }}{% if session.get('lang') == 'de' %} Profil{% else %}'s
         Profile{% endif %}
       </h1>
