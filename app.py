@@ -2322,6 +2322,7 @@ def payment_success():
         c.execute("UPDATE posts SET is_active = 0 WHERE id = ? AND quantity <= 0", (post_id,))
         
         # Send email notifications
+        app.logger.info(f"Sending payment emails for order {order_id}")
         c.execute("""SELECT o.buyer_id, o.seller_id, o.amount, p.title, buyer.email, seller.email,
                      COALESCE(buyer.email_notifications, 1), COALESCE(buyer.notify_order, 1),
                      COALESCE(seller.email_notifications, 1), COALESCE(seller.notify_order, 1)
@@ -2331,6 +2332,7 @@ def payment_success():
                      JOIN users seller ON o.seller_id = seller.id
                      WHERE o.id = ?""", (order_id,))
         order_info = c.fetchone()
+        app.logger.info(f"Order info: {order_info}")
         
         if order_info:
             buyer_email = order_info[4]
@@ -2341,6 +2343,9 @@ def payment_success():
             seller_notify = order_info[9]
             post_title = order_info[3]
             amount = order_info[2]
+            
+            app.logger.info(f"Buyer email: {buyer_email}, notify: {buyer_email_notif and buyer_notify}")
+            app.logger.info(f"Seller email: {seller_email}, notify: {seller_email_notif and seller_notify}")
             
             if buyer_email_notif and buyer_notify:
                 send_email(buyer_email, 'Payment Confirmed - ME-Tii', 
