@@ -17,6 +17,8 @@ import stripe
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 logging.basicConfig(level=logging.INFO)
 
@@ -104,49 +106,25 @@ def allowed_file(filename):
 
 def send_email(to_email, subject, body, html_body=None):
     app.logger.info(f"Attempting to send email to {to_email}")
-    app.logger.info(f"MAIL_PASSWORD set: {bool(app.config.get('MAIL_PASSWORD'))}")
-    app.logger.info(f"MAIL_USERNAME: {app.config.get('MAIL_USERNAME')}")
-    
-    if not app.config.get('MAIL_PASSWORD'):
-        app.logger.warning(f"Email not configured - MAIL_PASSWORD not set. Cannot send to {to_email}")
-        return False
     
     if not to_email:
         app.logger.warning(f"No recipient email provided for: {subject}")
         return False
     
     try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From'] = app.config.get('DEFAULT_FROM_EMAIL', 'ME-Tii Marketplace <noreply@me-tii.com>')
-        msg['To'] = to_email
+        message = Mail(
+            from_email=app.config.get('DEFAULT_FROM_EMAIL', 'ME-Tii Marketplace <noreply@me-tii.com>'),
+            to_emails=to_email,
+            subject=subject,
+            html_content=html_body or body)
         
-        part1 = MIMEText(body, 'plain')
-        msg.attach(part1)
+        sg = SendGridAPIClient(app.config.get('MAIL_PASSWORD'))
+        response = sg.send(message)
         
-        if html_body:
-            part2 = MIMEText(html_body, 'html')
-            msg.attach(part2)
-        
-        app.logger.info("Connecting to SMTP server...")
-        if app.config.get('MAIL_USE_SSL'):
-            server = smtplib.SMTP_SSL(app.config['MAIL_SERVER'], app.config['MAIL_PORT'], timeout=10)
-        else:
-            server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'], timeout=10)
-            server.starttls()
-        server.set_debuglevel(1)
-        app.logger.info("Logging in to SMTP...")
-        server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
-        app.logger.info("Sending message...")
-        server.send_message(msg)
-        server.quit()
-        
-        app.logger.info(f"Email sent to {to_email}: {subject}")
+        app.logger.info(f"Email sent to {to_email}: {subject} (status: {response.status_code})")
         return True
     except Exception as e:
         app.logger.error(f"Failed to send email to {to_email}: {str(e)}")
-        import traceback
-        app.logger.error(traceback.format_exc())
         return False
 
 def get_user_notification_prefs(user_id):
