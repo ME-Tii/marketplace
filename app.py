@@ -35,7 +35,7 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'thomasseitz22@gmail.com')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
 app.config['ADMIN_EMAIL'] = 'thomasseitz22@gmail.com'
-app.config['DEFAULT_FROM_EMAIL'] = 'ME-Tii Marketplace <noreply@me-tii.com>'
+app.config['DEFAULT_FROM_EMAIL'] = 'thomasseitz22@gmail.com'
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 csrf = CSRFProtect(app)
 if os.environ.get('FLASK_ENV') == 'production':
