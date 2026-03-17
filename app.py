@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, render_template, session, flash, send_from_directory, Response
+from flask import Flask, request, redirect, url_for, render_template, session, flash, send_from_directory, Response, g
 import sqlite3
 import os
 import logging
@@ -100,6 +100,29 @@ def stripe_webhook():
             conn.close()
     
     return '', 200
+
+@app.before_request
+def inject_user_alerts():
+    if 'user_id' not in session:
+        return
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    # Check for open disputes (as buyer or seller)
+    c.execute("SELECT COUNT(*) FROM orders WHERE (buyer_id = ? OR seller_id = ?) AND dispute_status = 'open'", 
+              (session['user_id'], session['user_id']))
+    open_disputes = c.fetchone()[0]
+    
+    # Check for reports on user's posts
+    c.execute("SELECT COUNT(*) FROM reports r JOIN posts p ON r.post_id = p.id WHERE p.user_id = ?", 
+              (session['user_id'],))
+    post_reports = c.fetchone()[0]
+    
+    conn.close()
+    
+    g.open_disputes = open_disputes
+    g.post_reports = post_reports
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
