@@ -129,7 +129,10 @@
                   class="nav-link text-nowrap"
                   href="/profile/{{ current_username }}"
                   >{% if session.get('lang') == 'de' %}Mein Profil{% else %}My
-                  Profile{% endif %}</a
+                  Profile{% endif %}{% if g.get('open_disputes', 0) > 0 or g.get('post_reports', 0) > 0 %}<span
+                    class="badge bg-warning ms-1"
+                    >{% if g.get('open_disputes', 0) > 0 %}{{ g.open_disputes }}{% endif %}{% if g.get('post_reports', 0) > 0 %}{% if g.get('open_disputes', 0) > 0 %}+{% endif %}{{ g.post_reports }}{% endif %}</span
+                  >{% endif %}</a
                 >
               </li>
               <li class="nav-item">
