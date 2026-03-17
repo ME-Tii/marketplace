@@ -47,17 +47,6 @@
     {% block extra_css %}{% endblock %}
   </head>
   <body>
-    {% if session.get('user_id') and (g.get('open_disputes', 0) > 0 or g.get('post_reports', 0) > 0) %}
-    <div class="alert alert-warning alert-dismissible fade show m-0" role="alert">
-      {% if g.get('open_disputes', 0) > 0 %}
-      <a href="/orders" class="alert-link">{% if session.get('lang') == 'de' %}Sie haben {{ g.open_disputes }} offene Streitfälle!{% else %}You have {{ g.open_disputes }} open dispute(s)!{% endif %}</a>
-      {% endif %}
-      {% if g.get('post_reports', 0) > 0 %}
-      <a href="/profile/{{ session.get('username') }}" class="alert-link">{% if session.get('lang') == 'de' %}Ihre Beiträge wurden gemeldet!{% else %}Your posts have been reported!{% endif %}</a>
-      {% endif %}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endif %}
     <div class="content-wrapper">
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
