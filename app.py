@@ -91,10 +91,10 @@ def stripe_webhook():
                 amount = order_info[2]
                 
                 if buyer_email_notif and buyer_notify:
-                    send_email(buyer_email, 'Payment Confirmed - ME-Tii', 
+                    send_email(buyer_email, 'Payment Confirmed - Marketplace', 
                               f'Your payment of ${amount:.2f} for "{post_title}" has been confirmed. The seller will ship your order soon.')
                 if seller_email_notif and seller_notify:
-                    send_email(seller_email, 'New Order - ME-Tii', 
+                    send_email(seller_email, 'New Order - Marketplace', 
                               f'You have a new order for "{post_title}". Payment of ${amount:.2f} received. Please ship the item.')
             conn.commit()
             conn.close()
@@ -458,7 +458,7 @@ def test_email():
         flash('No email address on your account.', 'danger')
         return redirect('/profile/' + username)
     
-    success = send_email(user_email, 'Test Email - ME-Tii', 
+    success = send_email(user_email, 'Test Email - Marketplace', 
                         'This is a test email from ME-Tii Marketplace.')
     
     if success:
@@ -2026,7 +2026,7 @@ def send_message(username):
         if not notify or notify[0]:
             c.execute("SELECT username FROM users WHERE id = ?", (session['user_id'],))
             sender = c.fetchone()
-            send_email(app.config['ADMIN_EMAIL'], 'New Message Received - ME-Tii', 
+            send_email(app.config['ADMIN_EMAIL'], 'New Message Received - Marketplace', 
                       f'You have a new message from {sender[0] if sender else "Unknown"}: {message[:100]}...')
     
     conn.commit()
@@ -2326,10 +2326,10 @@ def payment_success():
             app.logger.info(f"Seller email: {seller_email}, notify: {seller_email_notif and seller_notify}")
             
             if buyer_email_notif and buyer_notify:
-                send_email(buyer_email, 'Payment Confirmed - ME-Tii', 
+                send_email(buyer_email, 'Payment Confirmed - Marketplace', 
                           f'Your payment of ${amount:.2f} for "{post_title}" has been confirmed. The seller will ship your order soon.')
             if seller_email_notif and seller_notify:
-                send_email(seller_email, 'New Order - ME-Tii', 
+                send_email(seller_email, 'New Order - Marketplace', 
                           f'You have a new order for "{post_title}". Payment of ${amount:.2f} received. Please ship the item.')
         
         conn.commit()
@@ -2442,7 +2442,7 @@ def mark_shipped(order_id):
                  WHERE o.id = ?""", (order_id,))
     buyer_info = c.fetchone()
     if buyer_info and buyer_info[1] and buyer_info[2]:
-        send_email(buyer_info[0], 'Your Order Has Been Shipped - ME-Tii', 
+        send_email(buyer_info[0], 'Your Order Has Been Shipped - Marketplace', 
                   f'Your order "{buyer_info[3]}" has been shipped! Tracking: {tracking_number or "Not provided"}')
     
     conn.commit()
@@ -2543,7 +2543,7 @@ def open_dispute(order_id):
     order_info = c.fetchone()
     
     # Notify admin
-    send_email(app.config['ADMIN_EMAIL'], 'New Dispute Opened - ME-Tii', 
+    send_email(app.config['ADMIN_EMAIL'], 'New Dispute Opened - Marketplace', 
               f'A dispute has been opened for order #{order_id}: "{order_info[0] if order_info else "Unknown"}". Reason: {reason}')
     
     conn.commit()
@@ -2727,11 +2727,11 @@ def request_return(order_id):
                  WHERE o.id = ?""", (order_id,))
     seller_info = c.fetchone()
     if seller_info and seller_info[1] and seller_info[2]:
-        send_email(seller_info[0], 'Return Requested - ME-Tii', 
+        send_email(seller_info[0], 'Return Requested - Marketplace', 
                   f'A buyer has requested a return for "{seller_info[3]}". Please review the request in your order details.')
     
     # Notify admin
-    send_email(app.config['ADMIN_EMAIL'], 'New Return Request - ME-Tii', 
+    send_email(app.config['ADMIN_EMAIL'], 'New Return Request - Marketplace', 
               f'A return request has been made for order #{order_id}: "{seller_info[2] if seller_info else "Unknown"}"')
     
     conn.commit()
@@ -2788,10 +2788,10 @@ def respond_return(order_id):
     buyer_info = c.fetchone()
     if buyer_info and buyer_info[1] and buyer_info[2]:
         if new_status == 'approved':
-            send_email(buyer_info[0], 'Return Approved - ME-Tii', 
+            send_email(buyer_info[0], 'Return Approved - Marketplace', 
                       f'Your return request for "{buyer_info[3]}" has been APPROVED. Please ship the item back to the seller.')
         else:
-            send_email(buyer_info[0], 'Return Rejected - ME-Tii', 
+            send_email(buyer_info[0], 'Return Rejected - Marketplace', 
                       f'Your return request for "{buyer_info[3]}" has been REJECTED. Contact the seller for more details.')
     
     conn.commit()
@@ -2904,7 +2904,7 @@ def refund_return(order_id):
                  WHERE o.id = ?""", (order_id,))
     buyer_info = c.fetchone()
     if buyer_info and buyer_info[1] and buyer_info[2]:
-        send_email(buyer_info[0], 'Refund Issued - ME-Tii', 
+        send_email(buyer_info[0], 'Refund Issued - Marketplace', 
                   f'Your refund of ${refund_amount:.2f} for "{buyer_info[3]}" has been processed. The refund will appear on your payment method within 5-10 business days.')
     
     conn.commit()
