@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Bewertungen von{% else %}Ratings for{% endif %} {{ username }} - Marketplace{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <h2>{% if session.get('lang') == 'de' %}Bewertungen für{% else %}Ratings for{% endif %} <a href="/profile/{{ username }}">{{ username }}</a></h2>
+      
+      <div class="card mt-4">
+        <div class="card-body text-center">
+          <h1 class="display-4">{{ avg_rating }}/5</h1>
+          <p class="text-muted">
+            {% if session.get('lang') == 'de' %}
+              Basierend auf {{ total_ratings }} Bewertung{% if total_ratings != 1 %}en{% endif %}
+            {% else %}
+              Based on {{ total_ratings }} rating{% if total_ratings != 1 %}s{% endif %}
+            {% endif %}
+          </p>
+          <div class="mb-2">
+            {% for i in range(5) %}
+              {% if i < avg_rating|int %}
+                <span class="text-warning fs-4">⭐</span>
+              {% else %}
+                <span class="text-muted fs-4">☆</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      
+      <h4 class="mt-4">{% if session.get('lang') == 'de' %}Alle Bewertungen{% else %}All Reviews{% endif %}</h4>
+      
+      {% if ratings %}
+        {% for r in ratings %}
+        <div class="card mt-3">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <strong>{{ r[3] }}</strong>
+                <span class="text-muted ms-2">{{ r[2][:10] }}</span>
+              </div>
+              <div>
+                {% for i in range(r[0]) %}
+                  <span class="text-warning">⭐</span>
+                {% endfor %}
+              </div>
+            </div>
+            {% if r[1] %}
+            <p class="mt-2 mb-0">{{ r[1] }}</p>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted mt-3">{% if session.get('lang') == 'de' %}Noch keine Bewertungen.{% else %}No reviews yet.{% endif %}</p>
+      {% endif %}
+      
+      <a href="/profile/{{ username }}" class="btn btn-secondary mt-4">
+        {% if session.get('lang') == 'de' %}Zurück zum Profil{% else %}Back to Profile{% endif %}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

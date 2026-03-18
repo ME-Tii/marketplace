@@ -8,6 +8,16 @@
         {{ username }}{% if session.get('lang') == 'de' %} Profil{% else %}'s
         Profile{% endif %}
       </h1>
+      {% if total_ratings > 0 %}
+      <div class="mb-2">
+        <a href="/profile/{{ username }}/ratings" class="text-warning text-decoration-none">
+          {% for i in range(5) %}
+            {% if i < avg_rating|int %}⭐{% else %}☆{% endif %}
+          {% endfor %}
+          <span class="text-muted ms-1">({{ avg_rating }}/5 - {{ total_ratings }} {% if session.get('lang') == 'de' %}Bewertungen{% else %}ratings{% endif %})</span>
+        </a>
+      </div>
+      {% endif %}
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
       {% for category, message in messages %}

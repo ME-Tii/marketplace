@@ -533,6 +533,8 @@ def init_db():
         pass  # column already exists
     c.execute('''CREATE TABLE IF NOT EXISTS reports
                     (id INTEGER PRIMARY KEY, post_id INTEGER, reporter_id INTEGER, reason TEXT, description TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS ratings
+                    (id INTEGER PRIMARY KEY, order_id INTEGER UNIQUE NOT NULL, seller_id INTEGER NOT NULL, buyer_id INTEGER NOT NULL, rating INTEGER NOT NULL, review TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (order_id) REFERENCES orders(id), FOREIGN KEY (seller_id) REFERENCES users(id), FOREIGN KEY (buyer_id) REFERENCES users(id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS groups
                     (id INTEGER PRIMARY KEY, name TEXT NOT NULL, description TEXT, creator_id INTEGER NOT NULL, is_private BOOLEAN DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (creator_id) REFERENCES users(id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS group_members
@@ -1177,6 +1179,12 @@ def profile(username):
     stripe_account_id = user[3] or None
     is_owner = session.get('user_id') == user_id
     
+    # Get seller rating stats
+    c.execute("SELECT COUNT(*), COALESCE(AVG(rating), 0) FROM ratings WHERE seller_id = ?", (user_id,))
+    rating_stats = c.fetchone()
+    total_ratings = rating_stats[0]
+    avg_rating = round(rating_stats[1], 1) if rating_stats[1] else 0
+    
     # Regular posts - show all to owner, only active to others
     if is_owner:
         posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active, posts.is_featured, posts.featured_until, posts.local_pickup, posts.shipping_available FROM posts WHERE posts.user_id = ?"
@@ -1245,7 +1253,7 @@ def profile(username):
     conn.close()
     success = request.args.get('success')
     total_pages = (total_users + per_page - 1) // per_page if total_users > 0 else 1
-    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query, notification_prefs=notification_prefs)
+    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query, notification_prefs=notification_prefs, total_ratings=total_ratings, avg_rating=avg_rating)
 
 @app.route('/settings/notifications', methods=['POST'])
 def update_notifications():
@@ -1509,6 +1517,12 @@ def import_data():
             c.execute("INSERT OR IGNORE INTO reports (id, post_id, reporter_id, reason, description, timestamp) VALUES (?, ?, ?, ?, ?, ?)", r)
         except sqlite3.IntegrityError:
             pass
+    ratings = data.get('ratings', [])
+    for rating in ratings:
+        try:
+            c.execute("INSERT OR IGNORE INTO ratings (id, order_id, seller_id, buyer_id, rating, review, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", rating)
+        except sqlite3.IntegrityError:
+            pass
     conn.commit()
     conn.close()
     success_msg = 'Data imported successfully'
@@ -1573,6 +1587,8 @@ def export_all():
         noticed_users = c.fetchall()
         c.execute("SELECT id, post_id, reporter_id, reason, description, timestamp FROM reports")
         reports = c.fetchall()
+        c.execute("SELECT id, order_id, seller_id, buyer_id, rating, review, created_at FROM ratings")
+        ratings = c.fetchall()
         conn.close()
         data = {
             'users': users,
@@ -1585,7 +1601,8 @@ def export_all():
             'addresses': addresses,
             'notices': notices,
             'noticed_users': noticed_users,
-            'reports': reports
+            'reports': reports,
+            'ratings': ratings
         }
         import json
         zip_file.writestr('data_export.json', json.dumps(data, default=str))
@@ -3184,6 +3201,76 @@ def mark_delivered(order_id):
     
     flash('Order marked as delivered!', 'success')
     return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/rate', methods=['POST'])
+def submit_rating(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    rating = request.form.get('rating')
+    review = request.form.get('review', '')
+    
+    if not rating or int(rating) < 1 or int(rating) > 5:
+        flash('Please select a valid rating (1-5 stars).', 'danger')
+        return redirect(f'/order/{order_id}')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT buyer_id, seller_id, status FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[2] != 'delivered':
+        flash('You can only rate completed orders.', 'warning')
+        conn.close()
+        return redirect(f'/order/{order_id}')
+    
+    c.execute("SELECT id FROM ratings WHERE order_id = ?", (order_id,))
+    if c.fetchone():
+        conn.close()
+        flash('You have already rated this order.', 'warning')
+        return redirect(f'/order/{order_id}')
+    
+    c.execute("INSERT INTO ratings (order_id, seller_id, buyer_id, rating, review) VALUES (?, ?, ?, ?, ?)",
+              (order_id, order[1], order[0], int(rating), review))
+    conn.commit()
+    conn.close()
+    
+    flash('Thank you for your rating!', 'success')
+    return redirect(f'/order/{order_id}')
+
+@app.route('/profile/<username>/ratings')
+def seller_ratings(username):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT id FROM users WHERE username = ?", (username,))
+    user = c.fetchone()
+    
+    if not user:
+        conn.close()
+        return 'User not found', 404
+    
+    c.execute("""SELECT r.rating, r.review, r.created_at, buyer.username 
+                 FROM ratings r 
+                 JOIN users buyer ON r.buyer_id = buyer.id 
+                 WHERE r.seller_id = ? 
+                 ORDER BY r.created_at DESC""", (user[0],))
+    ratings = c.fetchall()
+    
+    c.execute("SELECT COUNT(*), COALESCE(AVG(rating), 0) FROM ratings WHERE seller_id = ?", (user[0],))
+    stats = c.fetchone()
+    conn.close()
+    
+    return render_template('seller_ratings.html', username=username, ratings=ratings, 
+                         total_ratings=stats[0], avg_rating=round(stats[1], 1),
+                         unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/order/<int:order_id>/dispute', methods=['POST'])
 def open_dispute(order_id):

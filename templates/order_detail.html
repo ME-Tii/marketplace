@@ -323,6 +323,34 @@
   </div>
   {% endif %}
 
+  {% if order[5] == 'delivered' and session.get('user_id') == order[2] %}
+  <div class="card mt-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+      <h5>{% if session.get('lang') == 'de' %}Verkäufer bewerten{% else %}Rate Seller{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <p>{% if session.get('lang') == 'de' %}Wie war Ihre Erfahrung mit diesem Verkäufer?{% else %}How was your experience with this seller?{% endif %}</p>
+      <form method="POST" action="/order/{{ order[0] }}/rate">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Bewertung{% else %}Rating{% endif %}</label>
+          <div class="rating-stars">
+            {% for i in range(5, 0, -1) %}
+            <input type="radio" class="btn-check" name="rating" id="star{{ i }}" value="{{ i }}" required>
+            <label class="btn btn-outline-warning" for="star{{ i }}">{{ i }} ⭐</label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Bewertung (optional){% else %}Review (optional){% endif %}</label>
+          <textarea class="form-control" name="review" rows="3" placeholder="{% if session.get('lang') == 'de' %}Teilen Sie Ihre Erfahrung...{% else %}Share your experience...{% endif %}"></textarea>
+        </div>
+        <button type="submit" class="btn btn-warning">{% if session.get('lang') == 'de' %}Bewertung absenden{% else %}Submit Rating{% endif %}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
   {% if order[19] %}
   <div class="card mt-4">
     <div class="card-header">

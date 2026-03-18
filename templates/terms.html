@@ -68,22 +68,30 @@
         <li>{% if session.get('lang') == 'de' %}Veröffentlichung schädlicher Inhalte{% else %}Publishing harmful content{% endif %}</li>
       </ul>
       
-      <h4>{% if session.get('lang') == 'de' %}12. Geistiges Eigentum{% else %}12. Intellectual Property{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}12. Verkäufer-Bewertungen{% else %}12. Seller Ratings{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Nach Abschluss einer Bestellung (Lieferung oder Abholung) können Käufer den Verkäufer bewerten. Die Bewertung umfasst:{% else %}After completing an order (delivery or pickup), buyers can rate the seller. The rating includes:{% endif %}</p>
+      <ul>
+        <li>{% if session.get('lang') == 'de' %}Sternbewertung (1-5 Sterne){% else %}Star rating (1-5 stars){% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}Optionale schriftliche Bewertung{% else %}Optional written review{% endif %}</li>
+      </ul>
+      <p>{% if session.get('lang') == 'de' %}Bewertungen werden auf dem Profil des Verkäufers angezeigt und dienen als Vertrauensindikator für zukünftige Käufer. Jeder Käufer kann nur einmal pro Bestellung bewerten.{% else %}Ratings are displayed on the seller's profile and serve as a trust indicator for future buyers. Each buyer can only rate once per order.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}13. Geistiges Eigentum{% else %}13. Intellectual Property{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Sie behalten das Eigentum an den Inhalten, die Sie veröffentlichen. Durch das Posten von Inhalten gewähren Sie uns eine nicht-exklusive, gebührenfreie Lizenz zur Nutzung dieser Inhalte. Sie garantieren, dass Sie über die Rechte an den von Ihnen veröffentlichten Inhalten verfügen.{% else %}You retain ownership of the content you post. By posting content, you grant us a non-exclusive, royalty-free license to use such content. You warrant that you have the rights to the content you publish.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}13. Haftungsausschluss{% else %}13. Disclaimer{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}14. Haftungsausschluss{% else %}14. Disclaimer{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Die Plattform wird "wie besehen" bereitgestellt. Wir übernehmen keine Gewährleistung für die Verfügbarkeit, Zuverlässigkeit oder Genauigkeit der Plattform. Wir haften nicht für indirekte, zufällige oder Folgeschäden.{% else %}The platform is provided "as is". We do not warrant that the platform will be available, reliable, or accurate. We are not liable for indirect, incidental, or consequential damages.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}14. Datenschutz{% else %}14. Privacy{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}15. Datenschutz{% else %}15. Privacy{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Wir erheben und verarbeiten personenbezogene Daten gemäß unserer Datenschutzerklärung. Durch die Nutzung der Plattform stimmen Sie dieser Verarbeitung zu.{% else %}We collect and process personal data in accordance with our Privacy Policy. By using the platform, you consent to such processing.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}15. Kündigung{% else %}15. Termination{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}16. Kündigung{% else %}16. Termination{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Wir behalten uns das Recht vor, Konten zu sperren oder zu löschen, die gegen diese Nutzungsbedingungen verstoßen. Sie können Ihr Konto jederzeit durch Kontaktaufnahme mit uns kündigen.{% else %}We reserve the right to suspend or delete accounts that violate these Terms of Service. You may delete your account at any time by contacting us.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}16. Änderungen{% else %}16. Changes{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}17. Änderungen{% else %}17. Changes{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Wir behalten uns das Recht vor, diese Nutzungsbedingungen jederzeit zu ändern. Änderungen werden auf dieser Seite veröffentlicht.{% else %}We reserve the right to modify these Terms of Service at any time. Changes will be posted on this page.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}17. Kontakt{% else %}17. Contact{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}18. Kontakt{% else %}18. Contact{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Bei Fragen zu diesen Nutzungsbedingungen kontaktieren Sie uns bitte über die Plattform.{% else %}If you have any questions about these Terms of Service, please contact us through the platform.{% endif %}</p>
       
       <a href="/dashboard" class="btn btn-primary mt-3">{% if session.get('lang') == 'de' %}Zurück zum Marktplatz{% else %}Back to Marketplace{% endif %}</a>
