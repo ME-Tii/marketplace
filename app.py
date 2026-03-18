@@ -682,6 +682,10 @@ def dispute_policy():
 def shipping_policy():
     return render_template('shipping_policy.html', unread_messages=get_unread_messages_count(session.get('user_id')))
 
+@app.route('/cookie-policy')
+def cookie_policy():
+    return render_template('cookie_policy.html', unread_messages=get_unread_messages_count(session.get('user_id')))
+
 @app.route('/connect/stripe')
 def connect_stripe():
     if 'user_id' not in session:

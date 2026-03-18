@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Cookie-Richtlinie{% else %}Cookie Policy{% endif %} - Marketplace{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h1>{% if session.get('lang') == 'de' %}Cookie-Richtlinie{% else %}Cookie Policy{% endif %}</h1>
+  
+  <p class="lead">{% if session.get('lang') == 'de' %}
+  Diese Cookie-Richtlinie erklärt, wie wir Cookies und ähnliche Technologien auf unserer Website verwenden.
+  {% else %}
+  This Cookie Policy explains how we use cookies and similar technologies on our website.
+  {% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}1. Was sind Cookies?{% else %}1. What are Cookies?{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}
+  Cookies sind kleine Textdateien, die auf Ihrem Gerät gespeichert werden, wenn Sie unsere Website besuchen. Sie helfen uns, Ihre Erfahrung zu verbessern und unsere Dienste effizienter zu gestalten.
+  {% else %}
+  Cookies are small text files stored on your device when you visit our website. They help us improve your experience and make our services more efficient.
+  {% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}2. Wie wir Cookies verwenden{% else %}2. How We Use Cookies{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}Wir verwenden Cookies für:{% else %}We use cookies for:{% endif %}</p>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Erinnerung an Ihre Cookie-Präferenzen{% else %}Remembering your cookie preferences{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Sitzungsverwaltung (Anmeldung, Warenkorb){% else %}Session management (login, shopping cart){% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Analyse der Website-Nutzung{% else %}Analyzing website usage{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Personalisierung Ihrer Erfahrung{% else %}Personalizing your experience{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}3. Arten von Cookies{% else %}3. Types of Cookies{% endif %}</h3>
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{% if session.get('lang') == 'de' %}Notwendige Cookies{% else %}Essential Cookies{% endif %}</h5>
+      <p class="card-text">{% if session.get('lang') == 'de' %}
+      Diese Cookies sind für die grundlegenden Funktionen der Website erforderlich. Sie ermöglichen Ihnen die Anmeldung und die Nutzung unserer Dienste.
+      {% else %}
+      These cookies are required for the basic functioning of the website. They enable you to log in and use our services.
+      {% endif %}</p>
+    </div>
+  </div>
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{% if session.get('lang') == 'de' %}Präferenz-Cookies{% else %}Preference Cookies{% endif %}</h5>
+      <p class="card-text">{% if session.get('lang') == 'de' %}
+      Diese Cookies speichern Ihre Präferenzen wie Sprach- und Regionseinstellungen.
+      {% else %}
+      These cookies store your preferences such as language and region settings.
+      {% endif %}</p>
+    </div>
+  </div>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}4. Ihre Rechte{% else %}4. Your Rights{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}Sie haben das Recht:{% else %}You have the right to:{% endif %}</p>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Cookies abzulehnen{% else %}Reject cookies{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Ihre Cookie-Präferenzen zu ändern{% else %}Change your cookie preferences{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Ihren Browser so einzustellen, dass er Cookies blockiert{% else %}Set your browser to block cookies{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}5. Cookies ablehnen{% else %}5. Managing Cookies{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}
+  Wenn Sie Cookies ablehnen möchten, können Sie auf "Ablehnen" klicken, wenn Sie das Cookie-Banner sehen. Sie können Ihre Cookie-Einstellungen auch in Ihrem Browser ändern.
+  {% else %}
+  If you wish to reject cookies, you can click "Reject" when you see the cookie banner. You can also change your cookie settings in your browser.
+  {% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}6. Drittanbieter-Cookies{% else %}6. Third-Party Cookies{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}
+  Unsere Website kann Drittanbieter-Cookies von Diensten wie Stripe (Zahlungen) verwenden. Diese unterliegen den eigenen Datenschutzrichtlinien dieser Dienste.
+  {% else %}
+  Our website may use third-party cookies from services like Stripe (payments). These are subject to the privacy policies of those respective services.
+  {% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}7. Änderungen{% else %}7. Updates{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}
+  Wir können diese Cookie-Richtlinie von Zeit zu Zeit aktualisieren. Änderungen werden auf dieser Seite veröffentlicht.
+  {% else %}
+  We may update this Cookie Policy from time to time. Any changes will be posted on this page.
+  {% endif %}</p>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}8. Kontakt{% else %}8. Contact{% endif %}</h3>
+  <p>{% if session.get('lang') == 'de' %}
+  Bei Fragen zu dieser Cookie-Richtlinie kontaktieren Sie uns bitte über unsere <a href="/chat/admin">Help</a> Seite.
+  {% else %}
+  If you have questions about this Cookie Policy, please contact us via our <a href="/chat/admin">Help</a> page.
+  {% endif %}</p>
+</div>
+{% endblock %}
