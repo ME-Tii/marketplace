@@ -1108,9 +1108,9 @@ def profile(username):
     
     # Regular posts - show all to owner, only active to others
     if is_owner:
-        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active, posts.is_featured, posts.featured_until FROM posts WHERE posts.user_id = ?"
+        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active, posts.is_featured, posts.featured_until, posts.local_pickup, posts.shipping_available FROM posts WHERE posts.user_id = ?"
     else:
-        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active, posts.is_featured, posts.featured_until FROM posts WHERE posts.user_id = ? AND (posts.is_active = 1 OR posts.is_active IS NULL)"
+        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active, posts.is_featured, posts.featured_until, posts.local_pickup, posts.shipping_available FROM posts WHERE posts.user_id = ? AND (posts.is_active = 1 OR posts.is_active IS NULL)"
     params = [user_id]
     if query:
         posts_query += " AND (posts.title LIKE ? OR posts.description LIKE ?)"
@@ -2464,6 +2464,51 @@ def messages():
     new_unread = get_unread_messages_count(session['user_id'])
     conn.close()
     return render_template('messages.html', conversations=conversations, conversations_unread=conversations_unread, selected_chat=selected_chat, messages=messages_data, unread_messages=new_unread, post_preview=post_preview)
+
+@app.route('/buy_now/<int:post_id>')
+def buy_now(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT id, user_id, title, price, local_pickup, shipping_available, shipping_cost, quantity, is_active FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post:
+        conn.close()
+        return 'Post not found', 404
+    
+    if not post[1] or not post[3]:
+        conn.close()
+        return 'Post not available', 400
+    
+    if post[7] == 0 or (post[8] is not None and post[8] <= 0):
+        conn.close()
+        flash('This item is no longer available.', 'danger')
+        return redirect(f'/post/{post_id}')
+    
+    if post[1] == session['user_id']:
+        conn.close()
+        flash('You cannot buy your own item.', 'warning')
+        return redirect(f'/post/{post_id}')
+    
+    # Only local pickup available - skip checkout form
+    if post[4] == 1 and (post[5] == 0 or post[5] is None):
+        total_amount = post[3]
+        transaction_fee = total_amount * 0.10
+        
+        c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee) VALUES (?, ?, ?, ?, 'pending', 'local_pickup', 0, ?)",
+                  (post_id, session['user_id'], post[1], total_amount, transaction_fee))
+        order_id = c.lastrowid
+        conn.commit()
+        conn.close()
+        
+        session['current_order_id'] = order_id
+        return redirect(f'/create_checkout_session/{post_id}')
+    
+    conn.close()
+    return redirect(f'/checkout/{post_id}')
 
 @app.route('/checkout/<int:post_id>')
 def checkout(post_id):

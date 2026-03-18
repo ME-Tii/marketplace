@@ -396,8 +396,14 @@
                 <div class="mt-2">
                   {% set qty = post[8]|default('1')|int %}
                   {% set active = post[9]|default('1')|int %}
-                  {% if active == 1 and qty > 0 and post[6] %}
-                  <a href="/checkout/{{ post[0] }}" class="btn btn-sm btn-success">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy Now{% endif %}</a>
+                  {% set local_pickup = post[12]|default(1)|int %}
+                  {% set shipping_available = post[13]|default(0)|int %}
+                  {% if active == 1 and qty > 0 and post[6] and (local_pickup or shipping_available) %}
+                    {% if local_pickup and not shipping_available %}
+                    <a href="/buy_now/{{ post[0] }}" class="btn btn-sm btn-success">{% if session.get('lang') == 'de' %}Jetzt kaufen{% else %}Buy Now{% endif %}</a>
+                    {% else %}
+                    <a href="/checkout/{{ post[0] }}" class="btn btn-sm btn-success">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy Now{% endif %}</a>
+                    {% endif %}
                   {% endif %}
                   <a href="/messages?chat={{ username }}&post_id={{ post[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Nachricht{% else %}Message{% endif %}</a>
                   <a href="/add_notice/{{ post[0] }}" class="btn btn-sm btn-info">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
