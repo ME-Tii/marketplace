@@ -1414,6 +1414,12 @@ def import_data():
             c.execute("INSERT OR IGNORE INTO noticed_users (user_id, noticed_user_id) VALUES (?, ?)", nu)
         except sqlite3.IntegrityError:
             pass
+    reports = data.get('reports', [])
+    for r in reports:
+        try:
+            c.execute("INSERT OR IGNORE INTO reports (id, post_id, reporter_id, reason, description, timestamp) VALUES (?, ?, ?, ?, ?, ?)", r)
+        except sqlite3.IntegrityError:
+            pass
     conn.commit()
     conn.close()
     success_msg = 'Data imported successfully'
@@ -1468,6 +1474,8 @@ def export_all():
         notices = c.fetchall()
         c.execute("SELECT user_id, noticed_user_id FROM noticed_users")
         noticed_users = c.fetchall()
+        c.execute("SELECT id, post_id, reporter_id, reason, description, timestamp FROM reports")
+        reports = c.fetchall()
         conn.close()
         data = {
             'users': users,
@@ -1479,7 +1487,8 @@ def export_all():
             'orders': orders,
             'addresses': addresses,
             'notices': notices,
-            'noticed_users': noticed_users
+            'noticed_users': noticed_users,
+            'reports': reports
         }
         import json
         zip_file.writestr('data_export.json', json.dumps(data, default=str))
