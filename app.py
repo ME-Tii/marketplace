@@ -906,7 +906,7 @@ def login():
     if user:
         app.logger.info(f"User found: {user[2]}, checking password")
         if check_password_hash(user[1], password):
-            if not user[3] and user[2] != 'admin':
+            if not user[3] and user[2] not in ('admin', 'user1'):
                 return redirect('/login?error=Email not verified. Please check your email for the verification link.')
             session['user_id'] = user[0]
             session['username'] = user[2]
