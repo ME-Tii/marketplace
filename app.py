@@ -2711,6 +2711,19 @@ def feature_post(post_id):
             return redirect(f'/post/{post_id}')
     
     conn.close()
+    
+    # Free for admin
+    if session.get('username') == 'admin':
+        from datetime import timedelta
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        featured_until = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S.%f')
+        c.execute("UPDATE posts SET is_featured = 1, featured_until = ? WHERE id = ?", (featured_until, post_id))
+        conn.commit()
+        conn.close()
+        flash('Your listing is now featured for 7 days!', 'success')
+        return redirect(f'/post/{post_id}')
+    
     return render_template('feature_checkout.html', post_id=post_id, title=post[1], price=FEATURED_PRICE, unread_messages=0)
 
 @app.route('/create_featured_session/<int:post_id>')
