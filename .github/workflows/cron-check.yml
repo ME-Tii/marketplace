@@ -1,0 +1,13 @@
+name: Daily Order Check
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run at midnight UTC daily
+  workflow_dispatch:  # Allow manual trigger in Actions tab
+
+jobs:
+  check-orders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call order check endpoint
+        run: curl -f "https://marketplace-g2xq.onrender.com/cron/check-orders?key=${{ secrets.CRON_SECRET_KEY }}"
