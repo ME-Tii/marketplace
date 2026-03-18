@@ -3,6 +3,7 @@ import sqlite3
 import os
 import logging
 import mimetypes
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
@@ -100,6 +101,134 @@ def stripe_webhook():
             conn.close()
     
     return '', 200
+
+@app.route('/cron/check-orders', methods=['GET'])
+def check_unshipped_orders():
+    cron_key = os.environ.get('CRON_SECRET_KEY')
+    if cron_key and request.args.get('key') != cron_key:
+        return 'Unauthorized', 401
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    c.execute("""SELECT o.id, o.created_at, o.amount, p.title, seller.username, seller.email, 
+                 seller.email_notifications, seller.notify_order, o.reminder_count, 
+                 o.warning_sent_at, o.cancelled_at, o.stripe_payment_id, o.refund_attempts
+                 FROM orders o
+                 JOIN posts p ON o.post_id = p.id
+                 JOIN users seller ON o.seller_id = seller.id
+                 WHERE o.status = 'paid'
+                 ORDER BY o.created_at""")
+    orders = c.fetchall()
+    
+    processed = 0
+    errors = []
+    
+    for order in orders:
+        order_id = order[0]
+        created_at = order[1]
+        amount = order[2]
+        item_title = order[3]
+        seller_username = order[4]
+        seller_email = order[5]
+        seller_email_notif = order[6]
+        seller_notify = order[7]
+        reminder_count = order[8]
+        warning_sent_at = order[9]
+        cancelled_at = order[10]
+        stripe_payment_id = order[11]
+        refund_attempts = order[12]
+        
+        days_since_payment = (datetime.now() - datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S.%f')).days if created_at else 0
+        
+        if days_since_payment >= 7 and not cancelled_at:
+            c.execute("UPDATE orders SET status = 'auto_cancelled', cancelled_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
+            conn.commit()
+            
+            if seller_email_notif and seller_notify:
+                send_email(seller_email, 'Order Auto-Cancelled - Marketplace',
+                          f'Dear {seller_username}, order #{order_id} for "{item_title}" has been auto-cancelled due to no shipping activity within 7 days.\n\nA full refund of ${amount:.2f} will be processed for the buyer.')
+            
+            app.logger.info(f"Order #{order_id} auto-cancelled")
+            processed += 1
+            
+        elif days_since_payment >= 8 and cancelled_at and not stripe_payment_id is None:
+            item_price = amount
+            try:
+                if stripe_payment_id and app.config.get('STRIPE_SECRET_KEY'):
+                    stripe.Refund.create(payment_intent=stripe_payment_id, amount=int(item_price * 100))
+                    
+                    c.execute("UPDATE orders SET status = 'refunded' WHERE id = ?", (order_id,))
+                    conn.commit()
+                    
+                    c.execute("""SELECT buyer.email, buyer.email_notifications FROM orders o 
+                                 JOIN users buyer ON o.buyer_id = buyer.id WHERE o.id = ?""", (order_id,))
+                    buyer_info = c.fetchone()
+                    if buyer_info and buyer_info[1]:
+                        send_email(buyer_info[0], 'Refund Processed - Marketplace',
+                                  f'Your refund for order #{order_id} has been processed. ${item_price:.2f} has been refunded to your original payment method.\n\nAllow 5-10 business days for the refund to appear.')
+                    
+                    app.logger.info(f"Order #{order_id} auto-refunded ${item_price:.2f}")
+                    processed += 1
+                    
+            except Exception as e:
+                new_attempts = (refund_attempts or 0) + 1
+                c.execute("UPDATE orders SET refund_attempts = ? WHERE id = ?", (new_attempts, order_id))
+                conn.commit()
+                
+                if new_attempts >= 2:
+                    send_email(app.config['ADMIN_EMAIL'], 'Auto-Refund Failed - Marketplace',
+                              f'Admin, the auto-refund for order #{order_id} failed after {new_attempts} attempts.\n\nAmount: ${item_price:.2f}\nStripe Payment ID: {stripe_payment_id}\n\nError: {str(e)}\n\nPlease investigate and process manually.')
+                
+                app.logger.error(f"Order #{order_id} refund failed: {str(e)}")
+                errors.append(f"Order #{order_id}: {str(e)}")
+                
+        elif days_since_payment >= 8 and cancelled_at and stripe_payment_id is None:
+            item_price = amount
+            c.execute("UPDATE orders SET status = 'refunded' WHERE id = ?", (order_id,))
+            conn.commit()
+            
+            c.execute("""SELECT buyer.email, buyer.email_notifications FROM orders o 
+                         JOIN users buyer ON o.buyer_id = buyer.id WHERE o.id = ?""", (order_id,))
+            buyer_info = c.fetchone()
+            if buyer_info and buyer_info[1]:
+                send_email(buyer_info[0], 'Order Cancelled - Marketplace',
+                          f'Your order #{order_id} for "{item_title}" has been cancelled and refunded.\n\n${item_price:.2f} will be returned to your original payment method.\n\nAllow 5-10 business days for the refund to appear.')
+            
+            app.logger.info(f"Order #{order_id} marked as refunded (no Stripe payment)")
+            processed += 1
+            
+        elif days_since_payment >= 6 and not warning_sent_at and not cancelled_at:
+            c.execute("UPDATE orders SET warning_sent_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
+            conn.commit()
+            
+            if seller_email_notif and seller_notify:
+                send_email(seller_email, 'Final Warning: Order Will Be Cancelled - Marketplace',
+                          f'Dear {seller_username}, your order #{order_id} for "{item_title}" has not been shipped.\n\nThis order will be AUTO-CANCELLED in 24 hours and the buyer will receive a full refund.\n\nPlease ship immediately or contact us if you need assistance.')
+            
+            app.logger.info(f"Final warning sent for order #{order_id}")
+            processed += 1
+            
+        elif days_since_payment >= 3 and reminder_count < 3 and not cancelled_at:
+            days_remaining = 7 - days_since_payment
+            c.execute("UPDATE orders SET reminder_count = reminder_count + 1 WHERE id = ?", (order_id,))
+            conn.commit()
+            
+            if seller_email_notif and seller_notify:
+                send_email(seller_email, 'Reminder: Unshipped Order - Marketplace',
+                          f'Dear {seller_username}, you have an unshipped order for "{item_title}".\n\nPlease ship within {days_remaining} days to avoid cancellation.\n\nOrder #{order_id} - ${amount:.2f}')
+            
+            app.logger.info(f"Reminder {reminder_count + 1} sent for order #{order_id}")
+            processed += 1
+    
+    conn.close()
+    
+    result = f"Processed {processed} orders"
+    if errors:
+        result += f", {len(errors)} errors"
+    app.logger.info(result)
+    
+    return result, 200
 
 @app.before_request
 def inject_user_alerts():
@@ -407,6 +536,23 @@ def init_db():
         c.execute("ALTER TABLE orders ADD COLUMN seller_at_fault INTEGER DEFAULT 0")
     except sqlite3.OperationalError:
         pass
+    # Auto-cancel fields
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN reminder_count INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN warning_sent_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN cancelled_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN refund_attempts INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
     # Shipping addresses
     c.execute('''CREATE TABLE IF NOT EXISTS addresses
                  (id INTEGER PRIMARY KEY, user_id INTEGER, order_id INTEGER,
@@ -700,7 +846,6 @@ def robots_txt():
 @app.route('/sitemap.xml')
 def sitemap():
     from flask import Response
-    import datetime
     base_url = request.url_root.rstrip('/')
     urls = [
         {'loc': f'{base_url}/', 'lastmod': datetime.datetime.now().strftime('%Y-%m-%d'), 'changefreq': 'daily', 'priority': '1.0'},

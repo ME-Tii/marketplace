@@ -50,12 +50,22 @@
 
   <h3 class="mt-4">{% if session.get('lang') == 'de' %}5. Zeitrahmen{% else %}5. Timeline{% endif %}</h3>
   <ul>
-    <li>{% if session.get('lang') == 'de' %}Verkäufer hat 3 Tage Zeit zu antworten{% else %}Seller has 3 days to respond to dispute{% endif %}</li>
-    <li>{% if session.get('lang') == 'de' %}Admin wird innerhalb von 7 Tagen entscheiden{% else %}Admin will resolve within 7 days of dispute opening{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Verkäufer hat 48 Stunden Zeit zu antworten. Wenn keine Antwort, kann Admin basierend auf verfügbaren Beweisen entscheiden.{% else %}Seller has 48 hours to respond. If seller doesn't respond, admin may make a decision based on available evidence.{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Admin wird innerhalb von 3-5 Werktagen entscheiden.{% else %}Admin will resolve within 3-5 business days of dispute response.{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Erstattungen werden innerhalb von 5-10 Werktagen nach Lösung verarbeitet.{% else %}Refunds will be processed within 5-10 business days after resolution.{% endif %}</li>
     <li>{% if session.get('lang') == 'de' %}Entscheidung ist endgültig und bindend{% else %}Decision is final and binding{% endif %}</li>
   </ul>
 
-  <h3 class="mt-4">{% if session.get('lang') == 'de' %}6. Nach der Lösung{% else %}6. After Resolution{% endif %}</h3>
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}6. Versandrichtlinien{% else %}6. Shipping Guidelines{% endif %}</h3>
+  <ul>
+    <li>{% if session.get('lang') == 'de' %}Verkäufer müssen innerhalb von 7 Tagen nach Zahlungseingang versenden.{% else %}Sellers must ship within 7 days of payment received.{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Erinnerungen werden am 3., 4. und 5. Tag gesendet.{% else %}Reminders are sent on days 3, 4, and 5.{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Am 6. Tag wird eine letzte Warnung gesendet.{% else %}A final warning is sent on day 6.{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Am 7. Tag wird die Bestellung automatisch storniert.{% else %}On day 7, the order is automatically cancelled.{% endif %}</li>
+    <li>{% if session.get('lang') == 'de' %}Volle Erstattung wird innerhalb von 24 Stunden nach Stornierung verarbeitet.{% else %}Full refund is processed within 24 hours after cancellation.{% endif %}</li>
+  </ul>
+
+  <h3 class="mt-4">{% if session.get('lang') == 'de' %}7. Nach der Lösung{% else %}7. After Resolution{% endif %}</h3>
   <ul>
     <li>{% if session.get('lang') == 'de' %}Bei Erstattung: Bestellstatus ändert sich zu "erstattet"{% else %}If refunded, order status changes to "refunded"{% endif %}</li>
     <li>{% if session.get('lang') == 'de' %}Bei Auszahlung an Verkäufer: Käufer kann Artikel noch versenden, falls nicht erhalten{% else %}If released to seller, buyer can still ship item if not received{% endif %}</li>
