@@ -2761,7 +2761,7 @@ def request_return(order_id):
     seller_info = c.fetchone()
     if seller_info and seller_info[1] and seller_info[2]:
         send_email(seller_info[0], 'Return Requested - Marketplace', 
-                  f'A buyer has requested a return for "{seller_info[3]}". Please review the request in your order details.')
+                  f'A buyer has requested a return for "{seller_info[3]}".\n\nReason: {reason}')
     
     # Notify admin
     send_email(app.config['ADMIN_EMAIL'], 'New Return Request - Marketplace', 
