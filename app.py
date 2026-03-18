@@ -1442,9 +1442,15 @@ def export_all():
         # Add data
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute("SELECT id, username, email, password, description, profile_picture, stripe_account_id FROM users")
+        c.execute("""SELECT id, username, email, password, description, profile_picture, stripe_account_id, 
+                     email_notifications, notify_order, notify_dispute, notify_return, notify_message,
+                     return_address, email_verified, verification_token, verification_sent_at 
+                     FROM users""")
         users = c.fetchall()
-        c.execute("SELECT id, user_id, title, description, type, image, links, price, timestamp, local_pickup, shipping_available, shipping_cost FROM posts")
+        c.execute("""SELECT id, user_id, title, description, type, image, links, price, timestamp, 
+                     local_pickup, shipping_available, shipping_cost, quantity, is_active,
+                     is_featured, featured_until, featured_payment_id 
+                     FROM posts""")
         posts = c.fetchall()
         c.execute("SELECT id, sender_id, receiver_id, message, timestamp FROM messages")
         messages = c.fetchall()
