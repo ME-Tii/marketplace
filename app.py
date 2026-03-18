@@ -2812,6 +2812,7 @@ def respond_return(order_id):
     
     c.execute("""UPDATE orders SET 
                  return_status = ?, 
+                 status = 'delivered',
                  return_response = ?,
                  seller_at_fault = ?
                  WHERE id = ?""", (new_status, response, 1 if seller_at_fault else 0, order_id))
@@ -2866,6 +2867,7 @@ def mark_return_shipped(order_id):
         return redirect(f'/order/{order_id}')
     
     c.execute("""UPDATE orders SET 
+                 return_status = 'shipped_back',
                  return_tracking_number = ?,
                  return_shipped_at = CURRENT_TIMESTAMP 
                  WHERE id = ?""", (tracking_number, order_id))
@@ -2894,7 +2896,7 @@ def refund_return(order_id):
         conn.close()
         return 'Access denied', 403
     
-    if order[1] not in ['approved', 'shipped_back']:
+    if order[1] != 'shipped_back':
         conn.close()
         flash('Return must be approved before refund.', 'warning')
         return redirect(f'/order/{order_id}')

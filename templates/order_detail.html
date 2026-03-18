@@ -253,7 +253,7 @@
   {% endif %}
 
   {# Seller: Issue refund after return shipped #}
-  {% if order[32] in ['approved', 'shipped_back'] and session.get('user_id') == order[3] %}
+  {% if order[32] == 'shipped_back' and session.get('user_id') == order[3] %}
   <div class="card mt-4 border-success">
     <div class="card-header bg-success text-white">
       <h5>{% if session.get('lang') == 'de' %}Rückerstattung verarbeiten{% else %}Process Refund{% endif %}</h5>
