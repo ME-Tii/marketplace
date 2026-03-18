@@ -1391,7 +1391,13 @@ def import_data():
             pass
     for gp in group_posts_data:
         try:
-            c.execute("INSERT INTO group_posts (id, group_id, user_id, title, content, image, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", gp)
+            gp_list = list(gp)
+            while len(gp_list) < 13:
+                gp_list.append(None)
+            c.execute("""INSERT OR REPLACE INTO group_posts 
+                         (id, group_id, user_id, title, content, image, links, price, type, 
+                          local_pickup, shipping_available, shipping_cost, created_at) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", gp_list[:13])
         except sqlite3.IntegrityError:
             pass
     for o in orders:
@@ -1476,7 +1482,8 @@ def export_all():
         groups = c.fetchall()
         c.execute("SELECT id, group_id, user_id, status, joined_at FROM group_members")
         group_members = c.fetchall()
-        c.execute("SELECT id, group_id, user_id, title, content, image, created_at FROM group_posts")
+        c.execute("""SELECT id, group_id, user_id, title, content, image, links, price, type, 
+                     local_pickup, shipping_available, shipping_cost, created_at FROM group_posts""")
         group_posts_data = c.fetchall()
         c.execute("""SELECT id, post_id, buyer_id, seller_id, amount, status, stripe_payment_id, tracking_number, 
                      shipped_at, delivered_at, dispute_status, shipping_method, created_at, dispute_reason, 
