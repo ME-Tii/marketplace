@@ -35,8 +35,15 @@
     <div class="card-body">
       <div class="row">
         <div class="col-md-6">
-          <p><strong>{% if session.get('lang') == 'de' %}Artikel:{% else %}Item:{% endif %}</strong> <a href="/post/{{ order[1] }}">{{ order[11] }}</a></p>
+          <p><strong>{% if session.get('lang') == 'de' %}Artikel:{% else %}Item:{% endif %}</strong> <a href="/post/{{ order[1] }}">{{ order[12] }}</a></p>
           <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %}</strong> ${{ order[4] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Lieferart:{% else %}Delivery:{% endif %}</strong> 
+            {% if order[11] == 'local_pickup' %}
+              <span class="badge bg-info">{% if session.get('lang') == 'de' %}Abholung vor Ort{% else %}Local Pickup{% endif %}</span>
+            {% else %}
+              <span class="badge bg-secondary">{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</span>
+            {% endif %}
+          </p>
           <p><strong>{% if session.get('lang') == 'de' %}Status:{% else %}Status:{% endif %}</strong>
             <span class="badge bg-{% if order[5] == 'paid' %}warning{% elif order[5] == 'shipped' %}info{% elif order[5] == 'delivered' %}success{% elif order[5] == 'refunded' %}danger{% elif order[5] == 'return_requested' %}warning{% else %}secondary{% endif %}">{{ order[5] }}</span>
             {% if order[5] == 'pending' %}
@@ -46,14 +53,32 @@
           <p><strong>{% if session.get('lang') == 'de' %}Datum:{% else %}Date:{% endif %}</strong> {{ order[6] }}</p>
         </div>
         <div class="col-md-6">
-          <p><strong>{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %}</strong> <a href="/profile/{{ order[16] }}">{{ order[16] }}</a></p>
-          <p><strong>{% if session.get('lang') == 'de' %}Käufer:{% else %}Buyer:{% endif %}</strong> <a href="/profile/{{ order[14] }}">{{ order[14] }}</a></p>
+          <p><strong>{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %}</strong> <a href="/profile/{{ order[17] }}">{{ order[17] }}</a></p>
+          <p><strong>{% if session.get('lang') == 'de' %}Käufer:{% else %}Buyer:{% endif %}</strong> <a href="/profile/{{ order[15] }}">{{ order[15] }}</a></p>
         </div>
       </div>
     </div>
   </div>
 
-  {% if order[5] == 'paid' and session.get('user_id') == order[3] %}
+  {% if order[5] == 'paid' and session.get('user_id') == order[3] and order[11] == 'local_pickup' %}
+  <div class="card mt-4 border-primary">
+    <div class="card-header bg-primary text-white">
+      <h5>{% if session.get('lang') == 'de' %}Abholung arrangieren{% else %}Arrange Pickup{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <p>{% if session.get('lang') == 'de' %}Kontaktieren Sie den Käufer um die Abholung zu arrangieren.{% else %}Contact the buyer to arrange pickup.{% endif %}</p>
+      <a href="/messages?chat={{ order[15] }}&order_id={{ order[0] }}" class="btn btn-primary">
+        {% if session.get('lang') == 'de' %}Nachricht an Käufer{% else %}Message Buyer{% endif %}
+      </a>
+      <form method="POST" action="/order/{{ order[0] }}/picked_up" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Als abgeholt markieren{% else %}Mark as Picked Up{% endif %}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if order[5] == 'paid' and session.get('user_id') == order[3] and order[11] == 'shipping' %}
   <div class="card mt-4">
     <div class="card-header">
       <h5>{% if session.get('lang') == 'de' %}Als versandt markieren{% else %}Mark as Shipped{% endif %}</h5>
@@ -67,6 +92,18 @@
         </div>
         <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Als versandt markieren{% else %}Mark as Shipped{% endif %}</button>
       </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if order[5] == 'paid' and session.get('user_id') == order[2] and order[11] == 'local_pickup' %}
+  <div class="card mt-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+      <h5>{% if session.get('lang') == 'de' %}Abholung erwarten{% else %}Awaiting Pickup{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <p>{% if session.get('lang') == 'de' %}Der Verkäufer wird sich mit Ihnen in Verbindung setzen um die Abholung zu arrangieren.{% else %}The seller will contact you to arrange pickup.{% endif %}</p>
+      <p><strong>{% if session.get('lang') == 'de' %}Verkäufer kontaktieren:{% else %}Contact Seller:{% endif %}</strong> <a href="/messages?chat={{ order[17] }}&order_id={{ order[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Nachricht{% else %}Message{% endif %}</a></p>
     </div>
   </div>
   {% endif %}
@@ -120,7 +157,7 @@
   </div>
   {% endif %}
 
-  {% if order[10] == 'open' and session.get('user_id') == order[3] and not order[26] %}
+  {% if order[10] == 'open' and session.get('user_id') == order[3] and not order[27] %}
   <div class="card mt-4 border-info">
     <div class="card-header bg-info text-white">
       <h5>{% if session.get('lang') == 'de' %}Auf Streitfall antworten{% else %}Respond to Dispute{% endif %}</h5>
@@ -139,7 +176,7 @@
   {% endif %}
 
   {# Return Section - for buyers #}
-  {% if order[5] in ['shipped', 'delivered', 'return_requested'] and session.get('user_id') == order[2] and not order[31] %}
+  {% if order[5] in ['shipped', 'delivered', 'return_requested'] and session.get('user_id') == order[2] and not order[32] %}
   <div class="card mt-4 border-warning">
     <div class="card-header bg-warning">
       <h5>{% if session.get('lang') == 'de' %}Artikel zurücksenden{% else %}Request Return{% endif %}</h5>
@@ -158,46 +195,46 @@
   {% endif %}
 
   {# Return Status Display - for both buyer and seller #}
-  {% if order[31] %}
-  <div class="alert alert-{% if order[31] == 'requested' %}warning{% elif order[31] == 'approved' %}info{% elif order[31] == 'rejected' %}danger{% elif order[31] == 'completed' %}success{% else %}secondary{% endif %} mt-4">
+  {% if order[32] %}
+  <div class="alert alert-{% if order[32] == 'requested' %}warning{% elif order[32] == 'approved' %}info{% elif order[32] == 'rejected' %}danger{% elif order[32] == 'completed' %}success{% else %}secondary{% endif %} mt-4">
     <h5>
       {% if session.get('lang') == 'de' %}Rückgabestatus: {% else %}Return Status: {% endif %}
-      {% if order[31] == 'requested' %}{% if session.get('lang') == 'de' %}Ausstehend{% else %}Pending Approval{% endif %}
-      {% elif order[31] == 'approved' %}{% if session.get('lang') == 'de' %}Genehmigt{% else %}Approved - Ship Item Back{% endif %}
-      {% elif order[31] == 'rejected' %}{% if session.get('lang') == 'de' %}Abgelehnt{% else %}Rejected{% endif %}
-      {% elif order[31] == 'shipped_back' %}{% if session.get('lang') == 'de' %}Zurückgesendet{% else %}Item Shipped Back{% endif %}
-      {% elif order[31] == 'completed' %}{% if session.get('lang') == 'de' %}Abgeschlossen{% else %}Completed{% endif %}
+      {% if order[32] == 'requested' %}{% if session.get('lang') == 'de' %}Ausstehend{% else %}Pending Approval{% endif %}
+      {% elif order[32] == 'approved' %}{% if session.get('lang') == 'de' %}Genehmigt{% else %}Approved - Ship Item Back{% endif %}
+      {% elif order[32] == 'rejected' %}{% if session.get('lang') == 'de' %}Abgelehnt{% else %}Rejected{% endif %}
+      {% elif order[32] == 'shipped_back' %}{% if session.get('lang') == 'de' %}Zurückgesendet{% else %}Item Shipped Back{% endif %}
+      {% elif order[32] == 'completed' %}{% if session.get('lang') == 'de' %}Abgeschlossen{% else %}Completed{% endif %}
       {% endif %}
     </h5>
-    {% if order[32] %}
-    <p><strong>{% if session.get('lang') == 'de' %}Käufer-Grund:{% else %}Buyer's Reason:{% endif %}</strong> {{ order[32] }}</p>
-    {% endif %}
     {% if order[33] %}
-    <p><strong>{% if session.get('lang') == 'de' %}Verkäufer-Antwort:{% else %}Seller's Response:{% endif %}</strong> {{ order[33] }}</p>
+    <p><strong>{% if session.get('lang') == 'de' %}Käufer-Grund:{% else %}Buyer's Reason:{% endif %}</strong> {{ order[33] }}</p>
     {% endif %}
-    {% if order[35] %}
-    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Rückgabe angefordert am{% else %}Return requested on{% endif %}: {{ order[35] }}</small></p>
+    {% if order[34] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Verkäufer-Antwort:{% else %}Seller's Response:{% endif %}</strong> {{ order[34] }}</p>
     {% endif %}
     {% if order[36] %}
-    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Zurückgesendet am{% else %}Item shipped back on{% endif %}: {{ order[36] }}</small></p>
+    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Rückgabe angefordert am{% else %}Return requested on{% endif %}: {{ order[36] }}</small></p>
     {% endif %}
-    {% if order[31] in ['approved', 'shipped_back', 'completed'] and order[38] and order[38] > 0 %}
+    {% if order[37] %}
+    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Zurückgesendet am{% else %}Item shipped back on{% endif %}: {{ order[37] }}</small></p>
+    {% endif %}
+    {% if order[32] in ['approved', 'shipped_back', 'completed'] and order[39] and order[39] > 0 %}
     <p class="mt-2">
-      {% if order[39] == 1 %}
+      {% if order[40] == 1 %}
       <span class="badge bg-success">{% if session.get('lang') == 'de' %}Verkäuferfehler (volle Erstattung + Rückversand){% else %}Seller at fault (full refund + return shipping){% endif %}</span>
-      {% elif order[38] and order[38] > 0 %}
-      <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Käufer zahlt Rückversand (${% else %}Buyer pays return shipping (${% endif %}{{ order[38] }})</span>
+      {% elif order[39] and order[39] > 0 %}
+      <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Käufer zahlt Rückversand (${% else %}Buyer pays return shipping (${% endif %}{{ order[39] }})</span>
       {% endif %}
     </p>
     {% endif %}
-    {% if order[31] == 'approved' and session.get('user_id') == order[2] %}
+    {% if order[32] == 'approved' and session.get('user_id') == order[2] %}
     <div class="mt-3 p-3 bg-light border rounded">
       <h6><strong>{% if session.get('lang') == 'de' %}Rücksendeadresse des Verkäufers:{% else %}Seller's Return Address:{% endif %}</strong></h6>
-      {% if order[18] %}
-      <pre class="mb-0" style="white-space: pre-wrap;">{{ order[18] }}</pre>
+      {% if order[19] %}
+      <pre class="mb-0" style="white-space: pre-wrap;">{{ order[19] }}</pre>
       {% else %}
       <p class="text-muted mb-2">{% if session.get('lang') == 'de' %}Der Verkäufer hat keine Rücksendeadresse angegeben.{% else %}The seller has not provided a return address.{% endif %}</p>
-      <a href="/chat/{{ order[16] }}" class="btn btn-sm btn-outline-primary">{% if session.get('lang') == 'de' %}Verkäufer kontaktieren{% else %}Contact Seller{% endif %}</a>
+      <a href="/chat/{{ order[17] }}" class="btn btn-sm btn-outline-primary">{% if session.get('lang') == 'de' %}Verkäufer kontaktieren{% else %}Contact Seller{% endif %}</a>
       {% endif %}
     </div>
     {% endif %}
@@ -205,7 +242,7 @@
   {% endif %}
 
   {# Buyer: Ship return after approval #}
-  {% if order[31] == 'approved' and session.get('user_id') == order[2] %}
+  {% if order[32] == 'approved' and session.get('user_id') == order[2] %}
   <div class="card mt-4 border-info">
     <div class="card-header bg-info text-white">
       <h5>{% if session.get('lang') == 'de' %}Artikel zurücksenden{% else %}Ship Returned Item{% endif %}</h5>
@@ -224,7 +261,7 @@
   {% endif %}
 
   {# Seller: Approve/Reject return #}
-  {% if order[31] == 'requested' and session.get('user_id') == order[3] %}
+  {% if order[32] == 'requested' and session.get('user_id') == order[3] %}
   <div class="card mt-4 border-warning">
     <div class="card-header bg-warning">
       <h5>{% if session.get('lang') == 'de' %}Rückgabe antworten{% else %}Respond to Return Request{% endif %}</h5>
@@ -236,11 +273,11 @@
           <label class="form-label">{% if session.get('lang') == 'de' %}Antwort (optional){% else %}Response (optional){% endif %}</label>
           <textarea class="form-control" name="response" rows="2" placeholder="{% if session.get('lang') == 'de' %}Optionale Antwort...{% else %}Optional response...{% endif %}"></textarea>
         </div>
-        {% if order[38] and order[38] > 0 %}
+        {% if order[39] and order[39] > 0 %}
         <div class="mb-3 form-check">
           <input type="checkbox" class="form-check-input" id="seller_at_fault" name="seller_at_fault" />
           <label class="form-check-label" for="seller_at_fault">
-            {% if session.get('lang') == 'de' %}Fehler liegt beim Verkäufer (volle Erstattung + Versandkosten){% else %}Seller's fault (full refund + ${{ order[38] }} for return shipping){% endif %}
+            {% if session.get('lang') == 'de' %}Fehler liegt beim Verkäufer (volle Erstattung + Versandkosten){% else %}Seller's fault (full refund + ${{ order[39] }} for return shipping){% endif %}
           </label>
         </div>
         <p class="text-muted small">{% if session.get('lang') == 'de' %}Wenn nicht angeklickt, zahlt der Käufer den Rückversand.{% else %}If unchecked, buyer pays for return shipping.{% endif %}</p>
@@ -253,18 +290,18 @@
   {% endif %}
 
   {# Seller: Issue refund after return shipped #}
-  {% if order[31] == 'shipped_back' and session.get('user_id') == order[3] %}
+  {% if order[32] == 'shipped_back' and session.get('user_id') == order[3] %}
   <div class="card mt-4 border-success">
     <div class="card-header bg-success text-white">
       <h5>{% if session.get('lang') == 'de' %}Rückerstattung verarbeiten{% else %}Process Refund{% endif %}</h5>
     </div>
     <div class="card-body">
-      {% if order[39] == 1 %}
-      <p class="text-success">{% if session.get('lang') == 'de' %}Verkäuferfehler: volle Erstattung + ${{ order[38] }} für Rückversand = ${{ (order[4] + (order[38] or 0))|round(2) }}{% else %}Seller at fault: Full refund + ${{ order[38] }} for return shipping = ${{ (order[4] + (order[38] or 0))|round(2) }}{% endif %}</p>
-      {% elif order[38] == 0 or order[38] is none %}
+      {% if order[40] == 1 %}
+      <p class="text-success">{% if session.get('lang') == 'de' %}Verkäuferfehler: volle Erstattung + ${{ order[39] }} für Rückversand = ${{ (order[4] + (order[39] or 0))|round(2) }}{% else %}Seller at fault: Full refund + ${{ order[39] }} for return shipping = ${{ (order[4] + (order[39] or 0))|round(2) }}{% endif %}</p>
+      {% elif order[39] == 0 or order[39] is none %}
       <p>{% if session.get('lang') == 'de' %}Klicken Sie hier, um dem Käufer eine Rückerstattung zu gewähren.{% else %}Click here to issue refund to buyer.{% endif %}</p>
       {% else %}
-      <p class="text-warning">{% if session.get('lang') == 'de' %}Käufer zahlt Rückversand: ${{ (order[4] - (order[38] or 0))|round(2) }} (Original: ${{ order[4] }} - Rückversand: ${{ order[38] }}){% else %}Buyer pays return shipping: ${{ (order[4] - (order[38] or 0))|round(2) }} (Original: ${{ order[4] }} - Return shipping: ${{ order[38] }}){% endif %}</p>
+      <p class="text-warning">{% if session.get('lang') == 'de' %}Käufer zahlt Rückversand: ${{ (order[4] - (order[39] or 0))|round(2) }} (Original: ${{ order[4] }} - Rückversand: ${{ order[39] }}){% else %}Buyer pays return shipping: ${{ (order[4] - (order[39] or 0))|round(2) }} (Original: ${{ order[4] }} - Return shipping: ${{ order[39] }}){% endif %}</p>
       {% endif %}
       <form method="POST" action="/order/{{ order[0] }}/return/refund">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -281,20 +318,20 @@
   </div>
   {% endif %}
 
-  {% if order[18] %}
+  {% if order[19] %}
   <div class="card mt-4">
     <div class="card-header">
       <h5>{% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping Address{% endif %}</h5>
     </div>
     <div class="card-body">
-      <p><strong>{{ order[18] }}</strong></p>
-      {% if order[19] %}
-      <p>{{ order[19] }}</p>
-      <p>{{ order[20] }}, {{ order[21] }} {{ order[22] }}</p>
-      <p>{{ order[23] }}</p>
+      <p><strong>{{ order[20] }}</strong></p>
+      {% if order[21] %}
+      <p>{{ order[21] }}</p>
+      <p>{{ order[22] }}, {{ order[23] }} {{ order[24] }}</p>
+      <p>{{ order[25] }}</p>
       {% endif %}
-      {% if order[24] %}
-      <p><strong>{% if session.get('lang') == 'de' %}Telefon:{% else %}Phone:{% endif %}</strong> {{ order[24] }}</p>
+      {% if order[26] %}
+      <p><strong>{% if session.get('lang') == 'de' %}Telefon:{% else %}Phone:{% endif %}</strong> {{ order[26] }}</p>
       {% endif %}
     </div>
   </div>

@@ -2912,7 +2912,7 @@ def order_detail(order_id):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("""SELECT o.id, o.post_id, o.buyer_id, o.seller_id, o.amount, o.status, o.created_at,
-                 o.tracking_number, o.shipped_at, o.delivered_at, o.dispute_status,
+                 o.tracking_number, o.shipped_at, o.delivered_at, o.dispute_status, o.shipping_method,
                  p.title, p.image, p.description,
                  buyer.username, buyer.email,
                  seller.username, seller.email, seller.return_address,
@@ -2977,6 +2977,45 @@ def mark_shipped(order_id):
     conn.close()
     
     flash('Order marked as shipped!', 'success')
+    return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/picked_up', methods=['POST'])
+def mark_picked_up(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT seller_id, status, shipping_method FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[1] != 'paid' or order[2] != 'local_pickup':
+        flash('Cannot mark as picked up.', 'warning')
+        conn.close()
+        return redirect(f'/order/{order_id}')
+    
+    c.execute("UPDATE orders SET status = 'delivered', delivered_at = datetime('now') WHERE id = ?", (order_id,))
+    
+    c.execute("""SELECT buyer.email, buyer.email_notifications, p.title FROM orders o 
+                 JOIN users buyer ON o.buyer_id = buyer.id 
+                 JOIN posts p ON o.post_id = p.id WHERE o.id = ?""", (order_id,))
+    buyer_info = c.fetchone()
+    if buyer_info and buyer_info[1]:
+        send_email(buyer_info[0], 'Order Picked Up - Marketplace',
+                  f'Your order "{buyer_info[2]}" has been picked up! Thank you for your purchase.')
+    
+    conn.commit()
+    conn.close()
+    
+    flash('Order marked as picked up!', 'success')
     return redirect(f'/order/{order_id}')
 
 @app.route('/cancel_order/<int:order_id>', methods=['POST'])
