@@ -285,7 +285,7 @@ def check_local_pickup_orders():
         
         days_since_payment = (datetime.now() - datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S.%f')).days if created_at else 0
         
-        # After 7 days with no pickup, allow buyer to request cancellation
+        # After 7 days with no pickup, notify seller and allow buyer to cancel
         if days_since_payment >= 7:
             c.execute("""UPDATE orders SET reminder_count = reminder_count + 1 WHERE id = ? AND reminder_count < 100""", (order_id,))
             conn.commit()
@@ -293,12 +293,12 @@ def check_local_pickup_orders():
             # Notify seller
             if seller_email and seller_notify:
                 send_email(seller_email, 'Urgent: Local Pickup Required - Marketplace',
-                          f'Dey {seller_username}, the buyer for order #{order_id} ("{item_title}") has not picked up the item.\n\nPlease contact the buyer to arrange pickup or contact support.\n\nIf no action is taken within 7 more days, the order will be auto-cancelled and refunded.')
+                          f'Dear {seller_username}, the buyer for order #{order_id} ("{item_title}") has not picked up the item.\n\nPlease contact the buyer to arrange pickup or contact support.\n\nIf no action is taken, the order will be auto-cancelled and refunded.')
             
             processed += 1
         
-        # After 14 days, auto-cancel and refund
-        if days_since_payment >= 14:
+        # After 7 days, auto-cancel and refund
+        if days_since_payment >= 7:
             c.execute("""SELECT stripe_payment_id FROM orders WHERE id = ? AND status = 'paid'""", (order_id,))
             stripe_info = c.fetchone()
             
