@@ -196,7 +196,8 @@
       {% if order[18] %}
       <pre class="mb-0" style="white-space: pre-wrap;">{{ order[18] }}</pre>
       {% else %}
-      <p class="text-muted mb-0">{% if session.get('lang') == 'de' %}Der Verkäufer hat keine Rücksendeadresse angegeben. Bitte kontaktieren Sie ihn.{% else %}The seller has not provided a return address. Please contact them for the address.{% endif %}</p>
+      <p class="text-muted mb-2">{% if session.get('lang') == 'de' %}Der Verkäufer hat keine Rücksendeadresse angegeben.{% else %}The seller has not provided a return address.{% endif %}</p>
+      <a href="/chat/{{ order[16] }}" class="btn btn-sm btn-outline-primary">{% if session.get('lang') == 'de' %}Verkäufer kontaktieren{% else %}Contact Seller{% endif %}</a>
       {% endif %}
     </div>
     {% endif %}
