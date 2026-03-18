@@ -10,8 +10,14 @@ content %}
       {% if error %}
       <div class="alert alert-danger">{{ error }}</div>
       {% endif %}
+      {% if return_to_order %}
+      <div class="alert alert-info">{% if session.get('lang') == 'de' %}Bitte fügen Sie Ihre Rücksendeadresse hinzu, um Rückgabeanfragen zu bearbeiten.{% else %}Please add your return address to process return requests.{% endif %}</div>
+      {% endif %}
       <form action="/edit_profile" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {% if return_to_order %}
+        <input type="hidden" name="return_to_order" value="{{ return_to_order }}" />
+        {% endif %}
         <div class="mb-3">
           <label for="profile_picture" class="form-label"
             >{% if session.get('lang') == 'de' %}Profilbild{% else %}Profile
@@ -44,6 +50,21 @@ content %}
             placeholder="{% if session.get('lang') == 'de' %}Erzählen Sie anderen von sich...{% else %}Tell others about yourself...{% endif %}"
           >
 {{ description }}</textarea
+          >
+        </div>
+        <div class="mb-3">
+          <label for="return_address" class="form-label"
+            >{% if session.get('lang') == 'de' %}Rücksendeadresse{% else %}Return Shipping Address{% endif %}</label
+          >
+          <textarea
+            class="form-control"
+            id="return_address"
+            name="return_address"
+            rows="3"
+            placeholder="{% if session.get('lang') == 'de' %}Geben Sie Ihre Adresse für Rücksendungen ein (z.B. Name, Straße, Stadt, PLZ, Land){% else %}Enter your address for returns (e.g. Name, Street, City, State, ZIP, Country){% endif %}"
+          >{{ return_address or '' }}</textarea>
+          <small class="form-text text-muted"
+            >{% if session.get('lang') == 'de' %}Diese Adresse wird Käufern angezeigt, die Ihnen Waren zurücksenden müssen.{% else %}This address will be shown to buyers who need to ship items back to you.{% endif %}</small
           >
         </div>
         <h4>

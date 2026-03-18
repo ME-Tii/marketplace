@@ -219,6 +219,10 @@ def init_db():
         c.execute("ALTER TABLE users ADD COLUMN notify_message INTEGER DEFAULT 1")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN return_address TEXT")
+    except sqlite3.OperationalError:
+        pass
     c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123')))
     c.execute('''CREATE TABLE IF NOT EXISTS posts
                  (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, description TEXT, type TEXT, image TEXT, links TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
@@ -1924,13 +1928,15 @@ def edit_profile_page():
         return redirect('/login')
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT description, profile_picture FROM users WHERE id = ?", (session['user_id'],))
+    c.execute("SELECT description, profile_picture, return_address FROM users WHERE id = ?", (session['user_id'],))
     user = c.fetchone()
     conn.close()
     description = user[0] if user else ''
     profile_picture = user[1] if user else None
+    return_address = user[2] if user else ''
     error = request.args.get('error')
-    return render_template('edit_profile.html', description=description, profile_picture=profile_picture, unread_messages=get_unread_messages_count(session['user_id']), error=error)
+    return_to_order = request.args.get('return_to_order')
+    return render_template('edit_profile.html', description=description, profile_picture=profile_picture, return_address=return_address, unread_messages=get_unread_messages_count(session['user_id']), error=error, return_to_order=return_to_order)
 
 @app.route('/edit_profile', methods=['POST'])
 def edit_profile():
@@ -1972,14 +1978,18 @@ def edit_profile():
                 conn.close()
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
+    return_address = request.form.get('return_address') or ''
     if profile_picture_path:
-        c.execute("UPDATE users SET description = ?, profile_picture = ? WHERE id = ?", (description, profile_picture_path, session['user_id']))
+        c.execute("UPDATE users SET description = ?, profile_picture = ?, return_address = ? WHERE id = ?", (description, profile_picture_path, return_address, session['user_id']))
     else:
-        c.execute("UPDATE users SET description = ? WHERE id = ?", (description, session['user_id']))
+        c.execute("UPDATE users SET description = ?, return_address = ? WHERE id = ?", (description, return_address, session['user_id']))
     conn.commit()
     conn.close()
     if password_error:
         return redirect(f'/edit_profile?error={password_error}')
+    return_to_order = request.form.get('return_to_order')
+    if return_to_order:
+        return redirect(f'/order/{return_to_order}')
     return redirect(f'/profile/{session.get("username")}')
 
 @app.route('/chat/<username>')
@@ -2410,7 +2420,7 @@ def order_detail(order_id):
                  o.tracking_number, o.shipped_at, o.delivered_at, o.dispute_status,
                  p.title, p.image, p.description,
                  buyer.username, buyer.email,
-                 seller.username, seller.email,
+                 seller.username, seller.email, seller.return_address,
                  a.full_name, a.street, a.city, a.state, a.zip_code, a.country, a.phone,
                  o.dispute_reason, o.dispute_response, o.dispute_opened_at, o.dispute_resolved_at, o.dispute_resolution,
                  o.return_status, o.return_reason, o.return_response, o.return_tracking_number, o.return_requested_at, o.return_shipped_at, o.return_completed_at,
@@ -2774,7 +2784,7 @@ def respond_return(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT seller_id, return_status FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT seller_id, return_status, seller.return_address FROM orders o JOIN users seller ON o.seller_id = seller.id WHERE o.id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -2791,6 +2801,10 @@ def respond_return(order_id):
         return redirect(f'/order/{order_id}')
     
     if action == 'approve':
+        if not order[2]:
+            conn.close()
+            flash('Please add a return address in your profile before approving returns.', 'warning')
+            return redirect(f'/edit_profile?return_to_order={order_id}')
         new_status = 'approved'
     else:
         new_status = 'rejected'
@@ -2802,17 +2816,20 @@ def respond_return(order_id):
                  seller_at_fault = ?
                  WHERE id = ?""", (new_status, response, 1 if seller_at_fault else 0, order_id))
     
-    # Get buyer info for notification
-    c.execute("""SELECT buyer.email, buyer.email_notifications, buyer.notify_return, p.title
+    # Get buyer info and seller return address for notification
+    c.execute("""SELECT buyer.email, buyer.email_notifications, buyer.notify_return, p.title, seller.return_address
                  FROM orders o
                  JOIN users buyer ON o.buyer_id = buyer.id
                  JOIN posts p ON o.post_id = p.id
+                 JOIN users seller ON o.seller_id = seller.id
                  WHERE o.id = ?""", (order_id,))
     buyer_info = c.fetchone()
     if buyer_info and buyer_info[1] and buyer_info[2]:
         if new_status == 'approved':
-            send_email(buyer_info[0], 'Return Approved - Marketplace', 
-                      f'Your return request for "{buyer_info[3]}" has been APPROVED. Please ship the item back to the seller.')
+            email_body = f'Your return request for "{buyer_info[3]}" has been APPROVED. Please ship the item back to the seller.'
+            if buyer_info[4]:
+                email_body += f'\n\nReturn Address:\n{buyer_info[4]}'
+            send_email(buyer_info[0], 'Return Approved - Marketplace', email_body)
         else:
             send_email(buyer_info[0], 'Return Rejected - Marketplace', 
                       f'Your return request for "{buyer_info[3]}" has been REJECTED. Contact the seller for more details.')

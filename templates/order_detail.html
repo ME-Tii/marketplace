@@ -190,6 +190,16 @@
       {% endif %}
     </p>
     {% endif %}
+    {% if order[30] == 'approved' and session.get('user_id') == order[2] %}
+    <div class="mt-3 p-3 bg-light border rounded">
+      <h6><strong>{% if session.get('lang') == 'de' %}Rücksendeadresse des Verkäufers:{% else %}Seller's Return Address:{% endif %}</strong></h6>
+      {% if order[18] %}
+      <pre class="mb-0" style="white-space: pre-wrap;">{{ order[18] }}</pre>
+      {% else %}
+      <p class="text-muted mb-0">{% if session.get('lang') == 'de' %}Der Verkäufer hat keine Rücksendeadresse angegeben. Bitte kontaktieren Sie ihn.{% else %}The seller has not provided a return address. Please contact them for the address.{% endif %}</p>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
   {% endif %}
 
