@@ -231,6 +231,26 @@ def check_unshipped_orders():
     
     return result, 200
 
+@app.route('/cron/expire-featured', methods=['GET'])
+def expire_featured():
+    cron_key = os.environ.get('CRON_SECRET_KEY')
+    if cron_key and request.args.get('key') != cron_key:
+        return 'Unauthorized', 401
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    c.execute("""UPDATE posts SET is_featured = 0 
+                 WHERE is_featured = 1 
+                 AND featured_until IS NOT NULL 
+                 AND datetime(featured_until) < datetime('now')""")
+    
+    expired_count = c.rowcount
+    conn.commit()
+    conn.close()
+    
+    return f"Expired {expired_count} featured listings", 200
+
 @app.before_request
 def inject_user_alerts():
     if 'user_id' not in session:
@@ -390,6 +410,18 @@ def init_db():
         pass
     try:
         c.execute("ALTER TABLE posts ADD COLUMN is_active INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE posts ADD COLUMN is_featured INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE posts ADD COLUMN featured_until DATETIME")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE posts ADD COLUMN featured_payment_id TEXT")
     except sqlite3.OperationalError:
         pass
     # Set default values for existing posts
@@ -564,6 +596,10 @@ def init_db():
         pass
     try:
         c.execute("ALTER TABLE orders ADD COLUMN refund_attempts INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN transaction_fee REAL DEFAULT 0")
     except sqlite3.OperationalError:
         pass
     # Shipping addresses
@@ -870,7 +906,7 @@ def login():
     if user:
         app.logger.info(f"User found: {user[2]}, checking password")
         if check_password_hash(user[1], password):
-            if not user[3]:
+            if not user[3] and user[2] != 'admin':
                 return redirect('/login?error=Email not verified. Please check your email for the verification link.')
             session['user_id'] = user[0]
             session['username'] = user[2]
@@ -994,7 +1030,7 @@ def dashboard():
     try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        base_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username FROM posts JOIN users ON posts.user_id = users.id WHERE (posts.is_active = 1 OR posts.is_active IS NULL)"
+        base_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, posts.is_featured, posts.featured_until FROM posts JOIN users ON posts.user_id = users.id WHERE (posts.is_active = 1 OR posts.is_active IS NULL)"
         conditions = []
         params = []
         if query:
@@ -1005,7 +1041,7 @@ def dashboard():
             params.append(type_filter)
         if conditions:
             base_query += " AND " + " AND ".join(conditions)
-        base_query += " ORDER BY posts.timestamp DESC"
+        base_query += " ORDER BY posts.is_featured DESC, posts.timestamp DESC"
         c.execute(base_query, params)
         posts = c.fetchall()
         conn.close()
@@ -1884,7 +1920,7 @@ def post_detail(post_id):
     try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping_available, posts.shipping_cost, posts.quantity, posts.is_active, users.username, posts.user_id FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?", (post_id,))
+        c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping_available, posts.shipping_cost, posts.quantity, posts.is_active, users.username, posts.user_id, posts.is_featured, posts.featured_until FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?", (post_id,))
         post = c.fetchone()
         conn.close()
         if not post:
@@ -2460,6 +2496,8 @@ def process_checkout(post_id):
         shipping_cost = post[5] or 0
         total_amount += shipping_cost
     
+    transaction_fee = total_amount * 0.10
+    
     if delivery_method == 'local_pickup':
         full_name = request.form.get('full_name')
         street = ''
@@ -2479,8 +2517,8 @@ def process_checkout(post_id):
     
     save_address = request.form.get('save_address')
     
-    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost) VALUES (?, ?, ?, ?, 'pending', ?, ?)",
-              (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost))
+    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)",
+              (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost, transaction_fee))
     order_id = c.lastrowid
     
     # Only save address for shipping orders, not local pickup
@@ -2644,6 +2682,94 @@ def payment_success():
     post = c.fetchone()
     conn.close()
     return render_template('payment_success.html', post=post, order_id=order_id, unread_messages=get_unread_messages_count(session.get('user_id')))
+
+FEATURED_PRICE = 2.99
+
+@app.route('/feature/<int:post_id>')
+def feature_post(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT user_id, title, is_featured, featured_until FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post:
+        conn.close()
+        return 'Post not found', 404
+    
+    if post[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if post[2] and post[3]:
+        featured_time = datetime.strptime(post[3], '%Y-%m-%d %H:%M:%S.%f') if isinstance(post[3], str) else post[3]
+        if featured_time > datetime.now():
+            conn.close()
+            flash('This post is already featured.', 'info')
+            return redirect(f'/post/{post_id}')
+    
+    conn.close()
+    return render_template('feature_checkout.html', post_id=post_id, title=post[1], price=FEATURED_PRICE, unread_messages=0)
+
+@app.route('/create_featured_session/<int:post_id>')
+def create_featured_session(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT user_id, title FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post or post[0] != session['user_id']:
+        conn.close()
+        return 'Post not found or access denied', 404
+    conn.close()
+    
+    try:
+        session_stripe = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': f'Featured Listing: {post[1]}'
+                    },
+                    'unit_amount': int(FEATURED_PRICE * 100),
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=request.url_root + f'featured_success?post_id={post_id}',
+            cancel_url=request.url_root + f'post/{post_id}',
+            metadata={'post_id': post_id, 'type': 'featured'}
+        )
+        return redirect(session_stripe.url, code=303)
+    except Exception as e:
+        flash(f'Payment error: {str(e)}', 'danger')
+        return redirect(f'/post/{post_id}')
+
+@app.route('/featured_success')
+def featured_success():
+    post_id = request.args.get('post_id')
+    
+    if not post_id:
+        return redirect('/dashboard')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    from datetime import timedelta
+    featured_until = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S.%f')
+    
+    c.execute("UPDATE posts SET is_featured = 1, featured_until = ? WHERE id = ?", (featured_until, post_id))
+    conn.commit()
+    conn.close()
+    
+    flash('Your listing is now featured for 7 days!', 'success')
+    return redirect(f'/post/{post_id}')
 
 @app.route('/orders')
 def orders():

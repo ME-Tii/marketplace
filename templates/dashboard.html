@@ -37,7 +37,12 @@
     <div class="col-md-4 mb-3">
       <div class="card h-100">
         <div class="card-body d-flex flex-column">
-          <h5 class="card-title"><a href="/post/{{ post[0] }}" class="text-decoration-none">{{ post[1] }}</a> <small class="text-muted">({{ post[3] }})</small></h5>
+          <h5 class="card-title">
+            {% if post[9] == 1 and post[10] %}
+              <span class="badge bg-warning text-dark me-1">⭐ Featured</span>
+            {% endif %}
+            <a href="/post/{{ post[0] }}" class="text-decoration-none">{{ post[1] }}</a> <small class="text-muted">({{ post[3] }})</small>
+          </h5>
           <p class="card-text">{{ post[2] }}</p>
           {% if post[6] %}
           <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong></p>

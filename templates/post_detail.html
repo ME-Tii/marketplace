@@ -4,6 +4,10 @@
     <div class="card-body">
       <h5 class="card-title">
         {{ post[1] }} <small class="text-muted">({{ post[3] }})</small>
+        {% if post[15] == 1 and post[16] %}
+          <span class="badge bg-warning text-dark ms-2">⭐ Featured</span>
+          <small class="text-muted">({% if session.get('lang') == 'de' %}noch {% else %}ends {% endif %}{{ post[16][:10] }})</small>
+        {% endif %}
       </h5>
       <p class="card-text">{{ post[2] }}</p>
       {% if post[6] %}
@@ -52,6 +56,9 @@
         {% if session.get('user_id') != post[14] %}
         <a href="/add_notice/{{ post[0] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
         <a href="/report_post/{{ post[0] }}" class="btn btn-danger">{% if session.get('lang') == 'de' %}Melden{% else %}Report{% endif %}</a>
+        {% endif %}
+        {% if session.get('user_id') == post[14] and not (post[15] == 1 and post[16]) %}
+        <a href="/feature/{{ post[0] }}" class="btn btn-warning">{% if session.get('lang') == 'de' %}Anzeige bewerben ($2.99){% else %}Feature Listing ($2.99){% endif %}</a>
         {% endif %}
       </div>
       {% endif %}

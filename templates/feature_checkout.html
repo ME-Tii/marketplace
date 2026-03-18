@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Anzeige bewerben{% else %}Feature Listing{% endif %} - Marketplace{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">
+            {% if session.get('lang') == 'de' %}Anzeige bewerben{% else %}Feature Your Listing{% endif %}
+          </h5>
+        </div>
+        <div class="card-body">
+          <h4 class="card-title">{{ title }}</h4>
+          
+          <div class="alert alert-info mt-3">
+            <h5>
+              {% if session.get('lang') == 'de' %}Was Sie erhalten{% else %}What You Get{% endif %}
+            </h5>
+            <ul class="mb-0">
+              <li>{% if session.get('lang') == 'de' %}Ihre Anzeige erscheint ganz oben in den Suchergebnissen{% else %}Your listing appears at the top of search results{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Hervorgehobenes "Featured" Badge{% else %}Highlighted "Featured" badge{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}7 Tage lang sichtbar{% else %}Visible for 7 days{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Mehr Käufer erreichen{% else %}Reach more buyers{% endif %}</li>
+            </ul>
+          </div>
+          
+          <div class="text-center mt-4">
+            <h3>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ price }}</h3>
+          </div>
+          
+          <form action="/create_featured_session/{{ post_id }}" method="get" class="mt-4">
+            <button type="submit" class="btn btn-warning w-100">
+              {% if session.get('lang') == 'de' %}Jetzt bewerben{% else %}Feature Now{% endif %}
+            </button>
+          </form>
+          
+          <div class="text-center mt-3">
+            <a href="/post/{{ post_id }}" class="text-muted">
+              {% if session.get('lang') == 'de' %}Zurück zur Anzeige{% else %}Back to listing{% endif %}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
