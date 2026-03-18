@@ -1364,10 +1364,14 @@ def import_data():
             p_list = list(p)
             if p_list[5]:  # image
                 p_list[5] = '/static/pictures/' + os.path.basename(p_list[5])
-            # Handle both old (9 fields) and new (12 fields) backup formats
-            while len(p_list) < 12:
+            # Handle backup formats with different field counts (9 to 18 fields)
+            while len(p_list) < 18:
                 p_list.append(None)
-            c.execute("INSERT INTO posts (id, user_id, title, description, type, image, links, price, timestamp, local_pickup, shipping_available, shipping_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", p_list[:12])
+            c.execute("""INSERT OR REPLACE INTO posts 
+                         (id, user_id, title, description, type, image, links, price, timestamp, 
+                          local_pickup, shipping_available, shipping_cost, quantity, is_active,
+                          is_featured, featured_until, featured_payment_id) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", p_list[:17])
         except sqlite3.IntegrityError:
             pass
     for m in messages:
