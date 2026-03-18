@@ -293,6 +293,9 @@
             <div class="card h-100">
               <div class="card-body d-flex flex-column">
                 <h5 class="card-title">
+                  {% if post[10] == 1 and post[11] %}
+                  <span class="badge bg-warning text-dark me-1">⭐ Featured</span>
+                  {% endif %}
                   {{ post[1] }}
                   <small class="text-muted">({{ post[3] }})</small>
                 </h5>
@@ -381,6 +384,9 @@
                   </div>
                   {% endif %}
                   <a href="/edit_post/{{ post[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Bearbeiten{% else %}Edit{% endif %}</a>
+                  {% if not (post[10] == 1 and post[11]) %}
+                  <a href="/feature/{{ post[0] }}" class="btn btn-sm btn-warning">⭐ {% if session.get('lang') == 'de' %}Bewerben{% else %}Feature{% endif %}</a>
+                  {% endif %}
                   <form action="/delete_post/{{ post[0] }}" method="POST" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>

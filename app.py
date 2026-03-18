@@ -1108,9 +1108,9 @@ def profile(username):
     
     # Regular posts - show all to owner, only active to others
     if is_owner:
-        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active FROM posts WHERE posts.user_id = ?"
+        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active, posts.is_featured, posts.featured_until FROM posts WHERE posts.user_id = ?"
     else:
-        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active FROM posts WHERE posts.user_id = ? AND (posts.is_active = 1 OR posts.is_active IS NULL)"
+        posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active, posts.is_featured, posts.featured_until FROM posts WHERE posts.user_id = ? AND (posts.is_active = 1 OR posts.is_active IS NULL)"
     params = [user_id]
     if query:
         posts_query += " AND (posts.title LIKE ? OR posts.description LIKE ?)"
