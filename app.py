@@ -114,11 +114,11 @@ def check_unshipped_orders():
     
     c.execute("""SELECT o.id, o.created_at, o.amount, p.title, seller.username, seller.email, 
                  seller.email_notifications, seller.notify_order, o.reminder_count, 
-                 o.warning_sent_at, o.cancelled_at, o.stripe_payment_id, o.refund_attempts, o.tracking_number
+                 o.warning_sent_at, o.cancelled_at, o.stripe_payment_id, o.refund_attempts, o.tracking_number, o.shipping_method
                  FROM orders o
                  JOIN posts p ON o.post_id = p.id
                  JOIN users seller ON o.seller_id = seller.id
-                 WHERE o.status = 'paid' AND o.tracking_number IS NULL
+                 WHERE o.status = 'paid' AND o.tracking_number IS NULL AND o.shipping_method != 'local_pickup'
                  ORDER BY o.created_at""")
     orders = c.fetchall()
     
