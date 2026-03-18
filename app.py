@@ -251,6 +251,77 @@ def expire_featured():
     
     return f"Expired {expired_count} featured listings", 200
 
+@app.route('/cron/check-local-pickup', methods=['GET'])
+def check_local_pickup_orders():
+    cron_key = os.environ.get('CRON_SECRET_KEY')
+    if cron_key and request.args.get('key') != cron_key:
+        return 'Unauthorized', 401
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    c.execute("""SELECT o.id, o.created_at, o.amount, p.title, o.buyer_id, o.seller_id,
+                 buyer.username, buyer.email, buyer.email_notifications,
+                 seller.username, seller.email, seller.email_notifications, seller.notify_order
+                 FROM orders o
+                 JOIN posts p ON o.post_id = p.id
+                 JOIN users buyer ON o.buyer_id = buyer.id
+                 JOIN users seller ON o.seller_id = seller.id
+                 WHERE o.status = 'paid' AND o.shipping_method = 'local_pickup'
+                 ORDER BY o.created_at""")
+    orders = c.fetchall()
+    
+    processed = 0
+    
+    for order in orders:
+        order_id = order[0]
+        created_at = order[1]
+        amount = order[2]
+        item_title = order[3]
+        buyer_id = order[4]
+        seller_username = order[6]
+        seller_email = order[8]
+        seller_notify = order[12]
+        
+        days_since_payment = (datetime.now() - datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S.%f')).days if created_at else 0
+        
+        # After 7 days with no pickup, allow buyer to request cancellation
+        if days_since_payment >= 7:
+            c.execute("""UPDATE orders SET reminder_count = reminder_count + 1 WHERE id = ? AND reminder_count < 100""", (order_id,))
+            conn.commit()
+            
+            # Notify seller
+            if seller_email and seller_notify:
+                send_email(seller_email, 'Urgent: Local Pickup Required - Marketplace',
+                          f'Dey {seller_username}, the buyer for order #{order_id} ("{item_title}") has not picked up the item.\n\nPlease contact the buyer to arrange pickup or contact support.\n\nIf no action is taken within 7 more days, the order will be auto-cancelled and refunded.')
+            
+            processed += 1
+        
+        # After 14 days, auto-cancel and refund
+        if days_since_payment >= 14:
+            c.execute("""SELECT stripe_payment_id FROM orders WHERE id = ? AND status = 'paid'""", (order_id,))
+            stripe_info = c.fetchone()
+            
+            if stripe_info and stripe_info[0]:
+                try:
+                    stripe.Refund.create(payment_intent=stripe_info[0], amount=int(amount * 100))
+                    c.execute("UPDATE orders SET status = 'refunded', cancelled_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
+                    conn.commit()
+                    
+                    send_email(order[7], 'Order Auto-Refunded - Marketplace',
+                              f'Your order #{order_id} for "{item_title}" has been auto-cancelled and refunded.\n\n${amount:.2f} will be returned to your original payment method.\n\nThe seller did not arrange pickup within 14 days.')
+                    
+                except Exception as e:
+                    app.logger.error(f"Local pickup refund failed for order #{order_id}: {str(e)}")
+            else:
+                c.execute("UPDATE orders SET status = 'refunded', cancelled_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
+                conn.commit()
+            
+            processed += 1
+    
+    conn.close()
+    return f"Processed {processed} local pickup orders", 200
+
 @app.before_request
 def inject_user_alerts():
     if 'user_id' not in session:
@@ -3017,6 +3088,47 @@ def mark_picked_up(order_id):
     
     flash('Order marked as picked up!', 'success')
     return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/buyer_cancel')
+def buyer_cancel_local_pickup(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT buyer_id, seller_id, status, shipping_method, amount, stripe_payment_id FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[2] != 'paid' or order[3] != 'local_pickup':
+        flash('Cannot request cancellation for this order.', 'warning')
+        conn.close()
+        return redirect(f'/order/{order_id}')
+    
+    # Process refund
+    if order[5]:  # Has Stripe payment ID
+        try:
+            stripe.Refund.create(payment_intent=order[5], amount=int(order[4] * 100))
+            c.execute("UPDATE orders SET status = 'refunded', cancelled_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
+            flash('Refund has been processed. Your money will be returned within 5-10 business days.', 'success')
+        except Exception as e:
+            app.logger.error(f"Refund failed for order #{order_id}: {str(e)}")
+            flash('Refund processing failed. Please contact support.', 'danger')
+    else:
+        c.execute("UPDATE orders SET status = 'refunded', cancelled_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
+        flash('Order cancelled and refunded.', 'success')
+    
+    conn.commit()
+    conn.close()
+    
+    return redirect('/orders')
 
 @app.route('/cancel_order/<int:order_id>', methods=['POST'])
 def cancel_order(order_id):

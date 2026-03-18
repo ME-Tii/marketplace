@@ -104,6 +104,11 @@
     <div class="card-body">
       <p>{% if session.get('lang') == 'de' %}Der Verkäufer wird sich mit Ihnen in Verbindung setzen um die Abholung zu arrangieren.{% else %}The seller will contact you to arrange pickup.{% endif %}</p>
       <p><strong>{% if session.get('lang') == 'de' %}Verkäufer kontaktieren:{% else %}Contact Seller:{% endif %}</strong> <a href="/messages?chat={{ order[17] }}&order_id={{ order[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Nachricht{% else %}Message{% endif %}</a></p>
+      <hr>
+      <p class="text-muted small">{% if session.get('lang') == 'de' %}Hat der Verkäufer nicht geantwortet?{% else %}Having trouble reaching the seller?{% endif %}</p>
+      <a href="/order/{{ order[0] }}/buyer_cancel" class="btn btn-outline-danger btn-sm" onclick="return confirm('{% if session.get('lang') == 'de' %}Möchten Sie eine Rückerstattung anfordern?{% else %}Request a refund for this order?{% endif %}');">
+        {% if session.get('lang') == 'de' %}Rückerstattung anfordern{% else %}Request Refund{% endif %}
+      </a>
     </div>
   </div>
   {% endif %}
