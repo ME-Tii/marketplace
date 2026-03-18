@@ -3210,8 +3210,19 @@ def submit_rating(order_id):
     rating = request.form.get('rating')
     review = request.form.get('review', '')
     
-    if not rating or int(rating) < 1 or int(rating) > 5:
-        flash('Please select a valid rating (1-5 stars).', 'danger')
+    app.logger.info(f"Rating submitted: order_id={order_id}, rating={rating}, review={review}")
+    
+    if not rating:
+        flash('Please select a rating.', 'danger')
+        return redirect(f'/order/{order_id}')
+    
+    try:
+        rating_int = int(rating)
+        if rating_int < 1 or rating_int > 5:
+            flash('Please select a valid rating (1-5 stars).', 'danger')
+            return redirect(f'/order/{order_id}')
+    except ValueError:
+        flash('Invalid rating value.', 'danger')
         return redirect(f'/order/{order_id}')
     
     conn = sqlite3.connect('database.db')
@@ -3221,15 +3232,20 @@ def submit_rating(order_id):
     
     if not order:
         conn.close()
+        app.logger.error(f"Order not found: {order_id}")
         return 'Order not found', 404
     
-    if order[0] != session['user_id']:
+    user_id = session.get('user_id')
+    app.logger.info(f"User: {user_id}, Order buyer: {order[0]}")
+    
+    if order[0] != user_id:
         conn.close()
+        app.logger.error(f"Access denied: user {user_id} tried to rate order {order_id} owned by buyer {order[0]}")
         return 'Access denied', 403
     
     if order[2] != 'delivered':
-        flash('You can only rate completed orders.', 'warning')
         conn.close()
+        flash('You can only rate completed orders.', 'warning')
         return redirect(f'/order/{order_id}')
     
     c.execute("SELECT id FROM ratings WHERE order_id = ?", (order_id,))
@@ -3239,7 +3255,7 @@ def submit_rating(order_id):
         return redirect(f'/order/{order_id}')
     
     c.execute("INSERT INTO ratings (order_id, seller_id, buyer_id, rating, review) VALUES (?, ?, ?, ?, ?)",
-              (order_id, order[1], order[0], int(rating), review))
+              (order_id, order[1], order[0], rating_int, review))
     conn.commit()
     conn.close()
     
