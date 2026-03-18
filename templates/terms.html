@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %}Terms of Service - Marketplace{% endblock %}
+{% extends "base.html" %} {% block title %}{% if session.get('lang') == 'de' %}Nutzungsbedingungen{% else %}Terms of Service{% endif %} - Marketplace{% endblock %}
 {% block content %}
 <div class="container mt-5">
   <div class="row">
@@ -7,12 +7,58 @@
       <p><em>{% if session.get('lang') == 'de' %}Stand: März 2026{% else %}Last updated: March 2026{% endif %}</em></p>
       
       <h4>{% if session.get('lang') == 'de' %}1. Allgemeines{% else %}1. General{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Willkommen bei Marketplace. Durch die Nutzung dieser Plattform erklären Sie sich mit den folgenden Nutzungsbedingungen einverstanden. Wenn Sie diesen Bedingungen nicht zustimmen, nutzen Sie die Plattform bitte nicht.{% else %}Welcome to Marketplace. By using this platform, you agree to these Terms of Service. If you do not agree to these terms, please do not use this platform.{% endif %}</p>
+      <p>{% if session.get('lang') == 'de' %}Willkommen bei ME-Tii Marketplace. Durch die Nutzung dieser Plattform erklären Sie sich mit den folgenden Nutzungsbedingungen einverstanden. Wenn Sie diesen Bedingungen nicht zustimmen, nutzen Sie die Plattform bitte nicht.{% else %}Welcome to ME-Tii Marketplace. By using this platform, you agree to these Terms of Service. If you do not agree to these terms, please do not use this platform.{% endif %}</p>
       
       <h4>{% if session.get('lang') == 'de' %}2. Kontoerstellung{% else %}2. Account Registration{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Sie müssen mindestens 18 Jahre alt sein, um ein Konto zu erstellen. Sie sind verantwortlich für die Sicherheit Ihres Kontos und Passworts. Sie tragen die Verantwortung für alle Aktivitäten unter Ihrem Konto.{% else %}You must be at least 18 years old to create an account. You are responsible for maintaining the security of your account and password. You are responsible for all activities that occur under your account.{% endif %}</p>
+      <p>{% if session.get('lang') == 'de' %}Sie müssen mindestens 18 Jahre alt sein, um ein Konto zu erstellen. Sie sind verantwortlich für die Sicherheit Ihres Kontos und Passworts. Sie tragen die Verantwortung für alle Aktivitäten unter Ihrem Konto. Bei der Registrierung muss eine gültige E-Mail-Adresse angegeben werden.{% else %}You must be at least 18 years old to create an account. You are responsible for maintaining the security of your account and password. You are responsible for all activities that occur under your account. A valid email address is required during registration.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}3. Nutzung der Plattform{% else %}3. Platform Usage{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}3. Erstellen von Angeboten{% else %}3. Listing Items{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Sie können Artikel zum Verkauf, Kauf, Tausch oder zur kostenlosen Abgabe einstellen. Für jeden Artikel müssen Sie folgendes angeben:{% else %}You can list items for sale, purchase, trade, or free giveaway. For each item, you must provide:{% endif %}</p>
+      <ul>
+        <li>{% if session.get('lang') == 'de' %}Titel und Beschreibung{% else %}Title and description{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}Preis (falls zutreffend){% else %}Price (if applicable){% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}Mindestbestand (Standard: 1){% else %}Minimum quantity (default: 1){% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}Lieferoptionen (Abholung vor Ort und/oder Versand){% else %}Delivery options (Local pickup and/or shipping){% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}Versandkosten (falls zutreffend){% else %}Shipping cost (if applicable){% endif %}</li>
+      </ul>
+      
+      <h4>{% if session.get('lang') == 'de' %}4. Beworbene Artikel (Featured Listings){% else %}4. Featured Listings{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Sie können Ihre Artikel für $2.99 für einen Zeitraum von 7 Tagen bewerben. Beworbene Artikel werden oben in den Suchergebnissen angezeigt. Die Gebühr wird über Stripe bezahlt und ist nicht erstattungsfähig.{% else %}You can feature your listings for $2.99 for a period of 7 days. Featured listings appear at the top of search results. The fee is processed through Stripe and is non-refundable.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}5. Zahlungen und Transaktionsgebühren{% else %}5. Payments and Transaction Fees{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Alle Zahlungen werden über Stripe abgewickelt. Wir speichern keine Zahlungsinformationen. Bei jedem Verkauf wird eine Transaktionsgebühr von 10% erhoben. Verkäufer sind für die Einhaltung aller geltenden Steuergesetze verantwortlich.{% else %}All payments are processed through Stripe. We do not store payment information. A transaction fee of 10% is charged on every sale. Sellers are responsible for complying with all applicable tax laws.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}6. Bestellabwicklung und Fristen{% else %}6. Order Fulfillment and Deadlines{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Nach Zahlungseingang haben Verkäufer 7 Tage Zeit, um die Bestellung zu erfüllen:{% else %}After payment is received, sellers have 7 days to fulfill the order:{% endif %}</p>
+      <ul>
+        <li>{% if session.get('lang') == 'de' %}<strong>Versand:</strong> Artikel versenden und Tracking-Nummer angeben{% else %}<strong>Shipping:</strong> Ship the item and provide tracking number{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}<strong>Abholung vor Ort:</strong> Abholung mit dem Käufer arrangieren{% else %}<strong>Local Pickup:</strong> Arrange pickup with the buyer{% endif %}</li>
+      </ul>
+      <p>{% if session.get('lang') == 'de' %}Wenn die Bestellung nicht innerhalb von 7 Tagen erfüllt wird, wird sie automatisch storniert und der Käufer erhält eine Rückerstattung.{% else %}If the order is not fulfilled within 7 days, it will be automatically cancelled and the buyer will receive a refund.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}7. Lieferoptionen{% else %}7. Delivery Options{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}<strong>7.1 Versand:</strong> Bei Versandbestellungen muss der Verkäufer das Paket innerhalb von 7 Tagen nach Zahlung versenden. Der Verkäufer muss eine gültige Tracking-Nummer angeben. Die Versandkosten werden dem Käufer in Rechnung gestellt.{% else %}<strong>7.1 Shipping:</strong> For shipping orders, the seller must ship the package within 7 days of payment. The seller must provide a valid tracking number. Shipping costs are charged to the buyer.{% endif %}</p>
+      
+      <p>{% if session.get('lang') == 'de' %}<strong>7.2 Abholung vor Ort:</strong> Bei Bestellungen zur Abholung vor Ort kontaktiert der Verkäufer den Käufer, um einen geeigneten Treffpunkt und Zeitpunkt zu vereinbaren. Nach der Abholung markiert der Verkäufer die Bestellung als "abgeholt".{% else %}<strong>7.2 Local Pickup:</strong> For local pickup orders, the seller contacts the buyer to arrange a suitable meeting location and time. After pickup, the seller marks the order as "picked up".{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}8. Rückgabe und Rückerstattungen{% else %}8. Returns and Refunds{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}<strong>8.1 Rückgaberecht:</strong> Käufer können innerhalb von 14 Tagen nach Lieferung eine Rückgabe beantragen, wenn der Artikel nicht wie beschrieben ist oder nicht ankommt.{% else %}<strong>8.1 Return Policy:</strong> Buyers may request a return within 14 days of delivery if the item is not as described or does not arrive.{% endif %}</p>
+      
+      <p>{% if session.get('lang') == 'de' %}<strong>8.2 Rückerstattungen:</strong> Rückerstattungen werden über die ursprüngliche Zahlungsmethode abgewickelt. Rückerstattungen können 5-10 Werktage dauern.{% else %}<strong>8.2 Refunds:</strong> Refunds are processed through the original payment method. Refunds may take 5-10 business days to appear.{% endif %}</p>
+      
+      <p>{% if session.get('lang') == 'de' %}<strong>8.3 Rückversandkosten:</strong> Wenn der Verkäufer für das Problem verantwortlich ist (Artikel nicht wie beschrieben, beschädigt), übernimmt der Verkäufer die Rückversandkosten. Andernfalls trägt der Käufer die Kosten.{% else %}<strong>8.3 Return Shipping:</strong> If the seller is at fault (item not as described, damaged), the seller covers return shipping costs. Otherwise, the buyer pays for return shipping.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}9. Streitfälle{% else %}9. Disputes{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Bei Problemen können Käufer oder Verkäufer einen Streitfall eröffnen. Wir werden nach besten Kräften vermitteln. Streitfälle können während des Versands oder nach der Lieferung eröffnet werden. Bei Käufen mit Abholung vor Ort wird empfohlen, dass beide Parteien einen Nachweis des Kaufs und der Abholung aufbewahren.{% else %}In case of problems, buyers or sellers can open a dispute. We will attempt to mediate to the best of our ability. Disputes can be opened during shipping or after delivery. For local pickup purchases, it is recommended that both parties keep proof of purchase and pickup.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}10. Stornierung{% else %}10. Cancellation{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}<strong>10.1 Käufer:</strong> Käufer können eine Bestellung stornieren, solange diese noch nicht bezahlt wurde. Bei Bestellungen mit Abholung vor Ort können Käufer jederzeit nach Zahlung eine Rückerstattung beantragen.{% else %}<strong>10.1 Buyers:</strong> Buyers can cancel an order as long as it has not been paid. For local pickup orders, buyers can request a refund at any time after payment.{% endif %}</p>
+      
+      <p>{% if session.get('lang') == 'de' %}<strong>10.2 Verkäufer:</strong> Verkäufer können Bestellungen vor dem Versand stornieren. Bei unbezahlten Bestellungen wird die Bestellung gelöscht.{% else %}<strong>10.2 Sellers:</strong> Sellers can cancel orders before shipping. For unpaid orders, the order is deleted.{% endif %}</p>
+      
+      <p>{% if session.get('lang') == 'de' %}<strong>10.3 Automatische Stornierung:</strong> Bestellungen, die nicht innerhalb von 7 Tagen erfüllt werden, werden automatisch storniert und der Käufer erhält eine Rückerstattung.{% else %}<strong>10.3 Auto-Cancellation:</strong> Orders not fulfilled within 7 days will be automatically cancelled and the buyer will receive a refund.{% endif %}</p>
+      
+      <h4>{% if session.get('lang') == 'de' %}11. Nutzung der Plattform{% else %}11. Platform Usage{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Sie verpflichten sich, diese Plattform nur für rechtmäßige Zwecke zu nutzen. Folgende Handlungen sind untersagt:{% else %}You agree to use this platform only for lawful purposes. The following activities are prohibited:{% endif %}</p>
       <ul>
         <li>{% if session.get('lang') == 'de' %}Verkauf illegaler Waren oder Dienstleistungen{% else %}Selling illegal goods or services{% endif %}</li>
@@ -22,28 +68,25 @@
         <li>{% if session.get('lang') == 'de' %}Veröffentlichung schädlicher Inhalte{% else %}Publishing harmful content{% endif %}</li>
       </ul>
       
-      <h4>{% if session.get('lang') == 'de' %}4. Geistiges Eigentum{% else %}4. Intellectual Property{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}12. Geistiges Eigentum{% else %}12. Intellectual Property{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Sie behalten das Eigentum an den Inhalten, die Sie veröffentlichen. Durch das Posten von Inhalten gewähren Sie uns eine nicht-exklusive, gebührenfreie Lizenz zur Nutzung dieser Inhalte. Sie garantieren, dass Sie über die Rechte an den von Ihnen veröffentlichten Inhalten verfügen.{% else %}You retain ownership of the content you post. By posting content, you grant us a non-exclusive, royalty-free license to use such content. You warrant that you have the rights to the content you publish.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}5. Zahlungen und Transaktionen{% else %}5. Payments and Transactions{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Alle Zahlungen werden über Stripe abgewickelt. Wir speichern keine Zahlungsinformationen. Verkäufer sind für die Einhaltung aller geltenden Steuergesetze verantwortlich. Bei Streitigkeiten zwischen Käufer und Verkäufer werden wir nach besten Kräften vermitteln, haben aber keine Verantwortung für die Lösung solcher Streitigkeiten.{% else %}All payments are processed through Stripe. We do not store payment information. Sellers are responsible for complying with all applicable tax laws. In case of disputes between buyer and seller, we will attempt to mediate but are not responsible for resolving such disputes.{% endif %}</p>
-      
-      <h4>{% if session.get('lang') == 'de' %}6. Haftungsausschluss{% else %}6. Disclaimer{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}13. Haftungsausschluss{% else %}13. Disclaimer{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Die Plattform wird "wie besehen" bereitgestellt. Wir übernehmen keine Gewährleistung für die Verfügbarkeit, Zuverlässigkeit oder Genauigkeit der Plattform. Wir haften nicht für indirekte, zufällige oder Folgeschäden.{% else %}The platform is provided "as is". We do not warrant that the platform will be available, reliable, or accurate. We are not liable for indirect, incidental, or consequential damages.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}7. Datenschutz{% else %}7. Privacy{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}14. Datenschutz{% else %}14. Privacy{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Wir erheben und verarbeiten personenbezogene Daten gemäß unserer Datenschutzerklärung. Durch die Nutzung der Plattform stimmen Sie dieser Verarbeitung zu.{% else %}We collect and process personal data in accordance with our Privacy Policy. By using the platform, you consent to such processing.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}8. Kündigung{% else %}8. Termination{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Wir behalten uns das Recht vor, Konten zu sperren oder zu löschen, gegen diese Nutzungsbedingungen verstoßen. Sie können Ihr Konto jederzeit durch Kontaktaufnahme mit uns kündigen.{% else %}We reserve the right to suspend or delete accounts that violate these Terms of Service. You may delete your account at any time by contacting us.{% endif %}</p>
+      <h4>{% if session.get('lang') == 'de' %}15. Kündigung{% else %}15. Termination{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Wir behalten uns das Recht vor, Konten zu sperren oder zu löschen, die gegen diese Nutzungsbedingungen verstoßen. Sie können Ihr Konto jederzeit durch Kontaktaufnahme mit uns kündigen.{% else %}We reserve the right to suspend or delete accounts that violate these Terms of Service. You may delete your account at any time by contacting us.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}9. Änderungen{% else %}9. Changes{% endif %}</h4>
+      <h4>{% if session.get('lang') == 'de' %}16. Änderungen{% else %}16. Changes{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Wir behalten uns das Recht vor, diese Nutzungsbedingungen jederzeit zu ändern. Änderungen werden auf dieser Seite veröffentlicht.{% else %}We reserve the right to modify these Terms of Service at any time. Changes will be posted on this page.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}10. Kontakt{% else %}10. Contact{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Bei Fragen zu diesen Nutzungsbedingungen kontaktieren Sie uns bitte.{% else %}If you have any questions about these Terms of Service, please contact us.{% endif %}</p>
+      <h4>{% if session.get('lang') == 'de' %}17. Kontakt{% else %}17. Contact{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Bei Fragen zu diesen Nutzungsbedingungen kontaktieren Sie uns bitte über die Plattform.{% else %}If you have any questions about these Terms of Service, please contact us through the platform.{% endif %}</p>
       
-      <a href="/register" class="btn btn-primary mt-3">{% if session.get('lang') == 'de' %}Zurück zur Registrierung{% else %}Back to Registration{% endif %}</a>
+      <a href="/dashboard" class="btn btn-primary mt-3">{% if session.get('lang') == 'de' %}Zurück zum Marktplatz{% else %}Back to Marketplace{% endif %}</a>
     </div>
   </div>
 </div>
