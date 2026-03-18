@@ -7,6 +7,29 @@ block content %}
         {% if session.get('lang') == 'de' %}Melden Sie sich bei Ihrem Konto an{%
         else %}Login to Your Account{% endif %}
       </h2>
+      {% if request.args.get('error') %}
+      <div class="alert alert-danger mt-3">
+        {{ request.args.get('error') }}
+        {% if 'not verified' in request.args.get('error', '')|lower %}
+        <hr>
+        <form action="/resend-verification" method="post" class="mt-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" name="email" value="{{ request.args.get('email', '') }}" />
+          <button type="submit" class="btn btn-sm btn-outline-light">
+            {% if session.get('lang') == 'de' %}Bestätigungs-E-Mail erneut senden{% else %}Resend verification email{% endif %}
+          </button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if request.args.get('info') %}
+      <div class="alert alert-info mt-3">{{ request.args.get('info') }}</div>
+      {% endif %}
+      {% if request.args.get('registered') %}
+      <div class="alert alert-success mt-3">
+        {% if session.get('lang') == 'de' %}Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail für den Bestätigungslink.{% else %}Registration successful! Please check your email for the verification link.{% endif %}
+      </div>
+      {% endif %}
       <form action="/login" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="mb-3">
@@ -20,6 +43,7 @@ block content %}
             id="email"
             name="email"
             required
+            value="{{ request.args.get('email', '') }}"
           />
           <div id="emailHelp" class="form-text">
             {% if session.get('lang') == 'de' %}Geben Sie Ihre E-Mail oder Ihren
@@ -56,9 +80,6 @@ block content %}
         <button type="submit" class="btn btn-primary w-100">
           {% if session.get('lang') == 'de' %}Anmelden{% else %}Login{% endif %}
         </button>
-        {% if error %}
-        <div class="alert alert-danger mt-3">{{ error }}</div>
-        {% endif %}
       </form>
       <div class="text-center mt-3">
         <a href="#"

@@ -3,6 +3,7 @@ import sqlite3
 import os
 import logging
 import mimetypes
+import secrets
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -350,6 +351,18 @@ def init_db():
         pass
     try:
         c.execute("ALTER TABLE users ADD COLUMN return_address TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN verification_token TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN verification_sent_at DATETIME")
     except sqlite3.OperationalError:
         pass
     c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123')))
@@ -803,12 +816,36 @@ def register():
     if password != confirm:
         return 'Passwords do not match', 400
     hashed = generate_password_hash(password)
+    
+    verification_token = secrets.token_urlsafe(32)
+    
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     try:
-        c.execute("INSERT INTO users (username, email, password, description) VALUES (?, ?, ?, ?)", (username, email, hashed, description))
+        c.execute("INSERT INTO users (username, email, password, description, verification_token) VALUES (?, ?, ?, ?, ?)", 
+                  (username, email, hashed, description, verification_token))
         conn.commit()
-        return redirect('/login')
+        
+        base_url = os.environ.get('BASE_URL', request.url_root.rstrip('/'))
+        verify_url = f"{base_url}/verify-email/{verification_token}"
+        
+        email_subject = 'Verify your email - Marketplace'
+        email_body = f"""Welcome to Marketplace, {username}!
+
+Thank you for registering. Please verify your email address by clicking the link below:
+
+{verify_url}
+
+This link will expire in 24 hours.
+
+If you did not create an account, please ignore this email.
+
+Best regards,
+Marketplace Team"""
+        
+        send_email(email, email_subject, email_body)
+        
+        return redirect('/login?registered=1')
     except sqlite3.IntegrityError:
         return 'Username or email already exists', 400
     finally:
@@ -825,14 +862,16 @@ def login():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     if '@' in identifier:
-        c.execute("SELECT id, password, username FROM users WHERE email = ?", (identifier,))
+        c.execute("SELECT id, password, username, email_verified FROM users WHERE email = ?", (identifier,))
     else:
-        c.execute("SELECT id, password, username FROM users WHERE username = ?", (identifier,))
+        c.execute("SELECT id, password, username, email_verified FROM users WHERE username = ?", (identifier,))
     user = c.fetchone()
     conn.close()
     if user:
         app.logger.info(f"User found: {user[2]}, checking password")
         if check_password_hash(user[1], password):
+            if not user[3]:
+                return redirect('/login?error=Email not verified. Please check your email for the verification link.')
             session['user_id'] = user[0]
             session['username'] = user[2]
             app.logger.info(f"Login successful for {user[2]}")
@@ -842,6 +881,88 @@ def login():
     else:
         app.logger.warning(f"User not found for identifier: {identifier}")
     return redirect('/login?error=Invalid credentials')
+
+@app.route('/verify-email/<token>')
+def verify_email(token):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT id, username, email, verification_sent_at FROM users WHERE verification_token = ? AND email_verified = 0", (token,))
+    user = c.fetchone()
+    
+    if not user:
+        conn.close()
+        return render_template('message.html', 
+                              title='Invalid Link' if session.get('lang') != 'de' else 'Ungültiger Link',
+                              message='This verification link is invalid or has already been used.' if session.get('lang') != 'de' else 'Dieser Bestätigungslink ist ungültig oder wurde bereits verwendet.',
+                              unread_messages=0)
+    
+    user_id, username, email, sent_at = user
+    
+    if sent_at:
+        sent_time = datetime.strptime(sent_at, '%Y-%m-%d %H:%M:%S.%f')
+        hours_elapsed = (datetime.now() - sent_time).total_seconds() / 3600
+        if hours_elapsed > 24:
+            conn.close()
+            return render_template('message.html',
+                                  title='Link Expired' if session.get('lang') != 'de' else 'Link abgelaufen',
+                                  message='This verification link has expired. Please request a new one.' if session.get('lang') != 'de' else 'Dieser Bestätigungslink ist abgelaufen. Bitte fordern Sie einen neuen an.',
+                                  unread_messages=0)
+    
+    c.execute("UPDATE users SET email_verified = 1, verification_token = NULL WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    
+    return render_template('message.html',
+                          title='Email Verified' if session.get('lang') != 'de' else 'E-Mail bestätigt',
+                          message=f'Your email has been verified! You can now log in to your account.' if session.get('lang') != 'de' else f'Ihre E-Mail wurde bestätigt! Sie können sich jetzt in Ihrem Konto anmelden.',
+                          unread_messages=0)
+
+@app.route('/resend-verification', methods=['POST'])
+def resend_verification():
+    email = request.form.get('email')
+    if not email:
+        return redirect('/login?error=Email required')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT id, username, email_verified FROM users WHERE email = ?", (email,))
+    user = c.fetchone()
+    
+    if not user:
+        conn.close()
+        return redirect('/login?error=Email not found')
+    
+    user_id, username, verified = user
+    
+    if verified:
+        conn.close()
+        return redirect('/login?info=Email already verified')
+    
+    new_token = secrets.token_urlsafe(32)
+    c.execute("UPDATE users SET verification_token = ?, verification_sent_at = CURRENT_TIMESTAMP WHERE id = ?", (new_token, user_id))
+    conn.commit()
+    conn.close()
+    
+    base_url = os.environ.get('BASE_URL', request.url_root.rstrip('/'))
+    verify_url = f"{base_url}/verify-email/{new_token}"
+    
+    email_subject = 'Verify your email - Marketplace'
+    email_body = f"""Hello {username},
+
+Please verify your email address by clicking the link below:
+
+{verify_url}
+
+This link will expire in 24 hours.
+
+If you did not request this, please ignore this email.
+
+Best regards,
+Marketplace Team"""
+    
+    send_email(email, email_subject, email_body)
+    
+    return redirect('/login?info=Verification email sent. Please check your inbox.')
 
 @app.route('/robots.txt')
 def robots_txt():
