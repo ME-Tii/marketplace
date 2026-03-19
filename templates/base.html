@@ -167,7 +167,7 @@
             </ul>
             <ul class="navbar-nav">
               <li class="nav-item">
-                <a
+                <a id="nav-language"
                   class="nav-link text-nowrap"
                   href="/switch_lang?lang={% if session.get('lang') == 'de' %}en{% else %}de{% endif %}"
                   >{% if session.get('lang') == 'de' %}English{% else
@@ -181,7 +181,7 @@
                 >
               </li>
               <li class="nav-item">
-                <a
+                <a id="nav-profile"
                   class="nav-link text-nowrap"
                   href="/profile/{{ current_username }}"
                   >{% if session.get('lang') == 'de' %}Mein Profil{% else %}My
@@ -192,7 +192,7 @@
                 >
               </li>
               <li class="nav-item">
-                <a class="nav-link text-nowrap" href="/logout"
+                <a id="nav-logout" class="nav-link text-nowrap" href="/logout"
                   >{% if session.get('lang') == 'de' %}Abmelden{% else
                   %}Logout{% endif %}</a
                 >
@@ -294,32 +294,47 @@
       {
         id: 'nav-dashboard',
         title: '{% if session.get("lang") == "de" %}Übersicht{% else %}Dashboard{% endif %}',
-        text: '{% if session.get("lang") == "de" %}Die Übersicht zeigt alle Ihre Artikel und ermöglicht das Erstellen neuer Beiträge.{% else %}The Dashboard shows all your items and allows you to create new posts.{% endif %}'
+        text: '{% if session.get("lang") == "de" %}Die Übersicht zeigt alle Artikel auf dem Marktplatz. Sie können nach Typ (Kaufen, Verkaufen, Tauschen) oder Kategorie filtern und neue Beiträge erstellen.{% else %}The Dashboard displays all items on the marketplace. You can filter by type (Buy, Sell, Trade) or category and create new posts for your items.{% endif %}'
       },
       {
         id: 'nav-notices',
         title: '{% if session.get("lang") == "de" %}Merken{% else %}Notices{% endif %}',
-        text: '{% if session.get("lang") == "de" %}Hier finden Sie Artikel und Nutzer, die Sie sich gemerkt haben.{% else %}Here you find items and users you have noticed/bookmarked.{% endif %}'
+        text: '{% if session.get("lang") == "de" %}Hier finden Sie Artikel und Nutzer, die Sie sich gemerkt haben. Verpassen Sie nie wieder interessante Angebote!{% else %}Here you find items and users you have noticed/bookmarked. Never miss interesting offers again!{% endif %}'
       },
       {
         id: 'nav-messages',
         title: '{% if session.get("lang") == "de" %}Nachrichten{% else %}Messages{% endif %}',
-        text: '{% if session.get("lang") == "de" %}Kommunizieren Sie direkt mit anderen Nutzern über Ihre Artikel oder Käufe.{% else %}Communicate directly with other users about your items or purchases.{% endif %}'
+        text: '{% if session.get("lang") == "de" %}Kommunizieren Sie direkt mit anderen Nutzern. Besprechen Sie Preise, stellen Sie Fragen zu Artikeln oder klären Sie Lieferdetails.{% else %}Communicate directly with other users. Discuss prices, ask questions about items, or clarify delivery details.{% endif %}'
       },
       {
         id: 'nav-groups',
         title: '{% if session.get("lang") == "de" %}Gruppen{% else %}Groups{% endif %}',
-        text: '{% if session.get("lang") == "de" %}Treten Sie Gruppen bei, um sich mit Gleichgesinnten auszutauschen.{% else %}Join groups to connect with like-minded people.{% endif %}'
+        text: '{% if session.get("lang") == "de" %}Treten Sie Gruppen bei, um sich mit Gleichgesinnten auszutauschen. Erstellen Sie eigene Gruppen oder finden Sie thematische Communities.{% else %}Join groups to connect with like-minded people. Create your own groups or find thematic communities.{% endif %}'
       },
       {
         id: 'nav-orders',
         title: '{% if session.get("lang") == "de" %}Bestellungen{% else %}Orders{% endif %}',
-        text: '{% if session.get("lang") == "de" %}Verfolgen Sie Ihre Käufe und Verkäufe, deren Status und Lieferung.{% else %}Track your purchases and sales, their status and delivery.{% endif %}'
+        text: '{% if session.get("lang") == "de" %}Verfolgen Sie alle Ihre Käufe und Verkäufe. Sehen Sie den Zahlungsstatus, Versandinformationen und Lieferbestätigungen.{% else %}Track all your purchases and sales. View payment status, shipping information, and delivery confirmations.{% endif %}'
       },
       {
         id: 'nav-offers',
         title: '{% if session.get("lang") == "de" %}Angebote{% else %}Offers{% endif %}',
-        text: '{% if session.get("lang") == "de" %}Als Verkäufer sehen Sie hier Angebote auf Ihre Artikel. Als Käufer sehen Sie Ihre Gebote.{% else %}As a seller, see offers on your items. As a buyer, see your submitted bids.{% endif %}'
+        text: '{% if session.get("lang") == "de" %}Als Verkäufer sehen Sie eingehende Angebote auf Ihre Artikel und können diese akzeptieren oder ablehnen. Als Käufer sehen Sie den Status Ihrer Gebote.{% else %}As a seller, view incoming offers on your items and accept or reject them. As a buyer, track the status of your submitted bids.{% endif %}'
+      },
+      {
+        id: 'nav-language',
+        title: '{% if session.get("lang") == "de" %}Sprache{% else %}Language{% endif %}',
+        text: '{% if session.get("lang") == "de" %}Wechseln Sie zwischen Deutsch und Englisch. Die gesamte Seite wird in Ihre gewählte Sprache übersetzt.{% else %}Switch between German and English. The entire site will be translated to your chosen language.{% endif %}'
+      },
+      {
+        id: 'nav-profile',
+        title: '{% if session.get("lang") == "de" %}Mein Profil{% else %}My Profile{% endif %}',
+        text: '{% if session.get("lang") == "de" %}Ihr persönliches Profil zeigt Ihre Artikel, Bewertungen und bietet Zugang zu Einstellungen wie Benachrichtigungen und Stripe-Verbindung.{% else %}Your personal profile displays your items, ratings, and provides access to settings like notifications and Stripe connection.{% endif %}'
+      },
+      {
+        id: 'nav-logout',
+        title: '{% if session.get("lang") == "de" %}Abmelden{% else %}Logout{% endif %}',
+        text: '{% if session.get("lang") == "de" %}Melden Sie sich sicher von Ihrem Konto ab. Ihre Daten bleiben gespeichert und Sie können sich jederzeit wieder anmelden.{% else %}Securely log out of your account. Your data remains saved and you can log back in anytime.{% endif %}'
       }
     ];
     
