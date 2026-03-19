@@ -2429,6 +2429,31 @@ def post_bids(post_id):
     
     return render_template('post_bids.html', post_id=post_id, bids=bids, unread_messages=get_unread_messages_count(session.get('user_id')))
 
+@app.route('/my-offers')
+def my_offers():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    # Get all bids across all user's posts
+    c.execute("""SELECT b.id, b.amount, b.message, b.status, b.created_at, u.username, p.title, p.id, p.image
+                 FROM bids b 
+                 JOIN users u ON b.buyer_id = u.id 
+                 JOIN posts p ON b.post_id = p.id 
+                 WHERE p.user_id = ? 
+                 ORDER BY b.created_at DESC""", (session['user_id'],))
+    bids = c.fetchall()
+    
+    # Get posts for display
+    c.execute("SELECT id, title, image FROM posts WHERE user_id = ?", (session['user_id'],))
+    posts = {p[0]: (p[1], p[2]) for p in c.fetchall()}
+    
+    conn.close()
+    
+    return render_template('my_offers.html', bids=bids, posts=posts, unread_messages=get_unread_messages_count(session.get('user_id')))
+
 @app.route('/bid/<int:bid_id>/accept')
 def accept_bid(bid_id):
     if 'user_id' not in session:
