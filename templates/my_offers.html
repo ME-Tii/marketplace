@@ -52,7 +52,5 @@
   {% else %}
   <p class="text-muted mt-4">{% if session.get('lang') == 'de' %}Noch keine Angebote.{% else %}No offers yet.{% endif %}</p>
   {% endif %}
-  
-  <a href="/profile/{{ session.get('username') }}" class="btn btn-secondary mt-3">{% if session.get('lang') == 'de' %}Zurück zum Profil{% else %}Back to Profile{% endif %}</a>
 </div>
 {% endblock %}
