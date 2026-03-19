@@ -546,7 +546,15 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS posts_categories
                     (post_id INTEGER, category_id INTEGER, PRIMARY KEY(post_id, category_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS bids
-                    (id INTEGER PRIMARY KEY, post_id INTEGER NOT NULL, buyer_id INTEGER NOT NULL, amount REAL NOT NULL, message TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (post_id) REFERENCES posts(id), FOREIGN KEY (buyer_id) REFERENCES users(id))''')
+                    (id INTEGER PRIMARY KEY, post_id INTEGER NOT NULL, buyer_id INTEGER NOT NULL, amount REAL NOT NULL, message TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, order_id INTEGER, seen INTEGER DEFAULT 0, FOREIGN KEY (post_id) REFERENCES posts(id), FOREIGN KEY (buyer_id) REFERENCES users(id))''')
+    try:
+        c.execute("ALTER TABLE bids ADD COLUMN order_id INTEGER")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE bids ADD COLUMN seen INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
     # Insert default categories if not exist
     default_categories = [
         ('Electronics', 'Elektronik', '📱', 1),
@@ -1238,6 +1246,26 @@ def profile(username):
     total_ratings = rating_stats[0]
     avg_rating = round(rating_stats[1], 1) if rating_stats[1] else 0
     
+    # Get user's bids (as buyer)
+    if is_owner:
+        c.execute("""SELECT b.id, b.amount, b.status, b.created_at, p.title, p.id, b.order_id
+                     FROM bids b JOIN posts p ON b.post_id = p.id 
+                     WHERE b.buyer_id = ? ORDER BY b.created_at DESC LIMIT 5""", (user_id,))
+        user_bids = c.fetchall()
+    else:
+        user_bids = []
+    
+    # Get count of accepted bids for notification
+    accepted_bids_count = 0
+    if is_owner:
+        c.execute("SELECT COUNT(*) FROM bids WHERE buyer_id = ? AND status = 'accepted' AND seen = 0", (user_id,))
+        accepted_bids_count = c.fetchone()[0]
+        
+        # Mark accepted bids as seen
+        if accepted_bids_count > 0:
+            c.execute("UPDATE bids SET seen = 1 WHERE buyer_id = ? AND status = 'accepted'", (user_id,))
+            conn.commit()
+    
     # Regular posts - show all to owner, only active to others
     if is_owner:
         posts_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.quantity, posts.is_active, posts.is_featured, posts.featured_until, posts.local_pickup, posts.shipping_available FROM posts WHERE posts.user_id = ?"
@@ -1306,7 +1334,7 @@ def profile(username):
     conn.close()
     success = request.args.get('success')
     total_pages = (total_users + per_page - 1) // per_page if total_users > 0 else 1
-    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query, notification_prefs=notification_prefs, total_ratings=total_ratings, avg_rating=avg_rating)
+    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query, notification_prefs=notification_prefs, total_ratings=total_ratings, avg_rating=avg_rating, user_bids=user_bids, accepted_bids_count=accepted_bids_count)
 
 @app.route('/settings/notifications', methods=['POST'])
 def update_notifications():
@@ -2434,6 +2462,8 @@ def accept_bid(bid_id):
                  VALUES (?, ?, ?, ?, 'pending', 'local_pickup', ?, ?)""",
               (bid[0], bid[1], bid[3], bid[2], shipping_cost, transaction_fee))
     order_id = c.lastrowid
+    
+    c.execute("UPDATE bids SET order_id = ? WHERE id = ?", (order_id, bid_id))
     
     conn.commit()
     conn.close()

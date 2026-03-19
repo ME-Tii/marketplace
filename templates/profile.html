@@ -37,6 +37,41 @@
       >
       <a href="/test_email" class="btn btn-info mb-3 ms-2">{% if session.get('lang') == 'de' %}E-Mail testen{% else %}Test Email{% endif %}</a>
       
+      {% if user_bids %}
+      <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Meine Angebote{% else %}My Offers{% endif %}</h5>
+          {% set accepted_count = namespace(count=0) %}
+          {% for b in user_bids if b[2] == 'accepted' %}{% set accepted_count.count = accepted_count.count + 1 %}{% endfor %}
+          {% if accepted_count.count > 0 %}
+          <span class="badge bg-danger">{{ accepted_count.count }} {% if session.get('lang') == 'de' %}akzeptiert - Checkout!{% else %}accepted - Checkout!{% endif %}</span>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          {% for bid in user_bids %}
+          <div class="d-flex justify-content-between align-items-center mb-2 {% if bid[2] == 'accepted' %}text-success{% elif bid[2] == 'rejected' %}text-danger{% else %}text-muted{% endif %}">
+            <div>
+              <a href="/post/{{ bid[5] }}">{{ bid[4] }}</a>
+              <strong class="ms-2">${{ bid[1] }}</strong>
+            </div>
+            <div>
+              {% if bid[2] == 'accepted' %}
+              <span class="badge bg-success">{% if session.get('lang') == 'de' %}Akzeptiert{% else %}Accepted{% endif %}</span>
+              {% if bid[6] %}
+              <a href="/order/{{ bid[6] }}" class="btn btn-sm btn-success ms-2">{% if session.get('lang') == 'de' %}Zur Kasse{% else %}Checkout{% endif %}</a>
+              {% endif %}
+              {% elif bid[2] == 'rejected' %}
+              <span class="badge bg-danger">{% if session.get('lang') == 'de' %}Abgelehnt{% else %}Rejected{% endif %}</span>
+              {% else %}
+              <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Ausstehend{% else %}Pending{% endif %}</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      
       <div class="card mb-4">
         <div class="card-header">
           <h5>{% if session.get('lang') == 'de' %}Benachrichtigungseinstellungen{% else %}Notification Settings{% endif %}</h5>
