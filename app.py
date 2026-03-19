@@ -2934,13 +2934,18 @@ def create_checkout_session(post_id):
         return redirect(f'/post/{post_id}')
     
     order_id = session.get('current_order_id')
+    
+    bid_order_id = request.args.get('bid_order_id')
+    if bid_order_id:
+        order_id = bid_order_id
+    
     if not order_id:
         flash('Please complete checkout form first.', 'warning')
         return redirect(f'/checkout/{post_id}')
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT amount, shipping_method FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT amount, shipping_method FROM orders WHERE id = ?", (int(order_id),))
     order = c.fetchone()
     c.execute("SELECT title, price, user_id FROM posts WHERE id = ?", (post_id,))
     post = c.fetchone()
