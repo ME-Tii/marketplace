@@ -741,11 +741,15 @@ def inject_user():
         c = conn.cursor()
         c.execute("SELECT username FROM users WHERE id = ?", (user_id,))
         user = c.fetchone()
+        c.execute("""SELECT COUNT(*) FROM bids b 
+                     JOIN posts p ON b.post_id = p.id 
+                     WHERE p.user_id = ? AND b.status = 'pending'""", (user_id,))
+        pending_offers = c.fetchone()[0]
         conn.close()
         if user:
-            session['username'] = user[0]  # cache in session
-            return {'current_username': user[0]}
-    return {'current_username': None}
+            session['username'] = user[0]
+            return {'current_username': user[0], 'pending_offers': pending_offers}
+    return {'current_username': None, 'pending_offers': 0}
 
 
 @app.route('/fix_notifications')
