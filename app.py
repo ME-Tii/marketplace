@@ -545,6 +545,8 @@ def init_db():
                     (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, name_de TEXT, icon TEXT, sort_order INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS posts_categories
                     (post_id INTEGER, category_id INTEGER, PRIMARY KEY(post_id, category_id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS bids
+                    (id INTEGER PRIMARY KEY, post_id INTEGER NOT NULL, buyer_id INTEGER NOT NULL, amount REAL NOT NULL, message TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (post_id) REFERENCES posts(id), FOREIGN KEY (buyer_id) REFERENCES users(id))''')
     # Insert default categories if not exist
     default_categories = [
         ('Electronics', 'Elektronik', '📱', 1),
@@ -1586,6 +1588,12 @@ def import_data():
             c.execute("INSERT OR IGNORE INTO posts_categories (post_id, category_id) VALUES (?, ?)", pc)
         except sqlite3.IntegrityError:
             pass
+    bids = data.get('bids', [])
+    for bid in bids:
+        try:
+            c.execute("INSERT OR IGNORE INTO bids (id, post_id, buyer_id, amount, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", bid)
+        except sqlite3.IntegrityError:
+            pass
     conn.commit()
     conn.close()
     success_msg = 'Data imported successfully'
@@ -1656,6 +1664,8 @@ def export_all():
         categories = c.fetchall()
         c.execute("SELECT post_id, category_id FROM posts_categories")
         posts_categories = c.fetchall()
+        c.execute("SELECT id, post_id, buyer_id, amount, message, status, created_at FROM bids")
+        bids = c.fetchall()
         conn.close()
         data = {
             'users': users,
@@ -1671,7 +1681,8 @@ def export_all():
             'reports': reports,
             'ratings': ratings,
             'categories': categories,
-            'posts_categories': posts_categories
+            'posts_categories': posts_categories,
+            'bids': bids
         }
         import json
         zip_file.writestr('data_export.json', json.dumps(data, default=str))
@@ -2319,6 +2330,137 @@ def remove_notice_user(username):
     conn.commit()
     conn.close()
     return redirect('/notices')
+
+@app.route('/bid/<int:post_id>', methods=['POST'])
+def submit_bid(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    amount = request.form.get('amount')
+    message = request.form.get('message', '')
+    
+    if not amount or float(amount) <= 0:
+        flash('Please enter a valid bid amount.', 'danger')
+        return redirect(f'/post/{post_id}')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT user_id, price, is_active, quantity FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post:
+        conn.close()
+        return 'Post not found', 404
+    
+    if post[0] == session['user_id']:
+        conn.close()
+        flash('You cannot bid on your own post.', 'warning')
+        return redirect(f'/post/{post_id}')
+    
+    if not post[2] or (post[3] is not None and post[3] <= 0):
+        conn.close()
+        flash('This item is no longer available.', 'danger')
+        return redirect(f'/post/{post_id}')
+    
+    c.execute("SELECT id FROM bids WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
+    if c.fetchone():
+        conn.close()
+        flash('You already have a pending bid on this item.', 'warning')
+        return redirect(f'/post/{post_id}')
+    
+    c.execute("INSERT INTO bids (post_id, buyer_id, amount, message) VALUES (?, ?, ?, ?)",
+              (post_id, session['user_id'], float(amount), message))
+    conn.commit()
+    conn.close()
+    
+    flash('Your bid has been submitted!', 'success')
+    return redirect(f'/post/{post_id}')
+
+@app.route('/post/<int:post_id>/bids')
+def post_bids(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT user_id FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post or post[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    c.execute("""SELECT b.id, b.amount, b.message, b.status, b.created_at, u.username 
+                 FROM bids b JOIN users u ON b.buyer_id = u.id 
+                 WHERE b.post_id = ? ORDER BY b.amount DESC""", (post_id,))
+    bids = c.fetchall()
+    conn.close()
+    
+    return render_template('post_bids.html', post_id=post_id, bids=bids, unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/bid/<int:bid_id>/accept')
+def accept_bid(bid_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""SELECT b.post_id, b.buyer_id, b.amount, p.user_id, p.price, p.quantity 
+                 FROM bids b JOIN posts p ON b.post_id = p.id WHERE b.id = ?""", (bid_id,))
+    bid = c.fetchone()
+    
+    if not bid or bid[3] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    c.execute("UPDATE bids SET status = 'accepted' WHERE id = ?", (bid_id,))
+    
+    c.execute("UPDATE bids SET status = 'rejected' WHERE post_id = ? AND status = 'pending' AND id != ?", (bid[0], bid_id))
+    
+    new_quantity = bid[4] - 1 if bid[4] else 0
+    c.execute("UPDATE posts SET quantity = ?, is_active = CASE WHEN ? <= 0 THEN 0 ELSE 1 END WHERE id = ?", (new_quantity, new_quantity, bid[0]))
+    
+    total_amount = bid[2]
+    shipping_cost = 0
+    c.execute("SELECT shipping_cost FROM posts WHERE id = ?", (bid[0],))
+    post_info = c.fetchone()
+    if post_info and post_info[0]:
+        shipping_cost = post_info[0]
+        total_amount += shipping_cost
+    
+    transaction_fee = total_amount * 0.10
+    
+    c.execute("""INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee)
+                 VALUES (?, ?, ?, ?, 'pending', 'local_pickup', ?, ?)""",
+              (bid[0], bid[1], bid[3], bid[2], shipping_cost, transaction_fee))
+    order_id = c.lastrowid
+    
+    conn.commit()
+    conn.close()
+    
+    flash('Bid accepted! Redirecting to checkout.', 'success')
+    return redirect(f'/create_checkout_session/{bid[0]}?bid_order_id={order_id}')
+
+@app.route('/bid/<int:bid_id>/reject')
+def reject_bid(bid_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""SELECT b.post_id, p.user_id FROM bids b JOIN posts p ON b.post_id = p.id WHERE b.id = ?""", (bid_id,))
+    bid = c.fetchone()
+    
+    if not bid or bid[1] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    c.execute("UPDATE bids SET status = 'rejected' WHERE id = ?", (bid_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Bid rejected.', 'info')
+    return redirect(f'/post/{bid[0]}/bids')
 
 @app.route('/edit_post/<int:post_id>')
 def edit_post_page(post_id):

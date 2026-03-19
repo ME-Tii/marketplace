@@ -69,9 +69,29 @@
         {% if session.get('user_id') != post[14] %}
         <a href="/add_notice/{{ post[0] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
         <a href="/report_post/{{ post[0] }}" class="btn btn-danger">{% if session.get('lang') == 'de' %}Melden{% else %}Report{% endif %}</a>
+        
+        {% if post[6] and post[11] and post[11] > 0 %}
+        <hr>
+        <h6>{% if session.get('lang') == 'de' %}Angebot machen{% else %}Make an Offer{% endif %}</h6>
+        <form method="POST" action="/bid/{{ post[0] }}" class="row g-2">
+          <div class="col-auto">
+            <input type="number" step="0.01" class="form-control" name="amount" placeholder="{% if session.get('lang') == 'de' %}Ihr Angebot{% else %}Your offer{% endif %}" required>
+          </div>
+          <div class="col-auto">
+            <input type="text" class="form-control" name="message" placeholder="{% if session.get('lang') == 'de' %}Nachricht (optional){% else %}Message (optional){% endif %}">
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-warning">{% if session.get('lang') == 'de' %}Angebot senden{% else %}Submit Offer{% endif %}</button>
+          </div>
+        </form>
+        {% endif %}
+        
         {% endif %}
         {% if (session.get('user_id') == post[14] and not (post[15] == 1 and post[16])) or session.get('username') == 'admin' %}
         <a href="/feature/{{ post[0] }}" class="btn btn-warning">{% if session.get('lang') == 'de' %}{% if session.get('username') == 'admin' %}Bewerben (Admin){% else %}Anzeige bewerben ($2.99){% endif %}{% else %}{% if session.get('username') == 'admin' %}Feature (Admin){% else %}Feature Listing ($2.99){% endif %}{% endif %}</a>
+        {% endif %}
+        {% if session.get('user_id') == post[14] %}
+        <a href="/post/{{ post[0] }}/bids" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Angebote ansehen{% else %}View Offers{% endif %}</a>
         {% endif %}
       </div>
       {% endif %}

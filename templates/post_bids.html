@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Angebote{% else %}Offers{% endif %} - Marketplace{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h2>{% if session.get('lang') == 'de' %}Angebote für diesen Artikel{% else %}Offers for This Item{% endif %}</h2>
+  
+  {% if bids %}
+  <div class="table-responsive mt-4">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>{% if session.get('lang') == 'de' %}Käufer{% else %}Buyer{% endif %}</th>
+          <th>{% if session.get('lang') == 'de' %}Angebot{% else %}Offer Amount{% endif %}</th>
+          <th>{% if session.get('lang') == 'de' %}Nachricht{% else %}Message{% endif %}</th>
+          <th>{% if session.get('lang') == 'de' %}Status{% else %}Status{% endif %}</th>
+          <th>{% if session.get('lang') == 'de' %}Datum{% else %}Date{% endif %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bid in bids %}
+        <tr>
+          <td><a href="/profile/{{ bid[5] }}">{{ bid[5] }}</a></td>
+          <td><strong>${{ bid[1] }}</strong></td>
+          <td>{{ bid[2] or '-' }}</td>
+          <td>
+            {% if bid[3] == 'pending' %}<span class="badge bg-warning">{% if session.get('lang') == 'de' %}Ausstehend{% else %}Pending{% endif %}</span>
+            {% elif bid[3] == 'accepted' %}<span class="badge bg-success">{% if session.get('lang') == 'de' %}Akzeptiert{% else %}Accepted{% endif %}</span>
+            {% elif bid[3] == 'rejected' %}<span class="badge bg-danger">{% if session.get('lang') == 'de' %}Abgelehnt{% else %}Rejected{% endif %}</span>
+            {% endif %}
+          </td>
+          <td>{{ bid[4][:10] }}</td>
+          <td>
+            {% if bid[3] == 'pending' %}
+            <a href="/bid/{{ bid[0] }}/accept" class="btn btn-sm btn-success">{% if session.get('lang') == 'de' %}Akzeptieren{% else %}Accept{% endif %}</a>
+            <a href="/bid/{{ bid[0] }}/reject" class="btn btn-sm btn-danger">{% if session.get('lang') == 'de' %}Ablehnen{% else %}Reject{% endif %}</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-muted mt-4">{% if session.get('lang') == 'de' %}Noch keine Angebote.{% else %}No offers yet.{% endif %}</p>
+  {% endif %}
+  
+  <a href="/post/{{ post_id }}" class="btn btn-secondary mt-3">{% if session.get('lang') == 'de' %}Zurück zum Artikel{% else %}Back to Post{% endif %}</a>
+</div>
+{% endblock %}
