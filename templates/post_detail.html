@@ -70,8 +70,8 @@
         <a href="/add_notice/{{ post[0] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
         <a href="/report_post/{{ post[0] }}" class="btn btn-danger">{% if session.get('lang') == 'de' %}Melden{% else %}Report{% endif %}</a>
         {% endif %}
-        {% if session.get('user_id') == post[14] and not (post[15] == 1 and post[16]) %}
-        <a href="/feature/{{ post[0] }}" class="btn btn-warning">{% if session.get('lang') == 'de' %}Anzeige bewerben ($2.99){% else %}Feature Listing ($2.99){% endif %}</a>
+        {% if (session.get('user_id') == post[14] and not (post[15] == 1 and post[16])) or session.get('username') == 'admin' %}
+        <a href="/feature/{{ post[0] }}" class="btn btn-warning">{% if session.get('lang') == 'de' %}{% if session.get('username') == 'admin' %}Bewerben (Admin){% else %}Anzeige bewerben ($2.99){% endif %}{% else %}{% if session.get('username') == 'admin' %}Feature (Admin){% else %}Feature Listing ($2.99){% endif %}{% endif %}</a>
         {% endif %}
       </div>
       {% endif %}
