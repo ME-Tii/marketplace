@@ -74,6 +74,7 @@
         <hr>
         <h6>{% if session.get('lang') == 'de' %}Angebot machen{% else %}Make an Offer{% endif %}</h6>
         <form method="POST" action="/bid/{{ post[0] }}" class="row g-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <div class="col-auto">
             <input type="number" step="0.01" class="form-control" name="amount" placeholder="{% if session.get('lang') == 'de' %}Ihr Angebot{% else %}Your offer{% endif %}" required>
           </div>
