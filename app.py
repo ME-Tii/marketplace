@@ -2949,7 +2949,11 @@ def feature_post(post_id):
         conn.close()
         return 'Post not found', 404
     
-    if post[0] != session['user_id']:
+    # Check if user is admin or post owner
+    is_admin = session.get('username') == 'admin'
+    is_owner = post[0] == session['user_id']
+    
+    if not is_admin and not is_owner:
         conn.close()
         return 'Access denied', 403
     
@@ -2962,8 +2966,8 @@ def feature_post(post_id):
     
     conn.close()
     
-    # Free for admin
-    if session.get('username') == 'admin':
+    # Free for admin OR post owner can feature for free
+    if is_admin:
         from datetime import timedelta
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
@@ -2971,9 +2975,10 @@ def feature_post(post_id):
         c.execute("UPDATE posts SET is_featured = 1, featured_until = ? WHERE id = ?", (featured_until, post_id))
         conn.commit()
         conn.close()
-        flash('Your listing is now featured for 7 days!', 'success')
+        flash('Listing is now featured for 7 days!', 'success')
         return redirect(f'/post/{post_id}')
     
+    # Non-admin owners pay
     return render_template('feature_checkout.html', post_id=post_id, title=post[1], price=FEATURED_PRICE, unread_messages=0)
 
 @app.route('/create_featured_session/<int:post_id>')
