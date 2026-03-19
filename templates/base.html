@@ -47,6 +47,46 @@
         border-color: #0d6efd;
         box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.5);
       }
+      #tutorial-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 1040;
+        display: none;
+      }
+      #tutorial-box {
+        position: fixed;
+        background: #212529;
+        border: 2px solid #0d6efd;
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 400px;
+        z-index: 1050;
+        display: none;
+        box-shadow: 0 0 20px rgba(13, 110, 253, 0.5);
+      }
+      #tutorial-box h4 {
+        color: #0d6efd;
+        margin-bottom: 10px;
+      }
+      #tutorial-box p {
+        color: #fff;
+        margin-bottom: 15px;
+      }
+      .tutorial-highlight {
+        position: relative;
+        z-index: 1051 !important;
+        box-shadow: 0 0 0 4px #0d6efd, 0 0 20px rgba(13, 110, 253, 0.8) !important;
+        border-radius: 5px;
+      }
+      #tutorial-progress {
+        font-size: 12px;
+        color: #aaa;
+        margin-bottom: 10px;
+      }
       #cookie-consent-banner {
         position: fixed;
         bottom: 0;
@@ -87,19 +127,19 @@
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
               <li class="nav-item">
-                <a class="nav-link text-nowrap" href="/dashboard"
+                <a id="nav-dashboard" class="nav-link text-nowrap" href="/dashboard"
                   >{% if session.get('lang') == 'de' %}Übersicht{% else
                   %}Dashboard{% endif %}</a
                 >
               </li>
               <li class="nav-item">
-                <a class="nav-link text-nowrap" href="/notices"
+                <a id="nav-notices" class="nav-link text-nowrap" href="/notices"
                   >{% if session.get('lang') == 'de' %}Merken{% else %}Notices{%
                   endif %}</a
                 >
               </li>
               <li class="nav-item">
-                <a class="nav-link text-nowrap" href="/messages"
+                <a id="nav-messages" class="nav-link text-nowrap" href="/messages"
                   >{% if session.get('lang') == 'de' %}Nachrichten{% else
                   %}Messages{% endif %}{% if unread_messages > 0 %}<span
                     class="badge bg-danger ms-1"
@@ -108,19 +148,19 @@
                 >
               </li>
               <li class="nav-item">
-                <a class="nav-link text-nowrap" href="/groups"
+                <a id="nav-groups" class="nav-link text-nowrap" href="/groups"
                   >{% if session.get('lang') == 'de' %}Gruppen{% else %}Groups{%
                   endif %}</a
                 >
               </li>
               <li class="nav-item">
-                <a class="nav-link text-nowrap" href="/orders"
+                <a id="nav-orders" class="nav-link text-nowrap" href="/orders"
                   >{% if session.get('lang') == 'de' %}Bestellungen{% else
                   %}Orders{% endif %}</a
                 >
               </li>
               <li class="nav-item">
-                <a class="nav-link text-nowrap" href="/my-offers"
+                <a id="nav-offers" class="nav-link text-nowrap" href="/my-offers"
                   >{% if session.get('lang') == 'de' %}Angebote{% else %}Offers{% endif %}{% if pending_offers > 0 %}<span class="badge bg-danger ms-1">{{ pending_offers }}</span>{% endif %}</a
                 >
               </li>
@@ -233,6 +273,143 @@
       }
       
       window.addEventListener('DOMContentLoaded', checkCookieConsent);
+    </script>
+    
+    <div id="tutorial-overlay"></div>
+    <div id="tutorial-box">
+      <div id="tutorial-progress"></div>
+      <h4 id="tutorial-title"></h4>
+      <p id="tutorial-text"></p>
+      <div class="d-flex justify-content-between">
+        <button class="btn btn-secondary" id="tutorial-skip">{% if session.get('lang') == 'de' %}Überspringen{% else %}Skip{% endif %}</button>
+        <div>
+          <button class="btn btn-outline-light" id="tutorial-prev" style="display:none;">{% if session.get('lang') == 'de' %}Zurück{% else %}Back{% endif %}</button>
+          <button class="btn btn-primary" id="tutorial-next">{% if session.get('lang') == 'de' %}Weiter{% else %}Next{% endif %}</button>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+    const tutorialSteps = [
+      {
+        id: 'nav-dashboard',
+        title: '{% if session.get("lang") == "de" %}Übersicht{% else %}Dashboard{% endif %}',
+        text: '{% if session.get("lang") == "de" %}Die Übersicht zeigt alle Ihre Artikel und ermöglicht das Erstellen neuer Beiträge.{% else %}The Dashboard shows all your items and allows you to create new posts.{% endif %}'
+      },
+      {
+        id: 'nav-notices',
+        title: '{% if session.get("lang") == "de" %}Merken{% else %}Notices{% endif %}',
+        text: '{% if session.get("lang") == "de" %}Hier finden Sie Artikel und Nutzer, die Sie sich gemerkt haben.{% else %}Here you find items and users you have noticed/bookmarked.{% endif %}'
+      },
+      {
+        id: 'nav-messages',
+        title: '{% if session.get("lang") == "de" %}Nachrichten{% else %}Messages{% endif %}',
+        text: '{% if session.get("lang") == "de" %}Kommunizieren Sie direkt mit anderen Nutzern über Ihre Artikel oder Käufe.{% else %}Communicate directly with other users about your items or purchases.{% endif %}'
+      },
+      {
+        id: 'nav-groups',
+        title: '{% if session.get("lang") == "de" %}Gruppen{% else %}Groups{% endif %}',
+        text: '{% if session.get("lang") == "de" %}Treten Sie Gruppen bei, um sich mit Gleichgesinnten auszutauschen.{% else %}Join groups to connect with like-minded people.{% endif %}'
+      },
+      {
+        id: 'nav-orders',
+        title: '{% if session.get("lang") == "de" %}Bestellungen{% else %}Orders{% endif %}',
+        text: '{% if session.get("lang") == "de" %}Verfolgen Sie Ihre Käufe und Verkäufe, deren Status und Lieferung.{% else %}Track your purchases and sales, their status and delivery.{% endif %}'
+      },
+      {
+        id: 'nav-offers',
+        title: '{% if session.get("lang") == "de" %}Angebote{% else %}Offers{% endif %}',
+        text: '{% if session.get("lang") == "de" %}Als Verkäufer sehen Sie hier Angebote auf Ihre Artikel. Als Käufer sehen Sie Ihre Gebote.{% else %}As a seller, see offers on your items. As a buyer, see your submitted bids.{% endif %}'
+      }
+    ];
+    
+    let currentStep = 0;
+    let originalElementStyles = [];
+    
+    function startTutorial() {
+      currentStep = 0;
+      originalElementStyles = [];
+      document.getElementById('tutorial-overlay').style.display = 'block';
+      document.getElementById('tutorial-box').style.display = 'block';
+      showStep(currentStep);
+    }
+    
+    function showStep(index) {
+      originalElementStyles.forEach(item => {
+        item.element.style.cssText = item.originalStyle;
+        item.element.classList.remove('tutorial-highlight');
+      });
+      originalElementStyles = [];
+      
+      const step = tutorialSteps[index];
+      const element = document.getElementById(step.id);
+      if (!element) {
+        nextStep();
+        return;
+      }
+      
+      originalElementStyles.push({
+        element: element,
+        originalStyle: element.style.cssText
+      });
+      
+      element.classList.add('tutorial-highlight');
+      
+      const rect = element.getBoundingClientRect();
+      const boxWidth = 400;
+      let left = rect.left + rect.width / 2 - boxWidth / 2;
+      let top = rect.bottom + 10;
+      
+      if (left < 10) left = 10;
+      if (left + boxWidth > window.innerWidth - 10) left = window.innerWidth - boxWidth - 10;
+      
+      if (top + 200 > window.innerHeight) {
+        top = rect.top - 210;
+      }
+      
+      document.getElementById('tutorial-box').style.left = left + 'px';
+      document.getElementById('tutorial-box').style.top = top + 'px';
+      
+      document.getElementById('tutorial-progress').textContent = (index + 1) + ' / ' + tutorialSteps.length;
+      document.getElementById('tutorial-title').textContent = step.title;
+      document.getElementById('tutorial-text').textContent = step.text;
+      
+      document.getElementById('tutorial-prev').style.display = index > 0 ? 'inline-block' : 'none';
+      document.getElementById('tutorial-next').textContent = index === tutorialSteps.length - 1 ? 
+        '{% if session.get("lang") == "de" %}Fertig{% else %}Finish{% endif %}' : 
+        '{% if session.get("lang") == "de" %}Weiter{% else %}Next{% endif %}';
+    }
+    
+    function nextStep() {
+      if (currentStep < tutorialSteps.length - 1) {
+        currentStep++;
+        showStep(currentStep);
+      } else {
+        endTutorial();
+      }
+    }
+    
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep--;
+        showStep(currentStep);
+      }
+    }
+    
+    function endTutorial() {
+      document.getElementById('tutorial-overlay').style.display = 'none';
+      document.getElementById('tutorial-box').style.display = 'none';
+      originalElementStyles.forEach(item => {
+        item.element.style.cssText = item.originalStyle;
+        item.element.classList.remove('tutorial-highlight');
+      });
+      localStorage.setItem('tutorial_done', 'true');
+    }
+    
+    document.getElementById('tutorial-next').addEventListener('click', nextStep);
+    document.getElementById('tutorial-prev').addEventListener('click', prevStep);
+    document.getElementById('tutorial-skip').addEventListener('click', endTutorial);
+    document.getElementById('tutorial-overlay').addEventListener('click', endTutorial);
     </script>
     {% block extra_js %}{% endblock %}
   </body>
