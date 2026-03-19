@@ -39,7 +39,7 @@
       </div>
     </div>
   </form>
-  <h2>{% if session.get('lang') == 'de' %}Beiträge{% else %}Posts{% endif %} {% if category_filter %}<small class="text-muted">- {% for cat in categories %}{% if cat[0]|string == category_filter %}{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}{% endif %}{% endfor %}{% endif %}</small>{% endif %}</h2>
+  <h2>{% if session.get('lang') == 'de' %}Beiträge{% else %}Posts{% endif %} {% if category_filter %}<small class="text-muted">- {% for cat in categories %}{% if cat[0]|string == category_filter %}{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}{% endif %}{% endfor %}{% endif %}</small></h2>
   <div class="row">
     {% for post in posts %}
     <div class="col-md-4 mb-3">
