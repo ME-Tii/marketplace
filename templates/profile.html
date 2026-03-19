@@ -307,7 +307,7 @@
                   <span class="badge bg-warning text-dark me-1">⭐ {% if session.get('lang') == 'de' %}Beworben{% else %}Featured{% endif %}</span>
                   {% endif %}
                   {{ post[1] }}
-                  <small class="text-muted">({{ post[3] }})</small>
+                  <small class="text-muted">({% if post[3] == 'sell' %}{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}{% elif post[3] == 'buy' %}{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}{% elif post[3] == 'trade' %}{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}{% elif post[3] == 'notification' %}{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}{% elif post[3] == 'giveaway' %}{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}{% else %}{{ post[3] }}{% endif %})</small>
                 </h5>
                 <p class="card-text">{{ post[2] }}</p>
                 {% if post[6] %}
