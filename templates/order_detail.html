@@ -54,7 +54,7 @@
               {% elif order[5] == 'return_requested' %}{% if session.get('lang') == 'de' %}Rückgabe angefordert{% else %}Return Requested{% endif %}
               {% else %}{{ order[5] }}{% endif %}
             </span>
-            {% if order[5] == 'pending' %}
+            {% if order[5] == 'pending' and session.get('user_id') == order[2] %}
             <a href="/create_checkout_session/{{ order[1] }}?bid_order_id={{ order[0] }}" class="btn btn-primary btn-sm ms-2">{% if session.get('lang') == 'de' %}Zahlung fortsetzen{% else %}Continue Payment{% endif %}</a>
             {% endif %}
           </p>
