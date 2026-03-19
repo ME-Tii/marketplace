@@ -5,7 +5,7 @@
       <h5 class="card-title">
         {{ post[1] }} <small class="text-muted">({{ post[3] }})</small>
         {% if post[15] == 1 and post[16] %}
-          <span class="badge bg-warning text-dark ms-2">⭐ Featured</span>
+          <span class="badge bg-warning text-dark ms-2">⭐ {% if session.get('lang') == 'de' %}Beworben{% else %}Featured{% endif %}</span>
           <small class="text-muted">({% if session.get('lang') == 'de' %}noch {% else %}ends {% endif %}{{ post[16][:10] }})</small>
         {% endif %}
       </h5>

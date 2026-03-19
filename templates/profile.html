@@ -304,7 +304,7 @@
               <div class="card-body d-flex flex-column">
                 <h5 class="card-title">
                   {% if post[10] == 1 and post[11] %}
-                  <span class="badge bg-warning text-dark me-1">⭐ Featured</span>
+                  <span class="badge bg-warning text-dark me-1">⭐ {% if session.get('lang') == 'de' %}Beworben{% else %}Featured{% endif %}</span>
                   {% endif %}
                   {{ post[1] }}
                   <small class="text-muted">({{ post[3] }})</small>
