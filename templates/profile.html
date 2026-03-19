@@ -429,7 +429,6 @@
                   </div>
                   {% endif %}
                   <a href="/edit_post/{{ post[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Bearbeiten{% else %}Edit{% endif %}</a>
-                  <a href="/post/{{ post[0] }}/bids" class="btn btn-sm btn-info">{% if session.get('lang') == 'de' %}Angebote{% else %}Offers{% endif %}</a>
                   {% if not (post[10] == 1 and post[11]) %}
                   <a href="/feature/{{ post[0] }}" class="btn btn-sm btn-warning">⭐ {% if session.get('lang') == 'de' %}Bewerben{% else %}Feature{% endif %}</a>
                   {% endif %}
