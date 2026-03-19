@@ -314,9 +314,9 @@
     </div>
     <div class="card-body">
       {% if order[40] == 1 %}
-      <p class="text-success">{% if session.get('lang') == 'de' %}Verkäuferfehler: volle Erstattung + ${{ order[39] }} für Rückversand = ${{ (order[4] + (order[39] or 0))|round(2) }}{% else %}Seller at fault: Full refund + ${{ order[39] }} for return shipping = ${{ (order[4] + (order[39] or 0))|round(2) }}{% endif %}</p>
-      {% elif order[39] == 0 or order[39] is none %}
-      <p>{% if session.get('lang') == 'de' %}Klicken Sie hier, um dem Käufer eine Rückerstattung zu gewähren.{% else %}Click here to issue refund to buyer.{% endif %}</p>
+      <p class="text-success">{% if order[11] == 'local_pickup' %}{% if session.get('lang') == 'de' %}Volle Erstattung: ${{ order[4]|round(2) }}{% else %}Full refund: ${{ order[4]|round(2) }}{% endif %}{% else %}{% if session.get('lang') == 'de' %}Verkäuferfehler: volle Erstattung + ${{ order[39] }} für Rückversand = ${{ (order[4] + (order[39] or 0))|round(2) }}{% else %}Seller at fault: Full refund + ${{ order[39] }} for return shipping = ${{ (order[4] + (order[39] or 0))|round(2) }}{% endif %}{% endif %}</p>
+      {% elif order[39] == 0 or order[39] is none or order[11] == 'local_pickup' %}
+      <p>{% if session.get('lang') == 'de' %}Volle Erstattung: ${{ order[4]|round(2) }}{% else %}Full refund: ${{ order[4]|round(2) }}{% endif %}</p>
       {% else %}
       <p class="text-warning">{% if session.get('lang') == 'de' %}Käufer zahlt Rückversand: ${{ (order[4] - (order[39] or 0))|round(2) }} (Original: ${{ order[4] }} - Rückversand: ${{ order[39] }}){% else %}Buyer pays return shipping: ${{ (order[4] - (order[39] or 0))|round(2) }} (Original: ${{ order[4] }} - Return shipping: ${{ order[39] }}){% endif %}</p>
       {% endif %}
