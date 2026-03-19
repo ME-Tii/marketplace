@@ -258,16 +258,20 @@
   {% if order[32] == 'approved' and session.get('user_id') == order[2] %}
   <div class="card mt-4 border-info">
     <div class="card-header bg-info text-white">
-      <h5>{% if session.get('lang') == 'de' %}Artikel zurücksenden{% else %}Ship Returned Item{% endif %}</h5>
+      <h5>{% if order[11] == 'local_pickup' %}{% if session.get('lang') == 'de' %}Artikel zurückgeben{% else %}Return Item{% endif %}{% else %}{% if session.get('lang') == 'de' %}Artikel zurücksenden{% else %}Ship Returned Item{% endif %}{% endif %}</h5>
     </div>
     <div class="card-body">
       <form method="POST" action="/order/{{ order[0] }}/return/mark_shipped">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {% if order[11] == 'local_pickup' %}
+        <p>{% if session.get('lang') == 'de' %}Bringen Sie den Artikel bitte persönlich zum Verkäufer zurück.{% else %}Please return the item to the seller in person.{% endif %}</p>
+        {% else %}
         <div class="mb-3">
           <label class="form-label">{% if session.get('lang') == 'de' %}Tracking-Nummer (optional){% else %}Tracking Number (optional){% endif %}</label>
           <input type="text" class="form-control" name="tracking_number" placeholder="{% if session.get('lang') == 'de' %}Geben Sie die Tracking-Nummer ein...{% else %}Enter tracking number...{% endif %}" />
         </div>
-        <button type="submit" class="btn btn-info">{% if session.get('lang') == 'de' %}Als zurückgesendet markieren{% else %}Mark as Shipped Back{% endif %}</button>
+        {% endif %}
+        <button type="submit" class="btn btn-info">{% if session.get('lang') == 'de' %}{% if order[11] == 'local_pickup' %}Als zurückgegeben markieren{% else %}Als zurückgesendet markieren{% endif %}{% else %}{% if order[11] == 'local_pickup' %}Mark as Returned{% else %}Mark as Shipped Back{% endif %}{% endif %}</button>
       </form>
     </div>
   </div>

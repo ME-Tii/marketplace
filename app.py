@@ -3901,7 +3901,7 @@ def mark_return_shipped(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT buyer_id, return_status FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT buyer_id, return_status, shipping_method FROM orders WHERE id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -3917,15 +3917,24 @@ def mark_return_shipped(order_id):
         flash('Return must be approved first.', 'warning')
         return redirect(f'/order/{order_id}')
     
-    c.execute("""UPDATE orders SET 
-                 return_status = 'shipped_back',
-                 return_tracking_number = ?,
-                 return_shipped_at = CURRENT_TIMESTAMP 
-                 WHERE id = ?""", (tracking_number, order_id))
+    if order[2] == 'local_pickup':
+        c.execute("""UPDATE orders SET 
+                     return_status = 'shipped_back',
+                     return_tracking_number = 'Local Pickup',
+                     return_shipped_at = CURRENT_TIMESTAMP 
+                     WHERE id = ?""", (order_id,))
+        flash('Return marked! The seller will process your refund.', 'success')
+    else:
+        c.execute("""UPDATE orders SET 
+                     return_status = 'shipped_back',
+                     return_tracking_number = ?,
+                     return_shipped_at = CURRENT_TIMESTAMP 
+                     WHERE id = ?""", (tracking_number, order_id))
+        flash('Return shipment marked! The seller will process your refund.', 'success')
+    
     conn.commit()
     conn.close()
     
-    flash('Return shipment marked! The seller will process your refund.', 'success')
     return redirect(f'/order/{order_id}')
 
 @app.route('/order/<int:order_id>/return/refund', methods=['POST'])
