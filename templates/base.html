@@ -63,7 +63,8 @@
         border: 2px solid #0d6efd;
         border-radius: 10px;
         padding: 20px;
-        max-width: 400px;
+        max-width: 90vw;
+        width: 350px;
         z-index: 1050;
         display: none;
         box-shadow: 0 0 20px rgba(13, 110, 253, 0.5);
@@ -71,10 +72,13 @@
       #tutorial-box h4 {
         color: #0d6efd;
         margin-bottom: 10px;
+        font-size: 1.1rem;
       }
       #tutorial-box p {
         color: #fff;
         margin-bottom: 15px;
+        font-size: 0.9rem;
+        line-height: 1.4;
       }
       .tutorial-highlight {
         position: relative;
@@ -86,6 +90,26 @@
         font-size: 12px;
         color: #aaa;
         margin-bottom: 10px;
+      }
+      .d-flex.justify-content-between {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .d-flex.justify-content-between button {
+        flex: 1;
+        min-width: 80px;
+      }
+      @media (max-width: 576px) {
+        #tutorial-box {
+          width: calc(100vw - 20px);
+          padding: 15px;
+        }
+        #tutorial-box h4 {
+          font-size: 1rem;
+        }
+        #tutorial-box p {
+          font-size: 0.85rem;
+        }
       }
       #cookie-consent-banner {
         position: fixed;
@@ -371,19 +395,27 @@
       element.classList.add('tutorial-highlight');
       
       const rect = element.getBoundingClientRect();
-      const boxWidth = 400;
-      let left = rect.left + rect.width / 2 - boxWidth / 2;
-      let top = rect.bottom + 10;
+      const isMobile = window.innerWidth < 576;
+      const boxWidth = isMobile ? window.innerWidth - 20 : 400;
+      const boxHeight = 180;
+      let left = isMobile ? 10 : rect.left + rect.width / 2 - boxWidth / 2;
+      let top;
       
-      if (left < 10) left = 10;
-      if (left + boxWidth > window.innerWidth - 10) left = window.innerWidth - boxWidth - 10;
-      
-      if (top + 200 > window.innerHeight) {
-        top = rect.top - 210;
+      if (isMobile) {
+        top = window.innerHeight / 2 - boxHeight / 2;
+        left = 10;
+      } else {
+        top = rect.bottom + 10;
+        if (top + boxHeight > window.innerHeight) {
+          top = rect.top - boxHeight - 10;
+        }
+        if (left < 10) left = 10;
+        if (left + boxWidth > window.innerWidth - 10) left = window.innerWidth - boxWidth - 10;
       }
       
       document.getElementById('tutorial-box').style.left = left + 'px';
       document.getElementById('tutorial-box').style.top = top + 'px';
+      document.getElementById('tutorial-box').style.width = boxWidth + 'px';
       
       document.getElementById('tutorial-progress').textContent = (index + 1) + ' / ' + tutorialSteps.length;
       document.getElementById('tutorial-title').textContent = step.title;
