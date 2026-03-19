@@ -13,10 +13,10 @@
   {% endif %}
   <form class="mb-3" method="get">
     <div class="row g-2">
-      <div class="col-md-6">
+      <div class="col-md-4">
         <input class="form-control" type="search" name="q" placeholder="{% if session.get('lang') == 'de' %}Beiträge suchen...{% else %}Search posts...{% endif %}" value="{{ query or '' }}"/>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <select class="form-select" name="type">
           <option value="">{% if session.get('lang') == 'de' %}Alle Typen{% else %}All Types{% endif %}</option>
           <option value="buy" {% if type_filter == 'buy' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
@@ -26,12 +26,20 @@
           <option value="giveaway" {% if type_filter == 'giveaway' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}</option>
         </select>
       </div>
+      <div class="col-md-3">
+        <select class="form-select" name="category">
+          <option value="">{% if session.get('lang') == 'de' %}Alle Kategorien{% else %}All Categories{% endif %}</option>
+          {% for cat in categories %}
+          <option value="{{ cat[0] }}" {% if category_filter == cat[0]|string %}selected{% endif %}>{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}</option>
+          {% endfor %}
+        </select>
+      </div>
       <div class="col-md-2">
         <button class="btn btn-outline-success w-100" type="submit">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
       </div>
     </div>
   </form>
-  <h2>{% if session.get('lang') == 'de' %}Beiträge{% else %}Posts{% endif %}</h2>
+  <h2>{% if session.get('lang') == 'de' %}Beiträge{% else %}Posts{% endif %} {% if category_filter %}<small class="text-muted">- {% for cat in categories %}{% if cat[0]|string == category_filter %}{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}{% endif %}{% endfor %}{% endif %}</small>{% endif %}</h2>
   <div class="row">
     {% for post in posts %}
     <div class="col-md-4 mb-3">
@@ -43,6 +51,9 @@
             {% endif %}
             <a href="/post/{{ post[0] }}" class="text-decoration-none">{{ post[1] }}</a> <small class="text-muted">({{ post[3] }})</small>
           </h5>
+          {% if post[12] %}
+          <p class="mb-1"><small class="text-primary">{{ post[12] }}</small></p>
+          {% endif %}
           <p class="card-text">{{ post[2] }}</p>
           {% if post[6] %}
           <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong></p>

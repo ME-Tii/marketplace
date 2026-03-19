@@ -64,6 +64,17 @@ content %}
             </select>
           </div>
           <div class="mb-3">
+            <label for="category" class="form-label">
+              {% if session.get('lang') == 'de' %}Kategorie{% else %}Category{% endif %}
+            </label>
+            <select class="form-control" id="category" name="category">
+              <option value="">{% if session.get('lang') == 'de' %}Alle Kategorien{% else %}All Categories{% endif %}</option>
+              {% for cat in categories %}
+              <option value="{{ cat[0] }}">{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
             <label for="image" class="form-label"
               >{% if session.get('lang') == 'de' %}Bild{% else %}Image{% endif
               %}</label

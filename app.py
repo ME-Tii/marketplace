@@ -541,6 +541,28 @@ def init_db():
                     (id INTEGER PRIMARY KEY, group_id INTEGER NOT NULL, user_id INTEGER NOT NULL, status TEXT DEFAULT 'pending', joined_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (group_id) REFERENCES groups(id), FOREIGN KEY (user_id) REFERENCES users(id), UNIQUE(group_id, user_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS group_posts
                     (id INTEGER PRIMARY KEY, group_id INTEGER NOT NULL, user_id INTEGER NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL, type TEXT, image TEXT, links TEXT, price REAL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (group_id) REFERENCES groups(id), FOREIGN KEY (user_id) REFERENCES users(id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS categories
+                    (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, name_de TEXT, icon TEXT, sort_order INTEGER DEFAULT 0)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS posts_categories
+                    (post_id INTEGER, category_id INTEGER, PRIMARY KEY(post_id, category_id))''')
+    # Insert default categories if not exist
+    default_categories = [
+        ('Electronics', 'Elektronik', '📱', 1),
+        ('Clothing', 'Kleidung', '👕', 2),
+        ('Home & Garden', 'Haus & Garten', '🏠', 3),
+        ('Sports', 'Sport', '⚽', 4),
+        ('Books', 'Bücher', '📚', 5),
+        ('Vehicles', 'Fahrzeuge', '🚗', 6),
+        ('Toys', 'Spielzeug', '🎮', 7),
+        ('Health & Beauty', 'Gesundheit & Schönheit', '💄', 8),
+        ('Services', 'Dienstleistungen', '🔧', 9),
+        ('Other', 'Sonstiges', '📦', 10),
+    ]
+    for cat in default_categories:
+        try:
+            c.execute("INSERT OR IGNORE INTO categories (name, name_de, icon, sort_order) VALUES (?, ?, ?, ?)", cat)
+        except:
+            pass
     # Add new columns if not exist
     try:
         c.execute("ALTER TABLE group_posts ADD COLUMN type TEXT")
@@ -1100,10 +1122,22 @@ def dashboard():
     app.logger.info("Dashboard route called")
     query = request.args.get('q', '')
     type_filter = request.args.get('type', '')
+    category_filter = request.args.get('category', '')
     try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        base_query = "SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, posts.is_featured, posts.featured_until FROM posts JOIN users ON posts.user_id = users.id WHERE (posts.is_active = 1 OR posts.is_active IS NULL)"
+        
+        # Get categories for filter
+        c.execute("SELECT id, name, name_de, icon FROM categories ORDER BY sort_order")
+        categories = c.fetchall()
+        
+        base_query = """SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, posts.is_featured, posts.featured_until, 
+                        GROUP_CONCAT(categories.id) as cat_ids, GROUP_CONCAT(categories.name) as cat_names
+                        FROM posts 
+                        JOIN users ON posts.user_id = users.id
+                        LEFT JOIN posts_categories ON posts.id = posts_categories.post_id
+                        LEFT JOIN categories ON posts_categories.category_id = categories.id
+                        WHERE (posts.is_active = 1 OR posts.is_active IS NULL)"""
         conditions = []
         params = []
         if query:
@@ -1112,14 +1146,17 @@ def dashboard():
         if type_filter:
             conditions.append("posts.type = ?")
             params.append(type_filter)
+        if category_filter:
+            conditions.append("categories.id = ?")
+            params.append(category_filter)
         if conditions:
             base_query += " AND " + " AND ".join(conditions)
-        base_query += " ORDER BY posts.is_featured DESC, posts.timestamp DESC"
+        base_query += " GROUP BY posts.id ORDER BY posts.is_featured DESC, posts.timestamp DESC"
         c.execute(base_query, params)
         posts = c.fetchall()
         conn.close()
         app.logger.info(f"Dashboard loaded with {len(posts)} posts")
-        return render_template('dashboard.html', posts=posts, query=query, type_filter=type_filter, unread_messages=get_unread_messages_count(session.get('user_id')))
+        return render_template('dashboard.html', posts=posts, query=query, type_filter=type_filter, category_filter=category_filter, categories=categories, unread_messages=get_unread_messages_count(session.get('user_id')))
     except Exception as e:
         app.logger.error(f"Error in dashboard: {str(e)}")
         return "Internal Server Error", 500
@@ -1128,7 +1165,12 @@ def dashboard():
 def create_post_page():
     if 'user_id' not in session:
         return redirect('/login')
-    return render_template('create_post.html', unread_messages=get_unread_messages_count(session['user_id']))
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT id, name, name_de, icon FROM categories ORDER BY sort_order")
+    categories = c.fetchall()
+    conn.close()
+    return render_template('create_post.html', categories=categories, unread_messages=get_unread_messages_count(session['user_id']))
 
 @app.route('/create_post', methods=['POST'])
 def create_post():
@@ -1144,6 +1186,7 @@ def create_post():
     shipping_cost = request.form.get('shipping_cost') or 0
     quantity = int(request.form.get('quantity') or 1)
     is_active = 1 if quantity > 0 else 0
+    category_id = request.form.get('category')
     image_path = None
     if 'image' in request.files:
         file = request.files['image']
@@ -1159,6 +1202,14 @@ def create_post():
     c = conn.cursor()
     c.execute("INSERT INTO posts (user_id, title, description, type, image, links, price, local_pickup, shipping_available, shipping_cost, quantity, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
               (session['user_id'], title, description, post_type, image_path, links, price, local_pickup, shipping_available, shipping_cost, quantity, is_active))
+    post_id = c.lastrowid
+    
+    if category_id:
+        try:
+            c.execute("INSERT INTO posts_categories (post_id, category_id) VALUES (?, ?)", (post_id, int(category_id)))
+        except:
+            pass
+    
     conn.commit()
     conn.close()
     return redirect('/dashboard')
@@ -1523,6 +1574,18 @@ def import_data():
             c.execute("INSERT OR IGNORE INTO ratings (id, order_id, seller_id, buyer_id, rating, review, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", rating)
         except sqlite3.IntegrityError:
             pass
+    categories = data.get('categories', [])
+    for cat in categories:
+        try:
+            c.execute("INSERT OR IGNORE INTO categories (id, name, name_de, icon, sort_order) VALUES (?, ?, ?, ?, ?)", cat)
+        except sqlite3.IntegrityError:
+            pass
+    posts_categories = data.get('posts_categories', [])
+    for pc in posts_categories:
+        try:
+            c.execute("INSERT OR IGNORE INTO posts_categories (post_id, category_id) VALUES (?, ?)", pc)
+        except sqlite3.IntegrityError:
+            pass
     conn.commit()
     conn.close()
     success_msg = 'Data imported successfully'
@@ -1589,6 +1652,10 @@ def export_all():
         reports = c.fetchall()
         c.execute("SELECT id, order_id, seller_id, buyer_id, rating, review, created_at FROM ratings")
         ratings = c.fetchall()
+        c.execute("SELECT id, name, name_de, icon, sort_order FROM categories")
+        categories = c.fetchall()
+        c.execute("SELECT post_id, category_id FROM posts_categories")
+        posts_categories = c.fetchall()
         conn.close()
         data = {
             'users': users,
@@ -1602,7 +1669,9 @@ def export_all():
             'notices': notices,
             'noticed_users': noticed_users,
             'reports': reports,
-            'ratings': ratings
+            'ratings': ratings,
+            'categories': categories,
+            'posts_categories': posts_categories
         }
         import json
         zip_file.writestr('data_export.json', json.dumps(data, default=str))
@@ -2051,10 +2120,17 @@ def post_detail(post_id):
         c = conn.cursor()
         c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, posts.local_pickup, posts.shipping_available, posts.shipping_cost, posts.quantity, posts.is_active, users.username, posts.user_id, posts.is_featured, posts.featured_until FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?", (post_id,))
         post = c.fetchone()
+        
+        # Get categories for this post
+        c.execute("""SELECT c.name, c.name_de, c.icon FROM categories c 
+                     JOIN posts_categories pc ON c.id = pc.category_id 
+                     WHERE pc.post_id = ?""", (post_id,))
+        categories = c.fetchall()
+        
         conn.close()
         if not post:
             return 'Post not found', 404
-        return render_template('post_detail.html', post=post, unread_messages=get_unread_messages_count(session.get('user_id')))
+        return render_template('post_detail.html', post=post, categories=categories, unread_messages=get_unread_messages_count(session.get('user_id')))
     except Exception as e:
         app.logger.error(f"Error in post_detail for id {post_id}: {str(e)}")
         return "Internal Server Error", 500

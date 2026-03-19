@@ -9,6 +9,13 @@
           <small class="text-muted">({% if session.get('lang') == 'de' %}noch {% else %}ends {% endif %}{{ post[16][:10] }})</small>
         {% endif %}
       </h5>
+      {% if categories %}
+      <p class="mb-2">
+        {% for cat in categories %}
+        <span class="badge bg-secondary me-1">{{ cat[2] }} {{ cat[0] if session.get('lang') != 'de' else cat[1] }}</span>
+        {% endfor %}
+      </p>
+      {% endif %}
       <p class="card-text">{{ post[2] }}</p>
       {% if post[6] %}
       <p>
