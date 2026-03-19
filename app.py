@@ -1252,19 +1252,22 @@ def profile(username):
                      FROM bids b JOIN posts p ON b.post_id = p.id 
                      WHERE b.buyer_id = ? ORDER BY b.created_at DESC LIMIT 5""", (user_id,))
         user_bids = c.fetchall()
+        
+        # Check for new accepted bids and show flash message
+        c.execute("SELECT COUNT(*) FROM bids WHERE buyer_id = ? AND status = 'accepted' AND seen = 0", (user_id,))
+        new_accepted_count = c.fetchone()[0]
+        
+        if new_accepted_count > 0:
+            c.execute("UPDATE bids SET seen = 1 WHERE buyer_id = ? AND status = 'accepted'", (user_id,))
+            conn.commit()
+            flash(f'{new_accepted_count} {"bid was" if new_accepted_count == 1 else "bids were"} accepted! Check out "My Offers" to complete your purchase.', 'success')
     else:
         user_bids = []
     
-    # Get count of accepted bids for notification
+    # Get count of accepted bids for notification badge
     accepted_bids_count = 0
-    if is_owner:
-        c.execute("SELECT COUNT(*) FROM bids WHERE buyer_id = ? AND status = 'accepted' AND seen = 0", (user_id,))
-        accepted_bids_count = c.fetchone()[0]
-        
-        # Mark accepted bids as seen
-        if accepted_bids_count > 0:
-            c.execute("UPDATE bids SET seen = 1 WHERE buyer_id = ? AND status = 'accepted'", (user_id,))
-            conn.commit()
+    if is_owner and user_bids:
+        accepted_bids_count = sum(1 for b in user_bids if b[2] == 'accepted')
     
     # Regular posts - show all to owner, only active to others
     if is_owner:
