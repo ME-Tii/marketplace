@@ -2468,11 +2468,23 @@ def accept_bid(bid_id):
     
     c.execute("UPDATE bids SET order_id = ? WHERE id = ?", (order_id, bid_id))
     
+    # Get buyer's info for notification
+    c.execute("SELECT username, email, email_notifications, notify_order FROM users WHERE id = ?", (bid[1],))
+    buyer = c.fetchone()
+    
     conn.commit()
     conn.close()
     
-    flash('Bid accepted! Redirecting to checkout.', 'success')
-    return redirect(f'/create_checkout_session/{bid[0]}?bid_order_id={order_id}')
+    # Send email notification to buyer
+    if buyer and buyer[2] and buyer[3]:
+        try:
+            send_email(buyer[1], 'Your Offer Was Accepted!', 
+                      f'Your offer of ${bid[2]:.2f} has been accepted! Please go to checkout to complete your purchase: {request.url_root}order/{order_id}')
+        except:
+            pass
+    
+    flash('Bid accepted! The buyer has been notified and can now complete checkout.', 'success')
+    return redirect(f'/post/{bid[0]}/bids')
 
 @app.route('/bid/<int:bid_id>/reject')
 def reject_bid(bid_id):
