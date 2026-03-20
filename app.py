@@ -2442,7 +2442,7 @@ def my_offers():
     c = conn.cursor()
     
     # Get all bids across all user's posts
-    c.execute("""SELECT b.id, b.amount, b.message, b.status, b.created_at, u.username, p.title, p.id, p.image
+    c.execute("""SELECT b.id, b.amount, b.message, b.status, b.created_at, u.username, p.title, p.id, p.image, p.price
                  FROM bids b 
                  JOIN users u ON b.buyer_id = u.id 
                  JOIN posts p ON b.post_id = p.id 
