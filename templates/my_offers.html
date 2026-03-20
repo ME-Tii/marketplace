@@ -31,7 +31,7 @@
           <td><a href="/profile/{{ bid[5] }}">{{ bid[5] }}</a></td>
           <td>
             <strong>${{ bid[1] }}</strong>
-            {% if bid[9] and bid[9] > bid[1] %}
+            {% if bid[9] %}
             <br><small class="text-muted">{% if session.get('lang') == 'de' %}Original: ${{ bid[9] }}{% else %}Original: ${{ bid[9] }}{% endif %}</small>
             {% endif %}
           </td>
