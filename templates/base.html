@@ -180,7 +180,7 @@
               <li class="nav-item">
                 <a id="nav-orders" class="nav-link text-nowrap" href="/orders"
                   >{% if session.get('lang') == 'de' %}Bestellungen{% else
-                  %}Orders{% endif %}</a
+                  %}Orders{% endif %}{% if pending_orders > 0 %}<span class="badge bg-info ms-1">{{ pending_orders }}</span>{% endif %}</a
                 >
               </li>
               <li class="nav-item">

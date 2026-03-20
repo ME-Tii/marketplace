@@ -745,11 +745,14 @@ def inject_user():
                      JOIN posts p ON b.post_id = p.id 
                      WHERE p.user_id = ? AND b.status = 'pending'""", (user_id,))
         pending_offers = c.fetchone()[0]
+        c.execute("""SELECT COUNT(*) FROM orders 
+                     WHERE (buyer_id = ? OR seller_id = ?) AND status IN ('paid', 'shipped', 'pending')""", (user_id, user_id))
+        pending_orders = c.fetchone()[0]
         conn.close()
         if user:
             session['username'] = user[0]
-            return {'current_username': user[0], 'pending_offers': pending_offers}
-    return {'current_username': None, 'pending_offers': 0}
+            return {'current_username': user[0], 'pending_offers': pending_offers, 'pending_orders': pending_orders}
+    return {'current_username': None, 'pending_offers': 0, 'pending_orders': 0}
 
 
 @app.route('/fix_notifications')
