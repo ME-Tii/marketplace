@@ -3835,7 +3835,7 @@ def respond_return(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT seller_id, return_status, seller.return_address FROM orders o JOIN users seller ON o.seller_id = seller.id WHERE o.id = ?", (order_id,))
+    c.execute("SELECT seller_id, return_status, seller.return_address, shipping_method FROM orders o JOIN users seller ON o.seller_id = seller.id WHERE o.id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -3852,7 +3852,8 @@ def respond_return(order_id):
         return redirect(f'/order/{order_id}')
     
     if action == 'approve':
-        if not order[2]:
+        # Only require return address for shipped orders, not local pickup
+        if order[3] != 'local_pickup' and not order[2]:
             conn.close()
             flash('Please add a return address in your profile before approving returns.', 'warning')
             return redirect(f'/edit_profile?return_to_order={order_id}')
@@ -3944,7 +3945,7 @@ def refund_return(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT seller_id, return_status, stripe_payment_id, amount, shipping_cost, seller_at_fault FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT seller_id, return_status, stripe_payment_id, amount, shipping_cost, seller_at_fault, shipping_method FROM orders WHERE id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -3978,7 +3979,9 @@ def refund_return(order_id):
     if order[2] and app.config.get('STRIPE_SECRET_KEY'):
         try:
             stripe.Refund.create(payment_intent=order[2], amount=int(refund_amount * 100))
-            if seller_at_fault:
+            if order[6] == 'local_pickup':
+                flash(f'Refund issued: ${refund_amount:.2f} (full refund for local pickup)', 'success')
+            elif seller_at_fault:
                 flash(f'Refund issued: ${refund_amount:.2f} (item ${item_price:.2f} + return shipping ${shipping_cost:.2f} x2)', 'success')
             else:
                 flash(f'Refund issued: ${refund_amount:.2f} (item price, buyer pays return shipping)', 'success')
@@ -3987,7 +3990,9 @@ def refund_return(order_id):
             conn.close()
             return redirect(f'/order/{order_id}')
     else:
-        if seller_at_fault:
+        if order[6] == 'local_pickup':
+            flash(f'Refund issued: ${refund_amount:.2f} (full refund for local pickup)', 'success')
+        elif seller_at_fault:
             flash(f'Refund issued: ${refund_amount:.2f} (item ${item_price:.2f} + return shipping ${shipping_cost:.2f} x2)', 'success')
         else:
             flash(f'Refund issued: ${refund_amount:.2f} (item price, buyer pays return shipping)', 'success')
