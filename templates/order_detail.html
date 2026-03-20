@@ -365,7 +365,18 @@
   </div>
   {% endif %}
 
-  {% if order[19] %}
+  {% if order[11] == 'local_pickup' %}
+  <div class="card mt-4 border-info">
+    <div class="card-header bg-info text-white">
+      <h5>{% if session.get('lang') == 'de' %}Abholung vor Ort{% else %}Local Pickup{% endif %}</h5>
+    </div>
+    <div class="card-body">
+      <p>{% if session.get('lang') == 'de' %}Dieser Artikel wird persönlich abgeholt.{% else %}This item is picked up in person.{% endif %}</p>
+      <p><strong>{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %}</strong> <a href="/profile/{{ order[17] }}">{{ order[17] }}</a></p>
+      <a href="/messages?chat={{ order[17] }}&order_id={{ order[0] }}" class="btn btn-primary btn-sm">{% if session.get('lang') == 'de' %}Verkäufer kontaktieren{% else %}Contact Seller{% endif %}</a>
+    </div>
+  </div>
+  {% elif order[20] %}
   <div class="card mt-4">
     <div class="card-header">
       <h5>{% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping Address{% endif %}</h5>
