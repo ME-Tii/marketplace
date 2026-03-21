@@ -14,7 +14,6 @@
         height: 100%;
       }
       body {
-        background-image: url("{{ url_for("static", filename="pictures/mobile/mobile.png") }}");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
@@ -40,7 +39,12 @@
       }
       @media (min-width: 992px) {
         body {
-          background-image: url("{{ url_for("static", filename="pictures/desktop/desktop.png") }}");
+          background-image: url("{{ url_for("static", filename="pictures/desktop/desktop_color.jpg") }}");
+        }
+      }
+      @media (max-width: 991px) {
+        body {
+          background-image: url("{{ url_for("static", filename="pictures/mobile/mobile_color.jpg") }}");
         }
       }
       .card:hover {
