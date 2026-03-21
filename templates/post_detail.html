@@ -1,14 +1,20 @@
-{% extends "base.html" %} {% block title %}{{ post[1] }} - Marketplace{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}{{ post[1] }} - Marketplace{% endblock %}
+{% block content %}
 <div class="container mt-5">
   <div class="card">
     <div class="card-body">
       <h5 class="card-title">
-        {{ post[1] }} <small class="text-muted">({% if post[3] == 'sell' %}{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}{% elif post[3] == 'buy' %}{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}{% elif post[3] == 'trade' %}{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}{% elif post[3] == 'notification' %}{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}{% elif post[3] == 'giveaway' %}{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}{% else %}{{ post[3] }}{% endif %})</small>
+        {{ post[1] }}
+        <small class="text-muted">
+          ({% if post[3] == 'sell' %}Sell{% elif post[3] == 'buy' %}Buy{% elif post[3] == 'trade' %}Trade{% elif post[3] == 'notification' %}Notification{% elif post[3] == 'giveaway' %}Give Away{% else %}{{ post[3] }}{% endif %})
+        </small>
         {% if post[15] == 1 and post[16] %}
-          <span class="badge bg-warning text-dark ms-2">⭐ {% if session.get('lang') == 'de' %}Beworben{% else %}Featured{% endif %}</span>
-          <small class="text-muted">({% if session.get('lang') == 'de' %}noch {% else %}ends {% endif %}{{ post[16][:10] }})</small>
+          <span class="badge bg-warning text-dark ms-2">⭐ Featured</span>
+          <small class="text-muted">(ends {{ post[16][:10] }})</small>
         {% endif %}
       </h5>
+      
       {% if categories %}
       <p class="mb-2">
         {% for cat in categories %}
@@ -16,21 +22,22 @@
         {% endfor %}
       </p>
       {% endif %}
+      
       <p class="card-text">{{ post[2] }}</p>
+      
       {% if post[6] %}
-      <p>
-        <strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong>
-      </p>
+      <p><strong>Price:</strong> ${{ post[6] }}</p>
       {% endif %}
+      
       {% if post[8] or post[9] %}
       <div class="mb-3">
-        <strong>{% if session.get('lang') == 'de' %}Lieferoptionen:{% else %}Delivery Options:{% endif %}</strong>
+        <strong>Delivery Options:</strong>
         <ul>
           {% if post[8] %}
-          <li>{% if session.get('lang') == 'de' %}Abholung vor Ort (kostenlos){% else %}Local Pickup (free){% endif %}</li>
+          <li>Local Pickup (free)</li>
           {% endif %}
           {% if post[9] and post[10] %}
-          <li>{% if session.get('lang') == 'de' %}Versand (${{ post[10] }}){% else %}Shipping (${{ post[10] }}){% endif %}</li>
+          <li>Shipping (${{ post[10] }})</li>
           {% endif %}
         </ul>
       </div>
@@ -66,59 +73,67 @@
       {% if post[5] %}
       <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
       {% endif %}
+      
       <p class="card-text">
-        <small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[13] }}">{{ post[13] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small>
+        <small class="text-muted">Posted by <a href="/profile/{{ post[13] }}">{{ post[13] }}</a> on {{ post[7] }}</small>
       </p>
-        {% set qty = post[11]|default('1')|int %}
+      
+      {% set qty = post[11]|default('1')|int %}
       {% set active = post[12]|default('1')|int %}
       {% set local_pickup = post[8]|default(1)|int %}
       {% set shipping_available = post[9]|default(0)|int %}
+      
       {% if active == 0 or qty <= 0 %}
       <div class="alert alert-danger mt-3">
-        <h5>{% if session.get('lang') == 'de' %}Ausverkauft{% else %}Sold Out{% endif %}</h5>
-        <p>{% if session.get('lang') == 'de' %}Dieser Artikel ist nicht mehr verfügbar.{% else %}This item is no longer available.{% endif %}</p>
+        <h5>Sold Out</h5>
+        <p>This item is no longer available.</p>
       </div>
       {% else %}
       <div class="mt-3">
         {% if session.get('user_id') and session.get('user_id') != post[14] and post[6] and (local_pickup or shipping_available) %}
           {% if local_pickup and not shipping_available %}
-          <a href="/buy_now/{{ post[0] }}" class="btn btn-success">{% if session.get('lang') == 'de' %}Jetzt kaufen{% else %}Buy Now{% endif %}</a>
+          <a href="/buy_now/{{ post[0] }}" class="btn btn-success">Buy Now</a>
           {% else %}
-          <a href="/checkout/{{ post[0] }}" class="btn btn-success">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy Now{% endif %}</a>
+          <a href="/checkout/{{ post[0] }}" class="btn btn-success">Buy Now</a>
           {% endif %}
         {% endif %}
-        {% if not (local_pickup or shipping_available) and post[6] %}
-        <p class="text-muted">{% if session.get('lang') == 'de' %}Wenden Sie sich an den Verkäufer für Lieferoptionen.{% else %}Contact seller for delivery options.{% endif %}</p>
-        {% endif %}
-        {% if session.get('user_id') %}
-        <a href="/messages?chat={{ post[13] }}&post_id={{ post[0] }}" class="btn btn-primary">{% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send Message{% endif %}</a>
-        {% endif %}
-        {% if session.get('user_id') != post[14] %}
-        <a href="/add_notice/{{ post[0] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
-        <a href="/report_post/{{ post[0] }}" class="btn btn-danger">{% if session.get('lang') == 'de' %}Melden{% else %}Report{% endif %}</a>
         
-        {% if post[6] and post[11] and post[11] > 0 %}
-        <hr>
-        <h6>{% if session.get('lang') == 'de' %}Angebot machen{% else %}Make an Offer{% endif %}</h6>
-        <form method="POST" action="/bid/{{ post[0] }}" class="row g-2">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <div class="col-auto">
-            <input type="number" step="0.01" class="form-control" name="amount" placeholder="{% if session.get('lang') == 'de' %}Ihr Angebot{% else %}Your offer{% endif %}" required>
-          </div>
-          <div class="col-auto">
-            <input type="text" class="form-control" name="message" placeholder="{% if session.get('lang') == 'de' %}Nachricht (optional){% else %}Message (optional){% endif %}">
-          </div>
-          <div class="col-auto">
-            <button type="submit" class="btn btn-warning">{% if session.get('lang') == 'de' %}Angebot senden{% else %}Submit Offer{% endif %}</button>
-          </div>
-        </form>
+        {% if not (local_pickup or shipping_available) and post[6] %}
+        <p class="text-muted">Contact seller for delivery options.</p>
+        {% endif %}
+        
+        {% if session.get('user_id') %}
+        <a href="/messages?chat={{ post[13] }}&post_id={{ post[0] }}" class="btn btn-primary">Send Message</a>
+        {% endif %}
+        
+        {% if session.get('user_id') != post[14] %}
+        <a href="/add_notice/{{ post[0] }}" class="btn btn-info">Notice</a>
+        <a href="/report_post/{{ post[0] }}" class="btn btn-danger">Report</a>
+        
+          {% if post[6] and post[11] and post[11] > 0 %}
+          <hr>
+          <h6>Make an Offer</h6>
+          <form method="POST" action="/bid/{{ post[0] }}" class="row g-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="col-auto">
+              <input type="number" step="0.01" class="form-control" name="amount" placeholder="Your offer" required>
+            </div>
+            <div class="col-auto">
+              <input type="text" class="form-control" name="message" placeholder="Message (optional)">
+            </div>
+            <div class="col-auto">
+              <button type="submit" class="btn btn-warning">Submit Offer</button>
+            </div>
+          </form>
+          {% endif %}
         {% endif %}
         
         {% if (session.get('user_id') == post[14] and not (post[15] == 1 and post[16])) or session.get('username') == 'admin' %}
-        <a href="/feature/{{ post[0] }}" class="btn btn-warning">{% if session.get('lang') == 'de' %}{% if session.get('username') == 'admin' %}Bewerben (Admin){% else %}Anzeige bewerben ($2.99){% endif %}{% else %}{% if session.get('username') == 'admin' %}Feature (Admin){% else %}Feature Listing ($2.99){% endif %}{% endif %}</a>
+        <a href="/feature/{{ post[0] }}" class="btn btn-warning">Feature Listing ($2.99)</a>
         {% endif %}
+        
         {% if session.get('user_id') == post[14] %}
-        <a href="/post/{{ post[0] }}/bids" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Angebote ansehen{% else %}View Offers{% endif %}</a>
+        <a href="/post/{{ post[0] }}/bids" class="btn btn-secondary">View Offers</a>
         {% endif %}
       </div>
       {% endif %}
