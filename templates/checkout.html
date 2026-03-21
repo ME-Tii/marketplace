@@ -6,7 +6,15 @@
     <div class="card-body">
       <h5 class="card-title">{{ post[0] }}</h5>
       <p class="card-text">
-        <strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %}</strong> ${{ post[1] }}
+        <strong>{% if session.get('lang') == 'de' %}Preis pro Stück:{% else %}Price per item:{% endif %}</strong> ${{ post[1] }}
+        <br><strong>{% if session.get('lang') == 'de' %}Verfügbar:{% else %}Available:{% endif %}</strong> {{ post[6] }}
+      </p>
+      <div class="mb-3">
+        <label class="form-label"><strong>{% if session.get('lang') == 'de' %}Anzahl:{% else %}Quantity:{% endif %}</strong></label>
+        <input type="number" class="form-control" name="quantity" min="1" max="{{ post[6] }}" value="1" required onchange="updateTotal()" />
+      </div>
+      <p class="card-text">
+        <strong>{% if session.get('lang') == 'de' %}Gesamt:{% else %}Total:{% endif %}</strong> <span id="total_amount">${{ post[1] }}</span>
       </p>
     </div>
   </div>
@@ -89,6 +97,24 @@ function toggleAddress() {
   } else {
     addressDiv.style.display = 'block';
   }
+  updateTotal();
 }
+
+function updateTotal() {
+  var qty = parseInt(document.querySelector('input[name="quantity"]').value) || 1;
+  var price = {{ post[1] }};
+  var shipping = 0;
+  var method = document.querySelector('input[name="delivery_method"]:checked');
+  if (method && method.value === 'shipping') {
+    shipping = {{ post[5] or 0 }};
+  }
+  var total = (qty * price) + shipping;
+  document.getElementById('total_amount').textContent = '$' + total.toFixed(2);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  updateTotal();
+});
 </script>
 {% endblock %}

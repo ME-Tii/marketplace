@@ -36,7 +36,8 @@
       <div class="row">
         <div class="col-md-6">
           <p><strong>{% if session.get('lang') == 'de' %}Artikel:{% else %}Item:{% endif %}</strong> <a href="/post/{{ order[1] }}">{{ order[12] }}</a></p>
-          <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %}</strong> ${{ order[4] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Anzahl:{% else %}Quantity:{% endif %}</strong> {{ order[41] if order[41] else 1 }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Gesamtbetrag:{% else %}Total:{% endif %}</strong> ${{ order[4] }}</p>
           <p><strong>{% if session.get('lang') == 'de' %}Lieferart:{% else %}Delivery:{% endif %}</strong> 
             {% if order[11] == 'local_pickup' %}
               <span class="badge bg-info">{% if session.get('lang') == 'de' %}Abholung vor Ort{% else %}Local Pickup{% endif %}</span>

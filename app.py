@@ -707,6 +707,10 @@ def init_db():
         c.execute("ALTER TABLE orders ADD COLUMN transaction_fee REAL DEFAULT 0")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN quantity INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
     # Shipping addresses
     c.execute('''CREATE TABLE IF NOT EXISTS addresses
                  (id INTEGER PRIMARY KEY, user_id INTEGER, order_id INTEGER,
@@ -2493,8 +2497,8 @@ def accept_bid(bid_id):
     
     transaction_fee = total_amount * 0.10
     
-    c.execute("""INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee)
-                 VALUES (?, ?, ?, ?, 'pending', 'local_pickup', ?, ?)""",
+    c.execute("""INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity)
+                 VALUES (?, ?, ?, ?, 'pending', 'local_pickup', ?, ?, 1)""",
               (bid[0], bid[1], bid[3], bid[2], shipping_cost, transaction_fee))
     order_id = c.lastrowid
     
@@ -2881,9 +2885,14 @@ def buy_now(post_id):
         total_amount = post[3]
         transaction_fee = total_amount * 0.10
         
-        c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee) VALUES (?, ?, ?, ?, 'pending', 'local_pickup', 0, ?)",
+        c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity) VALUES (?, ?, ?, ?, 'pending', 'local_pickup', 0, ?, 1)",
                   (post_id, session['user_id'], post[1], total_amount, transaction_fee))
         order_id = c.lastrowid
+        
+        # Reduce post quantity by 1
+        new_qty = post[7] - 1
+        c.execute("UPDATE posts SET quantity = ?, is_active = CASE WHEN ? <= 0 THEN 0 ELSE 1 END WHERE id = ?", (new_qty, new_qty, post_id))
+        
         conn.commit()
         conn.close()
         
@@ -2939,7 +2948,7 @@ def process_checkout(post_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost FROM posts WHERE id = ?", (post_id,))
+    c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost, quantity FROM posts WHERE id = ?", (post_id,))
     post = c.fetchone()
     
     if not post or not post[1]:
@@ -2951,6 +2960,13 @@ def process_checkout(post_id):
         flash('You cannot buy your own item.', 'warning')
         return redirect(f'/post/{post_id}')
     
+    # Get quantity from form
+    quantity = int(request.form.get('quantity', 1))
+    if quantity < 1 or quantity > post[6]:
+        conn.close()
+        flash(f'Invalid quantity. Available: {post[6]}', 'danger')
+        return redirect(f'/checkout/{post_id}')
+    
     # Validate delivery method matches available options
     if delivery_method == 'local_pickup' and not post[3]:
         flash('Local pickup is not available for this item.', 'danger')
@@ -2959,13 +2975,13 @@ def process_checkout(post_id):
         flash('Shipping is not available for this item.', 'danger')
         return redirect(f'/checkout/{post_id}')
     
-    total_amount = post[1]
+    item_total = post[1] * quantity
     shipping_cost = 0
     if delivery_method == 'shipping' and post[4]:
         shipping_cost = post[5] or 0
-        total_amount += shipping_cost
+    total_amount = item_total + shipping_cost
     
-    transaction_fee = total_amount * 0.10
+    transaction_fee = item_total * 0.10
     
     if delivery_method == 'local_pickup':
         full_name = request.form.get('full_name')
@@ -2986,9 +3002,13 @@ def process_checkout(post_id):
     
     save_address = request.form.get('save_address')
     
-    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)",
-              (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost, transaction_fee))
+    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)",
+              (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost, transaction_fee, quantity))
     order_id = c.lastrowid
+    
+    # Reduce post quantity
+    new_qty = post[6] - quantity
+    c.execute("UPDATE posts SET quantity = ?, is_active = CASE WHEN ? <= 0 THEN 0 ELSE 1 END WHERE id = ?", (new_qty, new_qty, post_id))
     
     # Only save address for shipping orders, not local pickup
     if save_address and full_name and delivery_method == 'shipping':
@@ -3312,7 +3332,7 @@ def order_detail(order_id):
                  a.full_name, a.street, a.city, a.state, a.zip_code, a.country, a.phone,
                  o.dispute_reason, o.dispute_response, o.dispute_opened_at, o.dispute_resolved_at, o.dispute_resolution,
                  o.return_status, o.return_reason, o.return_response, o.return_tracking_number, o.return_requested_at, o.return_shipped_at, o.return_completed_at,
-                 o.shipping_cost, o.seller_at_fault
+                 o.shipping_cost, o.seller_at_fault, o.quantity
                  FROM orders o
                  JOIN posts p ON o.post_id = p.id
                  JOIN users buyer ON o.buyer_id = buyer.id
