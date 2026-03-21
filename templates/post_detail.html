@@ -35,7 +35,34 @@
         </ul>
       </div>
       {% endif %}
-      <img src="{{ post[4] or '/static/pictures/placeholder.png' }}" class="img-fluid mb-3" alt="Post Image" />
+      
+      {% if post[4] or additional_images %}
+      <div id="imageCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          {% if post[4] %}
+          <div class="carousel-item active">
+            <img src="{{ post[4] }}" class="d-block w-100" style="max-height: 400px; object-fit: contain; background: #000;" alt="Post Image">
+          </div>
+          {% endif %}
+          {% for img in additional_images %}
+          <div class="carousel-item {% if not post[4] and loop.first %}active{% endif %}">
+            <img src="{{ img }}" class="d-block w-100" style="max-height: 400px; object-fit: contain; background: #000;" alt="Post Image {{ loop.index + 1 }}">
+          </div>
+          {% endfor %}
+        </div>
+        {% if (post[4] and additional_images) or (additional_images|length > 1) %}
+        <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon bg-dark rounded" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon bg-dark rounded" aria-hidden="true"></span>
+        </button>
+        {% endif %}
+      </div>
+      {% else %}
+      <img src="/static/pictures/placeholder.png" class="img-fluid mb-3" alt="Post Image" />
+      {% endif %}
+      
       {% if post[5] %}
       <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
       {% endif %}

@@ -76,7 +76,7 @@ content %}
           </div>
           <div class="mb-3">
             <label for="image" class="form-label"
-              >{% if session.get('lang') == 'de' %}Bild{% else %}Image{% endif
+              >{% if session.get('lang') == 'de' %}Hauptbild{% else %}Main Image{% endif
               %}</label
             >
             <input
@@ -86,6 +86,21 @@ content %}
               name="image"
               accept="image/*"
             />
+          </div>
+          <div class="mb-3">
+            <label for="images" class="form-label"
+              >{% if session.get('lang') == 'de' %}Zusätzliche Bilder{% else %}Additional Images{% endif
+              %} ({% if session.get('lang') == 'de' %}optional{% else %}optional{% endif %})</label
+            >
+            <input
+              type="file"
+              class="form-control"
+              id="images"
+              name="images"
+              accept="image/*"
+              multiple
+            />
+            <small class="text-muted">{% if session.get('lang') == 'de' %}Halten Sie Strg/Cmd gedrückt für mehrere Bilder{% else %}Hold Ctrl/Cmd to select multiple{% endif %}</small>
           </div>
           <div class="mb-3">
             <label for="price" class="form-label"

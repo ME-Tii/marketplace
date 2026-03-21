@@ -459,6 +459,8 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123')))
     c.execute('''CREATE TABLE IF NOT EXISTS posts
                  (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, description TEXT, type TEXT, image TEXT, links TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS post_images
+                 (id INTEGER PRIMARY KEY, post_id INTEGER, image_url TEXT, sort_order INTEGER DEFAULT 0, FOREIGN KEY (post_id) REFERENCES posts(id))''')
     try:
         c.execute("ALTER TABLE posts ADD COLUMN price REAL")
     except sqlite3.OperationalError:
@@ -1209,6 +1211,8 @@ def create_post():
     is_active = 1 if quantity > 0 else 0
     category_id = request.form.get('category')
     image_path = None
+    
+    # Handle main image
     if 'image' in request.files:
         file = request.files['image']
         if file.filename != '' and allowed_file(file.filename):
@@ -1219,11 +1223,26 @@ def create_post():
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
                 file.save(file_path)
                 image_path = f'/static/pictures/{filename}'
+    
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("INSERT INTO posts (user_id, title, description, type, image, links, price, local_pickup, shipping_available, shipping_cost, quantity, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
               (session['user_id'], title, description, post_type, image_path, links, price, local_pickup, shipping_available, shipping_cost, quantity, is_active))
     post_id = c.lastrowid
+    
+    # Handle additional images
+    if 'images' in request.files:
+        files = request.files.getlist('images')
+        for i, file in enumerate(files):
+            if file.filename != '' and allowed_file(file.filename):
+                mime = mimetypes.guess_type(file.filename)[0]
+                if mime and mime.startswith('image/'):
+                    filename = secure_filename(file.filename)
+                    file_path = os.path.join(app.root_path, 'static', 'pictures', filename)
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    file.save(file_path)
+                    image_url = f'/static/pictures/{filename}'
+                    c.execute("INSERT INTO post_images (post_id, image_url, sort_order) VALUES (?, ?, ?)", (post_id, image_url, i + 1))
     
     if category_id:
         try:
@@ -2180,10 +2199,14 @@ def post_detail(post_id):
                      WHERE pc.post_id = ?""", (post_id,))
         categories = c.fetchall()
         
+        # Get additional images
+        c.execute("SELECT image_url FROM post_images WHERE post_id = ? ORDER BY sort_order", (post_id,))
+        additional_images = [row[0] for row in c.fetchall()]
+        
         conn.close()
         if not post:
             return 'Post not found', 404
-        return render_template('post_detail.html', post=post, categories=categories, unread_messages=get_unread_messages_count(session.get('user_id')))
+        return render_template('post_detail.html', post=post, categories=categories, additional_images=additional_images, unread_messages=get_unread_messages_count(session.get('user_id')))
     except Exception as e:
         app.logger.error(f"Error in post_detail for id {post_id}: {str(e)}")
         return "Internal Server Error", 500
