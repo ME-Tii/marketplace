@@ -114,7 +114,6 @@
         </form>
         {% endif %}
         
-        {% endif %}
         {% if (session.get('user_id') == post[14] and not (post[15] == 1 and post[16])) or session.get('username') == 'admin' %}
         <a href="/feature/{{ post[0] }}" class="btn btn-warning">{% if session.get('lang') == 'de' %}{% if session.get('username') == 'admin' %}Bewerben (Admin){% else %}Anzeige bewerben ($2.99){% endif %}{% else %}{% if session.get('username') == 'admin' %}Feature (Admin){% else %}Feature Listing ($2.99){% endif %}{% endif %}</a>
         {% endif %}
