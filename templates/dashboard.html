@@ -6,6 +6,7 @@
 {% block content %}
 <div class="container mt-5">
   <h1>{% if session.get('lang') == 'de' %}Gemeinschaftsbrett{% else %}Community Board{% endif %}</h1>
+  <h4 class="text-muted mb-3 text-end">{% if session.get('lang') == 'de' %}Kaufen, Verkaufen, Informieren!{% else %}Buy, Sell, Notify!{% endif %}</h4>
   {% if session.get('user_id') %}
   <a href="/create_post_page" class="btn btn-primary mb-3">{% if session.get('lang') == 'de' %}Neuen Beitrag erstellen{% else %}Create New Post{% endif %}</a>
   <button class="btn btn-info mb-3 ms-2" onclick="startTutorial()">{% if session.get('lang') == 'de' %}Anleitung{% else %}Tutorial{% endif %}</button>
