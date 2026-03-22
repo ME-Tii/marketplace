@@ -153,7 +153,7 @@
   </div>
   {% endif %}
 
-  {% if order[5] in ['paid', 'shipped'] and session.get('user_id') == order[2] and not order[10] %}
+  {% if order[5] in ['paid', 'shipped', 'delivered'] and session.get('user_id') == order[2] and not order[10] %}
   <div class="card mt-4 border-danger">
     <div class="card-header bg-danger text-white">
       <h5>{% if session.get('lang') == 'de' %}Problem melden{% else %}Report Issue{% endif %}</h5>
