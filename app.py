@@ -309,7 +309,7 @@ def check_local_pickup_orders():
                     conn.commit()
                     
                     send_email(order[7], 'Order Auto-Refunded - Marketplace',
-                              f'Your order #{order_id} for "{item_title}" has been auto-cancelled and refunded.\n\n${amount:.2f} will be returned to your original payment method.\n\nThe seller did not arrange pickup within 14 days.')
+                              f'Your order #{order_id} for "{item_title}" has been auto-cancelled and refunded.\n\n${amount:.2f} will be returned to your original payment method.\n\nThe seller did not arrange pickup within 7 days.')
                     
                 except Exception as e:
                     app.logger.error(f"Local pickup refund failed for order #{order_id}: {str(e)}")
