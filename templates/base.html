@@ -35,7 +35,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
+        background-color: rgba(0, 0, 0, 0.85);
         z-index: -1;
       }
       @media (min-width: 992px) {
@@ -47,6 +47,17 @@
         body {
           background-image: url("{{ url_for("static", filename="pictures/mobile/mobile.png") }}");
         }
+      }
+      [data-bs-theme="dark"] {
+        --bs-body-bg: #0d0d0d;
+        --bs-body-color: #e0e0e0;
+        --bs-secondary-bg: #1a1a1a;
+        --bs-tertiary-bg: #141414;
+        --bs-card-bg: #1a1a1a;
+        --bs-modal-bg: #1a1a1a;
+        --bs-input-bg: #1a1a1a;
+        --bs-dropdown-bg: #1a1a1a;
+        --bs-code-bg: #1a1a1a;
       }
       .card:hover {
         border-color: #0d6efd;
