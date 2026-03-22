@@ -2520,8 +2520,8 @@ def accept_bid(bid_id):
     
     transaction_fee = total_amount * 0.10
     
-    c.execute("""INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity)
-                 VALUES (?, ?, ?, ?, 'pending', 'local_pickup', ?, ?, 1)""",
+    c.execute("""INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_cost, transaction_fee, quantity)
+                 VALUES (?, ?, ?, ?, 'pending', ?, ?, 1)""",
               (bid[0], bid[1], bid[3], bid[2], shipping_cost, transaction_fee))
     order_id = c.lastrowid
     
@@ -2543,7 +2543,7 @@ def accept_bid(bid_id):
             pass
     
     flash('Bid accepted! The buyer has been notified and can now complete checkout.', 'success')
-    return redirect(f'/post/{bid[0]}/bids')
+    return redirect(f'/checkout/{bid[0]}')
 
 @app.route('/bid/<int:bid_id>/reject')
 def reject_bid(bid_id):
@@ -3025,13 +3025,20 @@ def process_checkout(post_id):
     
     save_address = request.form.get('save_address')
     
-    c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)",
-              (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost, transaction_fee, quantity))
-    order_id = c.lastrowid
+    c.execute("SELECT id FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
+    existing_order = c.fetchone()
     
-    # Reduce post quantity
-    new_qty = post[6] - quantity
-    c.execute("UPDATE posts SET quantity = ?, is_active = CASE WHEN ? <= 0 THEN 0 ELSE 1 END WHERE id = ?", (new_qty, new_qty, post_id))
+    if existing_order:
+        order_id = existing_order[0]
+        c.execute("""UPDATE orders SET amount = ?, shipping_method = ?, shipping_cost = ?, transaction_fee = ?, quantity = ? WHERE id = ?""",
+                  (total_amount, delivery_method, shipping_cost, transaction_fee, quantity, order_id))
+    else:
+        c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)",
+                  (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost, transaction_fee, quantity))
+        order_id = c.lastrowid
+        
+        new_qty = post[6] - quantity
+        c.execute("UPDATE posts SET quantity = ?, is_active = CASE WHEN ? <= 0 THEN 0 ELSE 1 END WHERE id = ?", (new_qty, new_qty, post_id))
     
     # Only save address for shipping orders, not local pickup
     if save_address and full_name and delivery_method == 'shipping':
@@ -3652,12 +3659,11 @@ def open_dispute(order_id):
         conn.close()
         return 'Order not found', 404
     
-    # Only buyer can open dispute, and only if paid or shipped
     if session['user_id'] != order[0]:
         conn.close()
         return 'Access denied', 403
     
-    if order[2] not in ['paid', 'shipped']:
+    if order[2] in ['refunded', 'resolved']:
         flash('Cannot open dispute for this order status.', 'warning')
         conn.close()
         return redirect(f'/order/{order_id}')
