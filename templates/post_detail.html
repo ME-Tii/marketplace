@@ -90,7 +90,7 @@
       </div>
       {% else %}
       <div class="mt-3">
-        {% if session.get('user_id') and session.get('user_id') != post[14] and post[6] and (local_pickup or shipping_available) %}
+        {% if session.get('user_id') and session.get('user_id') != post[14] and post[6] %}
           {% if local_pickup and not shipping_available %}
           <a href="/buy_now/{{ post[0] }}" class="btn btn-success">Buy Now</a>
           {% else %}
