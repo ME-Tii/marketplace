@@ -2963,6 +2963,8 @@ def checkout(post_id):
     if 'user_id' not in session:
         return redirect('/login')
     
+    order_id = request.args.get('order_id')
+    
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost, quantity, is_active FROM posts WHERE id = ?", (post_id,))
@@ -2984,6 +2986,10 @@ def checkout(post_id):
     
     c.execute("SELECT * FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
     existing_order = c.fetchone()
+    
+    if not existing_order and order_id:
+        c.execute("SELECT * FROM orders WHERE id = ? AND buyer_id = ?", (order_id, session['user_id']))
+        existing_order = c.fetchone()
     
     c.execute("SELECT * FROM addresses WHERE user_id = ? ORDER BY id DESC LIMIT 1", (session['user_id'],))
     saved_address = c.fetchone()
