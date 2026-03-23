@@ -2551,19 +2551,11 @@ def accept_bid(bid_id):
     new_quantity = bid[4] - 1 if bid[4] else 0
     c.execute("UPDATE posts SET quantity = ?, is_active = CASE WHEN ? <= 0 THEN 0 ELSE 1 END WHERE id = ?", (new_quantity, new_quantity, bid[0]))
     
-    total_amount = bid[2]
-    shipping_cost = 0
-    c.execute("SELECT shipping_cost FROM posts WHERE id = ?", (bid[0],))
-    post_info = c.fetchone()
-    if post_info and post_info[0]:
-        shipping_cost = post_info[0]
-        total_amount += shipping_cost
-    
-    transaction_fee = total_amount * 0.10
+    transaction_fee = bid[2] * 0.10
     
     c.execute("""INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_cost, transaction_fee, quantity)
-                 VALUES (?, ?, ?, ?, 'pending', ?, ?, 1)""",
-              (bid[0], bid[1], bid[3], bid[2], shipping_cost, transaction_fee))
+                 VALUES (?, ?, ?, ?, 'pending', 0, ?, 1)""",
+              (bid[0], bid[1], bid[3], bid[2], transaction_fee))
     order_id = c.lastrowid
     
     c.execute("UPDATE bids SET order_id = ? WHERE id = ?", (order_id, bid_id))

@@ -25,11 +25,11 @@
     <div class="mb-3">
       {% if post[3] and post[4] %}
       <div class="form-check">
-        <input type="radio" class="form-check-input" name="delivery_method" id="local_pickup" value="local_pickup" onchange="toggleAddress()" checked />
+        <input type="radio" class="form-check-input" name="delivery_method" id="local_pickup" value="local_pickup" onchange="toggleAddress()" {% if not existing_order or existing_order[12] == 'local_pickup' %}checked{% endif %} />
         <label class="form-check-label" for="local_pickup">{% if session.get('lang') == 'de' %}Abholung vor Ort (kostenlos){% else %}Local Pickup (free){% endif %}</label>
       </div>
       <div class="form-check">
-        <input type="radio" class="form-check-input" name="delivery_method" id="shipping" value="shipping" onchange="toggleAddress()" />
+        <input type="radio" class="form-check-input" name="delivery_method" id="shipping" value="shipping" onchange="toggleAddress()" {% if existing_order and existing_order[12] == 'shipping' %}checked{% endif %} />
         <label class="form-check-label" for="shipping">{% if session.get('lang') == 'de' %}Versand (${{ post[5] }}){% else %}Shipping (${{ post[5] }}){% endif %}</label>
       </div>
       {% elif post[3] %}
