@@ -67,7 +67,7 @@
           <h5>{% if session.get('lang') == 'de' %}Käufer-Beschwerde{% else %}Buyer's Complaint{% endif %}</h5>
         </div>
         <div class="card-body">
-          {% if order[13] %}
+          {% if order[13] and order[13]|length > 5 and '<' not in order[13] %}
           <p>{{ order[13] }}</p>
           {% else %}
           <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Beschwerde{% else %}No complaint recorded{% endif %}</p>
@@ -81,7 +81,11 @@
           <h5>{% if session.get('lang') == 'de' %}Verkäufer-Antwort{% else %}Seller's Response{% endif %}</h5>
         </div>
         <div class="card-body">
+          {% if order[14] and order[14]|length > 5 and '<' not in order[14] %}
           <p>{{ order[14] }}</p>
+          {% else %}
+          <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Antwort{% else %}No response recorded{% endif %}</p>
+          {% endif %}
         </div>
       </div>
       {% endif %}
