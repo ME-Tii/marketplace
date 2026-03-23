@@ -54,7 +54,7 @@ def init_database():
     # Demo posts with real images
     demo_posts = [
         # Admin posts
-        (admin_id, 'DJ Equipment Set', 'Professional DJ equipment set including mixer, turntables, and speakers. Perfect for parties and events.', 'sell', '/static/pictures/placeholder.png', 850.00, 1, 1, 15.00, timestamp),
+        (admin_id, 'DJ Equipment Set', 'Professional DJ equipment set including mixer, turntables, and speakers. Perfect for parties and events.', 'sell', '/static/pictures/dj.jpg', 850.00, 1, 1, 15.00, timestamp),
         (admin_id, 'Sony WH-1000XM4 Headphones', 'Best noise-canceling headphones. Used for 6 months. Comes with case and cables. Black color.', 'sell', '/static/pictures/headphones.jpg', 180.00, 1, 1, 15.00, timestamp),
         (admin_id, 'Nintendo Switch OLED', 'Selling my Switch OLED, comes with dock, joycons, and 3 games (Zelda, Mario Kart, Smash). All in original boxes.', 'sell', '/static/pictures/switch.jpg', 280.00, 1, 1, 15.00, timestamp),
         (admin_id, 'Vintage Vinyl Records Collection', 'About 50 records from the 70s-90s. Rock, jazz, and classical. Selling as a lot only.', 'sell', '/static/pictures/vinyl.jpg', 150.00, 1, 1, 15.00, timestamp),
