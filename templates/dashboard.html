@@ -290,7 +290,27 @@
       </div>
     </form>
 
-    <div class="row">
+    <!-- Skeleton Loading -->
+    <div id="skeleton-loader" class="row">
+      {% for i in range(6) %}
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-body d-flex flex-column">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text" style="width: 80%;"></div>
+            <div class="skeleton skeleton-text" style="width: 60%;"></div>
+            <div class="skeleton skeleton-image"></div>
+            <div class="mt-auto">
+              <div class="skeleton skeleton-btn" style="display: inline-block;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div id="posts-container" class="row" style="display: none;">
       {% for post in posts %}
       <div class="col-md-4 mb-4">
         <div class="card h-100">
@@ -340,4 +360,13 @@
 {% endblock %}
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
+<script>
+  // Hide skeleton and show content after page loads
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      document.getElementById('skeleton-loader').style.display = 'none';
+      document.getElementById('posts-container').style.display = 'flex';
+    }, 300);
+  });
+</script>
 {% endblock %}
