@@ -2576,7 +2576,7 @@ def accept_bid(bid_id):
             pass
     
     flash('Bid accepted! The buyer has been notified and can now complete checkout.', 'success')
-    return redirect(f'/checkout/{bid[0]}')
+    return redirect(f'/checkout/{bid[0]}?order_id={order_id}')
 
 @app.route('/bid/<int:bid_id>/reject')
 def reject_bid(bid_id):
