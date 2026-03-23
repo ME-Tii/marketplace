@@ -160,6 +160,12 @@ content %}
             <input type="number" step="0.01" class="form-control" id="shipping_cost" name="shipping_cost" placeholder="0.00" />
           </div>
           <div class="mb-3">
+            <label for="location" class="form-label">
+              {% if session.get('lang') == 'de' %}Standort{% else %}Location{% endif %}
+            </label>
+            <input type="text" class="form-control" id="location" name="location" placeholder="{% if session.get('lang') == 'de' %}z.B. München{% else %}e.g. Munich{% endif %}" />
+          </div>
+          <div class="mb-3">
             <label for="links" class="form-label"
               >{% if session.get('lang') == 'de' %}Links{% else %}Links{% endif
               %}</label

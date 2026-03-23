@@ -1187,6 +1187,7 @@ def dashboard():
     query = request.args.get('q', '')
     type_filter = request.args.get('type', '')
     category_filter = request.args.get('category', '')
+    location_filter = request.args.get('location', '')
     try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
@@ -1195,7 +1196,7 @@ def dashboard():
         c.execute("SELECT id, name, name_de, icon FROM categories ORDER BY sort_order")
         categories = c.fetchall()
         
-        base_query = """SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, posts.is_featured, posts.featured_until, 
+        base_query = """SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, posts.is_featured, posts.featured_until, posts.location,
                         GROUP_CONCAT(categories.id) as cat_ids, GROUP_CONCAT(categories.name) as cat_names
                         FROM posts 
                         JOIN users ON posts.user_id = users.id
@@ -1213,6 +1214,9 @@ def dashboard():
         if category_filter:
             conditions.append("categories.id = ?")
             params.append(category_filter)
+        if location_filter:
+            conditions.append("posts.location LIKE ?")
+            params.append('%' + location_filter + '%')
         if conditions:
             base_query += " AND " + " AND ".join(conditions)
         base_query += " GROUP BY posts.id ORDER BY posts.is_featured DESC, posts.timestamp DESC"
@@ -1220,7 +1224,7 @@ def dashboard():
         posts = c.fetchall()
         conn.close()
         app.logger.info(f"Dashboard loaded with {len(posts)} posts")
-        return render_template('dashboard.html', posts=posts, query=query, type_filter=type_filter, category_filter=category_filter, categories=categories, unread_messages=get_unread_messages_count(session.get('user_id')))
+        return render_template('dashboard.html', posts=posts, query=query, type_filter=type_filter, category_filter=category_filter, location_filter=location_filter, categories=categories, unread_messages=get_unread_messages_count(session.get('user_id')))
     except Exception as e:
         app.logger.error(f"Error in dashboard: {str(e)}")
         return "Internal Server Error", 500
@@ -1245,6 +1249,7 @@ def create_post():
     post_type = request.form.get('type')
     links = request.form.get('links')
     price = request.form.get('price')
+    location = request.form.get('location', '').strip()
     local_pickup = 1 if request.form.get('local_pickup') else 0
     shipping_available = 1 if request.form.get('shipping_available') else 0
     shipping_cost = request.form.get('shipping_cost') or 0
@@ -1267,8 +1272,8 @@ def create_post():
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("INSERT INTO posts (user_id, title, description, type, image, links, price, local_pickup, shipping_available, shipping_cost, quantity, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-              (session['user_id'], title, description, post_type, image_path, links, price, local_pickup, shipping_available, shipping_cost, quantity, is_active))
+    c.execute("INSERT INTO posts (user_id, title, description, type, image, links, price, location, local_pickup, shipping_available, shipping_cost, quantity, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+              (session['user_id'], title, description, post_type, image_path, links, price, location, local_pickup, shipping_available, shipping_cost, quantity, is_active))
     post_id = c.lastrowid
     
     # Handle additional images

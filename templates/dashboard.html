@@ -263,10 +263,13 @@
 
     <form class="mb-4" method="get">
       <div class="row g-2">
-        <div class="col-md-4">
+        <div class="col-md-3">
           <input class="form-control" type="search" name="q" placeholder="{% if session.get('lang') == 'de' %}Beiträge suchen...{% else %}Search posts...{% endif %}" value="{{ query or '' }}"/>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+          <input class="form-control" type="search" name="location" placeholder="{% if session.get('lang') == 'de' %}Ort...{% else %}Location...{% endif %}" value="{{ location_filter or '' }}"/>
+        </div>
+        <div class="col-md-2">
           <select class="form-select" name="type">
             <option value="">{% if session.get('lang') == 'de' %}Alle Typen{% else %}All Types{% endif %}</option>
             <option value="buy" {% if type_filter == 'buy' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
@@ -327,6 +330,9 @@
             <p class="card-text text-secondary">{{ post[2][:100] }}{% if post[2]|length > 100 %}...{% endif %}</p>
             {% if post[6] %}
             <p class="fw-bold text-primary fs-5">${{ post[6] }}</p>
+            {% endif %}
+            {% if post[12] %}
+            <p class="text-muted small"><small>📍 {{ post[12] }}</small></p>
             {% endif %}
             <a href="/post/{{ post[0] }}"><img src="{{ post[4] or '/static/pictures/placeholder.png' }}" class="img-fluid mb-2 rounded" alt="{{ post[1] }}"/></a>
             <div class="mt-auto">
