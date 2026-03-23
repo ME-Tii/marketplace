@@ -853,6 +853,47 @@ def shipping_policy():
 def cookie_policy():
     return render_template('cookie_policy.html', unread_messages=get_unread_messages_count(session.get('user_id')))
 
+@app.route('/about')
+def about():
+    return render_template('about.html', unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    success = False
+    name = ''
+    email = ''
+    subject = ''
+    message = ''
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '')
+        email = request.form.get('email', '')
+        subject = request.form.get('subject', '')
+        message = request.form.get('message', '')
+        
+        if name and email and subject and message:
+            try:
+                send_email(
+                    app.config.get('ADMIN_EMAIL', 'support@me-tii.com'),
+                    f'Contact Form: {subject}',
+                    f'Name: {name}\nEmail: {email}\nSubject: {subject}\n\nMessage:\n{message}'
+                )
+                success = True
+                name = ''
+                email = ''
+                subject = ''
+                message = ''
+            except Exception as e:
+                app.logger.error(f"Contact form error: {str(e)}")
+    
+    return render_template('contact.html', 
+                          unread_messages=get_unread_messages_count(session.get('user_id')),
+                          success=success,
+                          name=name,
+                          email=email,
+                          subject=subject,
+                          message=message)
+
 @app.route('/connect/stripe')
 def connect_stripe():
     if 'user_id' not in session:

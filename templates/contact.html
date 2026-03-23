@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Kontakt - ME-Tii{% else %}Contact - ME-Tii{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <h1 class="mb-4 text-center">{% if session.get('lang') == 'de' %}Kontaktiere uns{% else %}Contact Us{% endif %}</h1>
+      
+      <div class="card mb-4">
+        <div class="card-body">
+          <p class="text-muted mb-4">
+            {% if session.get('lang') == 'de' %}
+            Hast du Fragen oder Feedback? Wir sind hier um zu helfen!
+            {% else %}
+            Have questions or feedback? We're here to help!
+            {% endif %}
+          </p>
+
+          {% if success %}
+          <div class="alert alert-success">
+            {% if session.get('lang') == 'de' %}
+            Nachricht gesendet! Wir melden uns so schnell wie möglich.
+            {% else %}
+            Message sent! We'll get back to you as soon as possible.
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Name{% else %}Name{% endif %}</label>
+              <input type="text" class="form-control" name="name" required 
+                     value="{{ name if name else '' }}">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}E-Mail{% else %}Email{% endif %}</label>
+              <input type="email" class="form-control" name="email" required
+                     value="{{ email if email else '' }}">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Betreff{% else %}Subject{% endif %}</label>
+              <select class="form-select" name="subject" required>
+                <option value="">{% if session.get('lang') == 'de' %}Bitte wählen...{% else %}Please select...{% endif %}</option>
+                <option value="general" {% if subject == 'general' %}selected{% endif %}>
+                  {% if session.get('lang') == 'de' %}Allgemeine Frage{% else %}General Question{% endif %}
+                </option>
+                <option value="support" {% if subject == 'support' %}selected{% endif %}>
+                  {% if session.get('lang') == 'de' %}Support{% else %}Support{% endif %}
+                </option>
+                <option value="bug" {% if subject == 'bug' %}selected{% endif %}>
+                  {% if session.get('lang') == 'de' %}Fehler melden{% else %}Report a Bug{% endif %}
+                </option>
+                <option value="feature" {% if subject == 'feature' %}selected{% endif %}>
+                  {% if session.get('lang') == 'de' %}Feature-Wunsch{% else %}Feature Request{% endif %}
+                </option>
+                <option value="other" {% if subject == 'other' %}selected{% endif %}>
+                  {% if session.get('lang') == 'de' %}Sonstiges{% else %}Other{% endif %}
+                </option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Nachricht{% else %}Message{% endif %}</label>
+              <textarea class="form-control" name="message" rows="5" required>{{ message if message else '' }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+              {% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send Message{% endif %}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body text-center">
+          <h5 class="card-title">{% if session.get('lang') == 'de' %}Andere Wege uns zu erreichen{% else %}Other Ways to Reach Us{% endif %}</h5>
+          <p class="text-muted mb-3">
+            {% if session.get('lang') == 'de' %}
+            Wir antworten in der Regel innerhalb von 24 Stunden.
+            {% else %}
+            We typically respond within 24 hours.
+            {% endif %}
+          </p>
+          <p class="mb-1">
+            <strong>Email:</strong> support@me-tii.com
+          </p>
+          <p class="mb-0">
+            <strong>{% if session.get('lang') == 'de' %}Geschäftszeiten{% else %}Business Hours{% endif %}:</strong>
+            {% if session.get('lang') == 'de' %}Mo-Fr 9:00-17:00{% else %}Mon-Fri 9:00-17:00{% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

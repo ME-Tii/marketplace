@@ -1,74 +1,340 @@
 {% extends "base.html" %}
-{% block title %}{% if session.get('lang') == 'de' %}Marktplatz - Kaufen, Verkaufen, Tauschen{% else %}Marketplace - Buy, Sell, Trade{% endif %}{% endblock %}
+{% block title %}{% if session.get('lang') == 'de' %}ME-Tii - Dein Community Marktplatz{% else %}ME-Tii - Your Community Marketplace{% endif %}{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}"/>
 {% endblock %}
 {% block content %}
-<div class="container mt-5">
-  <h1>{% if session.get('lang') == 'de' %}Gemeinschaftsbrett{% else %}Community Board{% endif %}</h1>
-  <h4 class="text-muted mb-3 text-end">{% if session.get('lang') == 'de' %}Kaufen, Verkaufen, Informieren!{% else %}Buy, Sell, Notify!{% endif %}</h4>
-  {% if session.get('user_id') %}
-  <a href="/create_post_page" class="btn btn-primary mb-3">{% if session.get('lang') == 'de' %}Neuen Beitrag erstellen{% else %}Create New Post{% endif %}</a>
-  <button class="btn btn-info mb-3 ms-2" onclick="startTutorial()">{% if session.get('lang') == 'de' %}Anleitung{% else %}Tutorial{% endif %}</button>
-  {% else %}
-  <p>{% if session.get('lang') == 'de' %}Bitte{% else %}Please{% endif %} <a href="/login">{% if session.get('lang') == 'de' %}anmelden{% else %}login{% endif %}</a> {% if session.get('lang') == 'de' %}um Beiträge zu erstellen.{% else %}to create posts.{% endif %}</p>
-  {% endif %}
-  <form class="mb-3" method="get">
-    <div class="row g-2">
-      <div class="col-md-4">
-        <input class="form-control" type="search" name="q" placeholder="{% if session.get('lang') == 'de' %}Beiträge suchen...{% else %}Search posts...{% endif %}" value="{{ query or '' }}"/>
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" name="type">
-          <option value="">{% if session.get('lang') == 'de' %}Alle Typen{% else %}All Types{% endif %}</option>
-          <option value="buy" {% if type_filter == 'buy' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
-          <option value="sell" {% if type_filter == 'sell' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}</option>
-          <option value="trade" {% if type_filter == 'trade' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}</option>
-          <option value="notification" {% if type_filter == 'notification' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}</option>
-          <option value="giveaway" {% if type_filter == 'giveaway' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" name="category">
-          <option value="">{% if session.get('lang') == 'de' %}Alle Kategorien{% else %}All Categories{% endif %}</option>
-          {% for cat in categories %}
-          <option value="{{ cat[0] }}" {% if category_filter == cat[0]|string %}selected{% endif %}>{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-2">
-        <button class="btn btn-outline-success w-100" type="submit">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
-      </div>
+
+<style>
+  .hero-section {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.15) 0%, rgba(0, 0, 0, 0.3) 100%);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-subtitle {
+    font-size: 1.2rem;
+    color: #a0a0a0;
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .hero-buttons .btn {
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 50px;
+  }
+  .trust-bar {
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 10px;
+    padding: 1rem 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+  }
+  .trust-item svg {
+    width: 20px;
+    height: 20px;
+    color: #0d6efd;
+  }
+  .features-section {
+    background: rgba(26, 26, 26, 0.8);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+  }
+  .section-title {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    color: #ffffff;
+  }
+  .feature-card {
+    background: rgba(33, 37, 41, 0.9);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    height: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(13, 110, 253, 0.2);
+  }
+  .feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  .feature-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+  }
+  .feature-desc {
+    color: #a0a0a0;
+    font-size: 0.9rem;
+  }
+  .how-it-works {
+    background: rgba(26, 26, 26, 0.8);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+  }
+  .step-card {
+    text-align: center;
+    padding: 1.5rem;
+    position: relative;
+  }
+  .step-number {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 auto 1rem;
+  }
+  .step-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+  }
+  .step-desc {
+    color: #a0a0a0;
+    font-size: 0.9rem;
+  }
+  .posts-section {
+    margin-top: 2rem;
+  }
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 1.8rem;
+    }
+    .hero-subtitle {
+      font-size: 1rem;
+    }
+    .trust-bar {
+      gap: 1rem;
+    }
+  }
+</style>
+
+<div class="container mt-4">
+  
+  {% if not session.get('user_id') %}
+  <div class="hero-section">
+    <h1 class="hero-title">{% if session.get('lang') == 'de' %}Dein Community Marktplatz{% else %}Your Community Marketplace{% endif %}</h1>
+    <p class="hero-subtitle">
+      {% if session.get('lang') == 'de' %}
+      Kaufe, verkaufe und tausche mit Menschen, denen du vertraust. Sicher, einfach und lokal.
+      {% else %}
+      Buy, sell, and trade with people you trust in your community. Secure, simple, and local.
+      {% endif %}
+    </p>
+    <div class="hero-buttons">
+      <a href="#posts" class="btn btn-primary btn-lg">
+        {% if session.get('lang') == 'de' %}Angebote durchsuchen{% else %}Browse Listings{% endif %}
+      </a>
+      <a href="/register" class="btn btn-outline-light btn-lg">
+        {% if session.get('lang') == 'de' %}Verkaufen{% else %}Start Selling{% endif %}
+      </a>
     </div>
-  </form>
-  <h2>{% if session.get('lang') == 'de' %}Beiträge{% else %}Posts{% endif %} {% if category_filter %}<small class="text-muted">- {% for cat in categories %}{% if cat[0]|string == category_filter %}{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}{% endif %}{% endfor %}{% endif %}</small></h2>
-  <div class="row">
-    {% for post in posts %}
-    <div class="col-md-4 mb-3">
-      <div class="card h-100">
-        <div class="card-body d-flex flex-column">
-          <h5 class="card-title">
-            {% if post[9] == 1 and post[10] %}
-              <span class="badge bg-warning text-dark me-1">⭐ {% if session.get('lang') == 'de' %}Beworben{% else %}Featured{% endif %}</span>
-            {% endif %}
-            <a href="/post/{{ post[0] }}" class="text-decoration-none">{{ post[1] }}</a> <small class="text-muted">({% if post[3] == 'sell' %}{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}{% elif post[3] == 'buy' %}{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}{% elif post[3] == 'trade' %}{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}{% elif post[3] == 'notification' %}{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}{% elif post[3] == 'giveaway' %}{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}{% else %}{{ post[3] }}{% endif %})</small>
-          </h5>
-          {% if post[12] %}
-          <p class="mb-1"><small class="text-primary">{{ post[12] }}</small></p>
-          {% endif %}
-          <p class="card-text">{{ post[2] }}</p>
-          {% if post[6] %}
-          <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong></p>
-          {% endif %}
-          <a href="/post/{{ post[0] }}"><img src="{{ post[4] or '/static/pictures/placeholder.png' }}" class="img-fluid mb-2" alt="{{ post[1] }} - {{ post[3] }}"/></a>
-          {% if post[5] %}
-          <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
-          {% endif %}
-          <p class="card-text mt-auto"><small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[8] }}">{{ post[8] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small></p>
+  </div>
+  {% endif %}
+
+  <div class="trust-bar">
+    <div class="trust-item">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+      <span>{% if session.get('lang') == 'de' %}Sichere Zahlungen{% else %}Secure Payments{% endif %}</span>
+    </div>
+    <div class="trust-item">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+      <span>{% if session.get('lang') == 'de' %}Verifizierte Nutzer{% else %}Verified Users{% endif %}</span>
+    </div>
+    <div class="trust-item">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <span>{% if session.get('lang') == 'de' %} Käuferschutz{% else %}Buyer Protection{% endif %}</span>
+    </div>
+  </div>
+
+  <div class="features-section">
+    <h2 class="section-title">{% if session.get('lang') == 'de' %}Was du tun kannst{% else %}What You Can Do{% endif %}</h2>
+    <div class="row g-4">
+      <div class="col-md-4 col-lg-3">
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <div class="feature-title">{% if session.get('lang') == 'de' %}Sofort chatten{% else %}Chat Instantly{% endif %}</div>
+          <div class="feature-desc">{% if session.get('lang') == 'de' %}Kommuniziere direkt mit Käufern und Verkäufern{% else %}Communicate directly with buyers and sellers{% endif %}</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <div class="feature-title">{% if session.get('lang') == 'de' %}Sichere Zahlungen{% else %}Secure Payments{% endif %}</div>
+          <div class="feature-desc">{% if session.get('lang') == 'de' %}Geschützte Transaktionen und Rückerstattungen{% else %}Protected transactions & refunds{% endif %}</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <div class="feature-card">
+          <div class="feature-icon">🏪</div>
+          <div class="feature-title">{% if session.get('lang') == 'de' %}Gruppen erstellen{% else %}Create Groups{% endif %}</div>
+          <div class="feature-desc">{% if session.get('lang') == 'de' %}Private Marktplätze für deine Community{% else %}Private marketplaces for your community{% endif %}</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <div class="feature-card">
+          <div class="feature-icon">📦</div>
+          <div class="feature-title">{% if session.get('lang') == 'de' %}Schnell inserieren{% else %}Post in Seconds{% endif %}</div>
+          <div class="feature-desc">{% if session.get('lang') == 'de' %}Teile deine Artikel in Sekunden{% else %}Share your items in seconds{% endif %}</div>
         </div>
       </div>
     </div>
-    {% endfor %}
+  </div>
+
+  <div class="how-it-works">
+    <h2 class="section-title">{% if session.get('lang') == 'de' %}So funktioniert's{% else %}How It Works{% endif %}</h2>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-title">{% if session.get('lang') == 'de' %}Artikel einstellen{% else %}Post an Item{% endif %}</div>
+          <div class="step-desc">{% if session.get('lang') == 'de' %}Erstelle ein Inserat mit Foto und Preis{% else %}Create a listing with photo and price{% endif %}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-title">{% if session.get('lang') == 'de' %}Mit Käufern chatten{% else %}Chat with Buyers{% endif %}</div>
+          <div class="step-desc">{% if session.get('lang') == 'de' %}Finde interessierte Käufer und verhandle{% else %}Find interested buyers and negotiate{% endif %}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-title">{% if session.get('lang') == 'de' %}Verkauf abschließen{% else %}Complete the Sale{% endif %}</div>
+          <div class="step-desc">{% if session.get('lang') == 'de' %}Sicher bezahlen und Ware erhalten{% else %}Pay securely and receive your item{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="posts-section" id="posts">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0">{% if session.get('lang') == 'de' %}Aktuelle Angebote{% else %}Latest Listings{% endif %}</h2>
+      {% if session.get('user_id') %}
+      <a href="/create_post_page" class="btn btn-primary">
+        {% if session.get('lang') == 'de' %}Neuen Beitrag erstellen{% else %}Create New Post{% endif %}
+      </a>
+      {% endif %}
+    </div>
+
+    <form class="mb-4" method="get">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <input class="form-control" type="search" name="q" placeholder="{% if session.get('lang') == 'de' %}Beiträge suchen...{% else %}Search posts...{% endif %}" value="{{ query or '' }}"/>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" name="type">
+            <option value="">{% if session.get('lang') == 'de' %}Alle Typen{% else %}All Types{% endif %}</option>
+            <option value="buy" {% if type_filter == 'buy' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
+            <option value="sell" {% if type_filter == 'sell' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}</option>
+            <option value="trade" {% if type_filter == 'trade' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}</option>
+            <option value="notification" {% if type_filter == 'notification' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}</option>
+            <option value="giveaway" {% if type_filter == 'giveaway' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" name="category">
+            <option value="">{% if session.get('lang') == 'de' %}Alle Kategorien{% else %}All Categories{% endif %}</option>
+            {% for cat in categories %}
+            <option value="{{ cat[0] }}" {% if category_filter == cat[0]|string %}selected{% endif %}>{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-outline-primary w-100" type="submit">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="row">
+      {% for post in posts %}
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">
+              {% if post[9] == 1 and post[10] %}
+              <span class="badge bg-warning text-dark me-1">⭐ {% if session.get('lang') == 'de' %}Beworben{% else %}Featured{% endif %}</span>
+              {% endif %}
+              <a href="/post/{{ post[0] }}" class="text-decoration-none text-white">{{ post[1] }}</a>
+            </h5>
+            {% if post[12] %}
+            <p class="mb-1"><small class="text-primary">{{ post[12] }}</small></p>
+            {% endif %}
+            <p class="card-text text-secondary">{{ post[2][:100] }}{% if post[2]|length > 100 %}...{% endif %}</p>
+            {% if post[6] %}
+            <p class="fw-bold text-primary fs-5">${{ post[6] }}</p>
+            {% endif %}
+            <a href="/post/{{ post[0] }}"><img src="{{ post[4] or '/static/pictures/placeholder.png' }}" class="img-fluid mb-2 rounded" alt="{{ post[1] }}"/></a>
+            <div class="mt-auto">
+              <span class="badge bg-secondary me-1">
+                {% if post[3] == 'sell' %}{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}
+                {% elif post[3] == 'buy' %}{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}
+                {% elif post[3] == 'trade' %}{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}
+                {% elif post[3] == 'giveaway' %}{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}
+                {% endif %}
+              </span>
+              <small class="text-muted">{% if session.get('lang') == 'de' %}von{% else %}by{% endif %} <a href="/profile/{{ post[8] }}">{{ post[8] }}</a></small>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if not posts %}
+    <div class="text-center py-5">
+      <p class="text-muted fs-4">{% if session.get('lang') == 'de' %}Keine Beiträge gefunden{% else %}No listings found{% endif %}</p>
+      {% if session.get('user_id') %}
+      <a href="/create_post_page" class="btn btn-primary">{% if session.get('lang') == 'de' %}Erster Beitrag{% else %}Create First Post{% endif %}</a>
+      {% else %}
+      <a href="/register" class="btn btn-primary">{% if session.get('lang') == 'de' %}Jetzt registrieren{% else %}Sign Up Now{% endif %}</a>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

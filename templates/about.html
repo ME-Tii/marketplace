@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Über uns - ME-Tii{% else %}About Us - ME-Tii{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h1 class="mb-4 text-center">{% if session.get('lang') == 'de' %}Über ME-Tii{% else %}About ME-Tii{% endif %}</h1>
+      
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="h4 mb-3">{% if session.get('lang') == 'de' %}Unsere Mission{% else %}Our Mission{% endif %}</h2>
+          <p class="lead">
+            {% if session.get('lang') == 'de' %}
+            ME-Tii ist dein lokaler Community-Marktplatz. Wir verbinden Menschen, um sicher und einfach Waren zu kaufen, verkaufen und tauschen.
+            {% else %}
+            ME-Tii is your local community marketplace. We connect people to buy, sell, and trade items safely and easily.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="h4 mb-3">{% if session.get('lang') == 'de' %}Was uns auszeichnet{% else %}What Sets Us Apart{% endif %}</h2>
+          <ul class="list-unstyled">
+            <li class="mb-3 d-flex">
+              <span class="me-3 fs-4">🔒</span>
+              <div>
+                <strong>{% if session.get('lang') == 'de' %}Sicherheit zuerst{% else %}Safety First{% endif %}</strong>
+                <p class="mb-0 text-muted">{% if session.get('lang') == 'de' %}Sichere Zahlungen und Käuferschutz für alle Transaktionen.{% else %}Secure payments and buyer protection for all transactions.{% endif %}</p>
+              </div>
+            </li>
+            <li class="mb-3 d-flex">
+              <span class="me-3 fs-4">💬</span>
+              <div>
+                <strong>{% if session.get('lang') == 'de' %}Direkte Kommunikation{% else %}Direct Communication{% endif %}</strong>
+                <p class="mb-0 text-muted">{% if session.get('lang') == 'de' %}Chatte direkt mit Käufern und Verkäufern.{% else %}Chat directly with buyers and sellers.{% endif %}</p>
+              </div>
+            </li>
+            <li class="mb-3 d-flex">
+              <span class="me-3 fs-4">🏪</span>
+              <div>
+                <strong>{% if session.get('lang') == 'de' %}Private Gruppen{% else %}Private Groups{% endif %}</strong>
+                <p class="mb-0 text-muted">{% if session.get('lang') == 'de' %}Erstelle private Marktplätze für deine Community.{% else %}Create private marketplaces for your community.{% endif %}</p>
+              </div>
+            </li>
+            <li class="d-flex">
+              <span class="me-3 fs-4">✅</span>
+              <div>
+                <strong>{% if session.get('lang') == 'de' %}Verifizierte Nutzer{% else %}Verified Users{% endif %}</strong>
+                <p class="mb-0 text-muted">{% if session.get('lang') == 'de' %}Email-verifizierte Nutzer für mehr Vertrauen.{% else %}Email-verified users for added trust.{% endif %}</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="h4 mb-3">{% if session.get('lang') == 'de' %}Wie es funktioniert{% else %}How It Works{% endif %}</h2>
+          <ol class="mb-0">
+            <li class="mb-2">{% if session.get('lang') == 'de' %}<strong>Registriere dich</strong> - Kostenlos und einfach{% else %}<strong>Sign up</strong> - Free and easy{% endif %}</li>
+            <li class="mb-2">{% if session.get('lang') == 'de' %}<strong>Erstelle Inserate</strong> - Mit Fotos und Preis{% else %}<strong>Create listings</strong> - With photos and price{% endif %}</li>
+            <li class="mb-2">{% if session.get('lang') == 'de' %}<strong>Chatte</strong> - Direkt mit Interessenten{% else %}<strong>Chat</strong> - Directly with interested buyers{% endif %}</li>
+            <li>{% if session.get('lang') == 'de' %}<strong>Verkauf abgeschlossen</strong> - Sicher und einfach{% else %}<strong>Complete the sale</strong> - Safely and easily{% endif %}</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <a href="/contact" class="btn btn-primary">
+          {% if session.get('lang') == 'de' %}Kontaktiere uns{% else %}Contact Us{% endif %}
+        </a>
+        <a href="/dashboard" class="btn btn-outline-light ms-2">
+          {% if session.get('lang') == 'de' %}Zum Marktplatz{% else %}Go to Marketplace{% endif %}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
