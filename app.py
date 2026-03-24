@@ -2545,8 +2545,6 @@ def accept_bid(bid_id):
                  FROM bids b JOIN posts p ON b.post_id = p.id WHERE b.id = ?""", (bid_id,))
     bid = c.fetchone()
     
-    app.logger.info(f"accept_bid: bid_id={bid_id}, bid_found={bid is not None}, session_user_id={session['user_id']}, post_owner_id={bid[3] if bid else None}")
-    
     if not bid:
         conn.close()
         app.logger.warning(f"accept_bid: Bid {bid_id} not found")
@@ -2554,7 +2552,6 @@ def accept_bid(bid_id):
     
     if bid[3] != session['user_id']:
         conn.close()
-        app.logger.warning(f"accept_bid: User {session['user_id']} not authorized to accept bid {bid_id} (post owner is {bid[3]})")
         return 'Access denied', 403
     
     c.execute("UPDATE bids SET status = 'accepted' WHERE id = ?", (bid_id,))
@@ -3000,10 +2997,6 @@ def checkout(post_id):
     c.execute("SELECT * FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
     existing_order = c.fetchone()
     
-    app.logger.info(f"checkout: post_id={post_id}, buyer_id={session['user_id']}, order_id={order_id}, existing_order found by post+buyer={existing_order is not None}")
-    if existing_order:
-        app.logger.info(f"checkout: existing_order amount={existing_order[4]}, quantity={existing_order[33]}")
-    
     if not existing_order and order_id:
         c.execute("SELECT * FROM orders WHERE id = ? AND buyer_id = ?", (order_id, session['user_id']))
         existing_order = c.fetchone()
@@ -3042,8 +3035,6 @@ def process_checkout(post_id):
     
     # Get quantity from form
     quantity = int(request.form.get('quantity', 1))
-    app.logger.info(f"process_checkout: raw quantity from form={request.form.get('quantity')}, post_id={post_id}")
-    app.logger.info(f"process_checkout: full form data={dict(request.form)}")
     app.logger.info(f"process_checkout: quantity={quantity}, post_id={post_id}")
     if quantity < 1 or quantity > post[6]:
         conn.close()
@@ -3060,10 +3051,8 @@ def process_checkout(post_id):
     
     c.execute("SELECT id, amount, quantity FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
     existing_for_calc = c.fetchone()
-    app.logger.info(f"process_checkout DEBUG: existing_for_calc={existing_for_calc}")
     if existing_for_calc:
         per_item_price = existing_for_calc[1] / existing_for_calc[2] if existing_for_calc[2] and existing_for_calc[2] > 0 else existing_for_calc[1]
-        app.logger.info(f"process_checkout DEBUG: stored_amount={existing_for_calc[1]}, stored_qty={existing_for_calc[2]}, per_item={per_item_price}, form_qty={quantity}")
         item_total = per_item_price * quantity
     else:
         item_total = post[1] * quantity
@@ -3096,13 +3085,8 @@ def process_checkout(post_id):
     
     if existing_for_calc:
         order_id = existing_for_calc[0]
-        app.logger.info(f"UPDATE order: amount={total_amount}, quantity={quantity}")
         c.execute("""UPDATE orders SET amount = ?, shipping_method = ?, shipping_cost = ?, transaction_fee = ?, quantity = ? WHERE id = ?""",
                   (total_amount, delivery_method, shipping_cost, transaction_fee, quantity, order_id))
-        app.logger.info(f"UPDATE complete, checking...")
-        c.execute("SELECT amount, quantity FROM orders WHERE id = ?", (order_id,))
-        updated = c.fetchone()
-        app.logger.info(f"Order {order_id} after update: amount={updated[0]}, quantity={updated[1]}")
     else:
         c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)",
                   (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost, transaction_fee, quantity))
