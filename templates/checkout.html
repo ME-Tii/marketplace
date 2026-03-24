@@ -14,7 +14,7 @@
       </p>
       <div class="mb-3">
         <label class="form-label"><strong>{% if session.get('lang') == 'de' %}Anzahl:{% else %}Quantity:{% endif %}</strong></label>
-        <input type="number" class="form-control" name="quantity" min="1" max="{{ post[6] }}" value="{{ existing_order[33] if existing_order else 1 }}" required onchange="updateTotal()" />
+        <input type="number" class="form-control" name="quantity" min="1" {% if not existing_order %}max="{{ post[6] }}"{% endif %} value="{{ existing_order[33] if existing_order else 1 }}" required onchange="updateTotal()" />
       </div>
       <p class="card-text">
         <strong>{% if session.get('lang') == 'de' %}Gesamt:{% else %}Total:{% endif %}</strong> <span id="total_amount">${{ existing_order[4] if existing_order else post[1] }}</span>
