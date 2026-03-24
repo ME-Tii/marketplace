@@ -3259,8 +3259,16 @@ def payment_success():
     c = conn.cursor()
     c.execute("SELECT title, price FROM posts WHERE id = ?", (post_id,))
     post = c.fetchone()
+    
+    order_amount = None
+    if order_id:
+        c.execute("SELECT amount FROM orders WHERE id = ?", (order_id,))
+        order = c.fetchone()
+        if order:
+            order_amount = order[0]
+    
     conn.close()
-    return render_template('payment_success.html', post=post, order_id=order_id, unread_messages=get_unread_messages_count(session.get('user_id')))
+    return render_template('payment_success.html', post=post, order_id=order_id, order_amount=order_amount, unread_messages=get_unread_messages_count(session.get('user_id')))
 
 FEATURED_PRICE = 2.99
 

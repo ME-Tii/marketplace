@@ -24,7 +24,7 @@ endblock %} {% block content %}
           >{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif
           %}</strong
         >
-        ${{ post[1] }}
+        ${{ order_amount if order_amount else post[1] }}
       </p>
       {% endif %} {% if order_id %}
       <p>
