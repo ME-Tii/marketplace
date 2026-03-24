@@ -3088,8 +3088,13 @@ def process_checkout(post_id):
     
     if existing_for_calc:
         order_id = existing_for_calc[0]
+        app.logger.info(f"UPDATE order: amount={total_amount}, quantity={quantity}")
         c.execute("""UPDATE orders SET amount = ?, shipping_method = ?, shipping_cost = ?, transaction_fee = ?, quantity = ? WHERE id = ?""",
                   (total_amount, delivery_method, shipping_cost, transaction_fee, quantity, order_id))
+        app.logger.info(f"UPDATE complete, checking...")
+        c.execute("SELECT amount, quantity FROM orders WHERE id = ?", (order_id,))
+        updated = c.fetchone()
+        app.logger.info(f"Order {order_id} after update: amount={updated[0]}, quantity={updated[1]}")
     else:
         c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)",
                   (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost, transaction_fee, quantity))
