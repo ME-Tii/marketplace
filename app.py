@@ -3042,6 +3042,7 @@ def process_checkout(post_id):
     
     # Get quantity from form
     quantity = int(request.form.get('quantity', 1))
+    app.logger.info(f"process_checkout: quantity={quantity}, post_id={post_id}")
     if quantity < 1 or quantity > post[6]:
         conn.close()
         flash(f'Invalid quantity. Available: {post[6]}', 'danger')
@@ -3062,6 +3063,7 @@ def process_checkout(post_id):
     if delivery_method == 'shipping' and post[4]:
         shipping_cost = post[5] or 0
     total_amount = item_total + shipping_cost
+    app.logger.info(f"process_checkout: item_total={item_total}, shipping={shipping_cost}, total_amount={total_amount}")
     
     transaction_fee = item_total * 0.10
     
