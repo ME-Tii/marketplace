@@ -6,15 +6,18 @@
     <div class="card-body">
       <h5 class="card-title">{{ post[0] }}</h5>
       <p class="card-text">
-        <strong>{% if session.get('lang') == 'de' %}Preis pro Stück:{% else %}Price per item:{% endif %}</strong> ${{ post[1] }}
+        <strong>{% if session.get('lang') == 'de' %}Preis pro Stück:{% else %}Price per item:{% endif %}</strong> ${{ existing_order[4] if existing_order else post[1] }}
+        {% if existing_order and existing_order[4] != post[1] %}
+        <br><small class="text-muted">({% if session.get('lang') == 'de' %}Angebot akzeptiert{% else %}Accepted offer{% endif %})</small>
+        {% endif %}
         <br><strong>{% if session.get('lang') == 'de' %}Verfügbar:{% else %}Available:{% endif %}</strong> {{ post[6] }}
       </p>
       <div class="mb-3">
         <label class="form-label"><strong>{% if session.get('lang') == 'de' %}Anzahl:{% else %}Quantity:{% endif %}</strong></label>
-        <input type="number" class="form-control" name="quantity" min="1" max="{{ post[6] }}" value="1" required onchange="updateTotal()" />
+        <input type="number" class="form-control" name="quantity" min="1" max="{{ post[6] }}" value="{{ existing_order[33] if existing_order else 1 }}" required onchange="updateTotal()" />
       </div>
       <p class="card-text">
-        <strong>{% if session.get('lang') == 'de' %}Gesamt:{% else %}Total:{% endif %}</strong> <span id="total_amount">${{ post[1] }}</span>
+        <strong>{% if session.get('lang') == 'de' %}Gesamt:{% else %}Total:{% endif %}</strong> <span id="total_amount">${{ existing_order[4] if existing_order else post[1] }}</span>
       </p>
     </div>
   </div>
@@ -89,6 +92,8 @@
   </form>
 </div>
 <script>
+var orderPrice = {{ existing_order[4] if existing_order else post[1] }};
+
 function toggleAddress() {
   var method = document.querySelector('input[name="delivery_method"]:checked').value;
   var addressDiv = document.getElementById('address_fields');
@@ -102,7 +107,7 @@ function toggleAddress() {
 
 function updateTotal() {
   var qty = parseInt(document.querySelector('input[name="quantity"]').value) || 1;
-  var price = {{ post[1] }};
+  var price = orderPrice;
   var shipping = 0;
   var method = document.querySelector('input[name="delivery_method"]:checked');
   if (method && method.value === 'shipping') {

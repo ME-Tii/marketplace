@@ -2545,8 +2545,16 @@ def accept_bid(bid_id):
                  FROM bids b JOIN posts p ON b.post_id = p.id WHERE b.id = ?""", (bid_id,))
     bid = c.fetchone()
     
-    if not bid or bid[3] != session['user_id']:
+    app.logger.info(f"accept_bid: bid_id={bid_id}, bid_found={bid is not None}, session_user_id={session['user_id']}, post_owner_id={bid[3] if bid else None}")
+    
+    if not bid:
         conn.close()
+        app.logger.warning(f"accept_bid: Bid {bid_id} not found")
+        return 'Bid not found', 404
+    
+    if bid[3] != session['user_id']:
+        conn.close()
+        app.logger.warning(f"accept_bid: User {session['user_id']} not authorized to accept bid {bid_id} (post owner is {bid[3]})")
         return 'Access denied', 403
     
     c.execute("UPDATE bids SET status = 'accepted' WHERE id = ?", (bid_id,))
