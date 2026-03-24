@@ -38,14 +38,14 @@
         </div>
         <div class="card-body">
           <p><strong>{% if session.get('lang') == 'de' %}Status:{% else %}Status:{% endif %}</strong>
-            {% if order[10] == 'open' %}
+            {% if order[11] == 'open' %}
             <span class="badge bg-danger">{% if session.get('lang') == 'de' %}Offen{% else %}Open{% endif %}</span>
-            {% elif order[10] == 'refunded' %}
+            {% elif order[11] == 'refunded' %}
             <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Erstattet{% else %}Refunded{% endif %}</span>
-            {% elif order[10] == 'resolved' %}
+            {% elif order[11] == 'resolved' %}
             <span class="badge bg-success">{% if session.get('lang') == 'de' %}Gelöst{% else %}Resolved{% endif %}</span>
             {% else %}
-            <span class="badge bg-secondary">{{ order[10] or 'None' }}</span>
+            <span class="badge bg-secondary">{{ order[11] or 'None' }}</span>
             {% endif %}
           </p>
           {% if order[15] %}
@@ -67,22 +67,22 @@
           <h5>{% if session.get('lang') == 'de' %}Käufer-Beschwerde{% else %}Buyer's Complaint{% endif %}</h5>
         </div>
         <div class="card-body">
-          {% if order[13] and order[13]|length > 5 and '<' not in order[13] %}
-          <p>{{ order[13] }}</p>
+          {% if order[12] and order[12]|length > 5 and '<' not in order[12] %}
+          <p>{{ order[12] }}</p>
           {% else %}
           <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Beschwerde{% else %}No complaint recorded{% endif %}</p>
           {% endif %}
         </div>
       </div>
 
-      {% if order[14] %}
+      {% if order[13] %}
       <div class="card mb-4">
         <div class="card-header bg-info text-white">
           <h5>{% if session.get('lang') == 'de' %}Verkäufer-Antwort{% else %}Seller's Response{% endif %}</h5>
         </div>
         <div class="card-body">
-          {% if order[14] and order[14]|length > 5 and '<' not in order[14] %}
-          <p>{{ order[14] }}</p>
+          {% if order[13] and order[13]|length > 5 and '<' not in order[13] %}
+          <p>{{ order[13] }}</p>
           {% else %}
           <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Antwort{% else %}No response recorded{% endif %}</p>
           {% endif %}
@@ -90,7 +90,7 @@
       </div>
       {% endif %}
 
-      {% if order[10] == 'open' %}
+      {% if order[11] == 'open' %}
       <div class="card mb-4 border-warning">
         <div class="card-header bg-warning">
           <h5>{% if session.get('lang') == 'de' %}Streitfall lösen{% else %}Resolve Dispute{% endif %}</h5>
