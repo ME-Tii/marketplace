@@ -3056,9 +3056,15 @@ def process_checkout(post_id):
         flash('Shipping is not available for this item.', 'danger')
         return redirect(f'/checkout/{post_id}')
     
-    c.execute("SELECT id, amount FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
+    c.execute("SELECT id, amount, quantity FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
     existing_for_calc = c.fetchone()
-    item_total = existing_for_calc[1] * quantity if existing_for_calc else post[1] * quantity
+    app.logger.info(f"process_checkout DEBUG: existing_for_calc={existing_for_calc}")
+    if existing_for_calc:
+        per_item_price = existing_for_calc[1] / existing_for_calc[2] if existing_for_calc[2] and existing_for_calc[2] > 0 else existing_for_calc[1]
+        app.logger.info(f"process_checkout DEBUG: stored_amount={existing_for_calc[1]}, stored_qty={existing_for_calc[2]}, per_item={per_item_price}, form_qty={quantity}")
+        item_total = per_item_price * quantity
+    else:
+        item_total = post[1] * quantity
     shipping_cost = 0
     if delivery_method == 'shipping' and post[4]:
         shipping_cost = post[5] or 0
