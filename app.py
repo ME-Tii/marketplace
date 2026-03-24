@@ -3042,6 +3042,8 @@ def process_checkout(post_id):
     
     # Get quantity from form
     quantity = int(request.form.get('quantity', 1))
+    app.logger.info(f"process_checkout: raw quantity from form={request.form.get('quantity')}, post_id={post_id}")
+    app.logger.info(f"process_checkout: full form data={dict(request.form)}")
     app.logger.info(f"process_checkout: quantity={quantity}, post_id={post_id}")
     if quantity < 1 or quantity > post[6]:
         conn.close()
