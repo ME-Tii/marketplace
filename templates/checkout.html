@@ -17,7 +17,7 @@
         <input type="number" class="form-control" name="quantity" min="1" max="{{ post[6] }}" value="{{ existing_order[33] if existing_order else 1 }}" required onchange="updateTotal()" />
       </div>
       <p class="card-text">
-        <strong>{% if session.get('lang') == 'de' %}Gesamt:{% else %}Total:{% endif %}</strong> <span id="total_amount">${{ existing_order[4] if existing_order else post[1] }}</span>
+        <strong>{% if session.get('lang') == 'de' %}Gesamt:{% else %}Total:{% endif %}</strong> <span id="total_amount">${{ (existing_order[4] * existing_order[33]) if existing_order else post[1] }}</span>
       </p>
     </div>
   </div>
@@ -92,7 +92,7 @@
   </form>
 </div>
 <script>
-var orderPrice = {{ existing_order[4] if existing_order else post[1] }};
+var orderPrice = {{ (existing_order[4] * existing_order[33]) if existing_order else post[1] }};
 
 function toggleAddress() {
   var method = document.querySelector('input[name="delivery_method"]:checked').value;
