@@ -3001,6 +3001,8 @@ def checkout(post_id):
     existing_order = c.fetchone()
     
     app.logger.info(f"checkout: post_id={post_id}, buyer_id={session['user_id']}, order_id={order_id}, existing_order found by post+buyer={existing_order is not None}")
+    if existing_order:
+        app.logger.info(f"checkout: existing_order amount={existing_order[4]}, quantity={existing_order[33]}")
     
     if not existing_order and order_id:
         c.execute("SELECT * FROM orders WHERE id = ? AND buyer_id = ?", (order_id, session['user_id']))
