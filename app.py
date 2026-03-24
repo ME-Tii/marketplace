@@ -3053,7 +3053,9 @@ def process_checkout(post_id):
         flash('Shipping is not available for this item.', 'danger')
         return redirect(f'/checkout/{post_id}')
     
-    item_total = post[1] * quantity
+    c.execute("SELECT id, amount FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
+    existing_for_calc = c.fetchone()
+    item_total = existing_for_calc[1] * quantity if existing_for_calc else post[1] * quantity
     shipping_cost = 0
     if delivery_method == 'shipping' and post[4]:
         shipping_cost = post[5] or 0
@@ -3080,14 +3082,10 @@ def process_checkout(post_id):
     
     save_address = request.form.get('save_address')
     
-    c.execute("SELECT id, amount FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
-    existing_order = c.fetchone()
-    
-    if existing_order:
-        order_id = existing_order[0]
-        saved_amount = existing_order[1]
-        c.execute("""UPDATE orders SET shipping_method = ?, shipping_cost = ?, quantity = ? WHERE id = ?""",
-                  (delivery_method, shipping_cost, quantity, order_id))
+    if existing_for_calc:
+        order_id = existing_for_calc[0]
+        c.execute("""UPDATE orders SET amount = ?, shipping_method = ?, shipping_cost = ?, transaction_fee = ?, quantity = ? WHERE id = ?""",
+                  (total_amount, delivery_method, shipping_cost, transaction_fee, quantity, order_id))
     else:
         c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)",
                   (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost, transaction_fee, quantity))
