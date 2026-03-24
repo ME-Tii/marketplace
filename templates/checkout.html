@@ -2,7 +2,9 @@
 {% block content %}
 <div class="container mt-5">
   <h2>{% if session.get('lang') == 'de' %}Kasse{% else %}Checkout{% endif %}</h2>
-  <div class="card mt-3">
+  <form method="POST" action="/process_checkout/{{ post_id }}" class="mt-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="card mt-3">
     <div class="card-body">
       <h5 class="card-title">{{ post[0] }}</h5>
       <p class="card-text">
@@ -21,10 +23,8 @@
       </p>
     </div>
   </div>
-  <form method="POST" action="/process_checkout/{{ post_id }}" class="mt-4">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     
-    <h4>{% if session.get('lang') == 'de' %}Lieferoption{% else %}Delivery Option{% endif %}</h4>
+  <h4>{% if session.get('lang') == 'de' %}Lieferoption{% else %}Delivery Option{% endif %}</h4>
     <div class="mb-3">
       {% if post[3] and post[4] %}
       <div class="form-check">
