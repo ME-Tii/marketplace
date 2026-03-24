@@ -3000,9 +3000,12 @@ def checkout(post_id):
     c.execute("SELECT * FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
     existing_order = c.fetchone()
     
+    app.logger.info(f"checkout: post_id={post_id}, buyer_id={session['user_id']}, order_id={order_id}, existing_order found by post+buyer={existing_order is not None}")
+    
     if not existing_order and order_id:
         c.execute("SELECT * FROM orders WHERE id = ? AND buyer_id = ?", (order_id, session['user_id']))
         existing_order = c.fetchone()
+        app.logger.info(f"checkout: order lookup by id={order_id}, found={existing_order is not None}")
     
     c.execute("SELECT * FROM addresses WHERE user_id = ? ORDER BY id DESC LIMIT 1", (session['user_id'],))
     saved_address = c.fetchone()
