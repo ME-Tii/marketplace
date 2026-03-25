@@ -3830,7 +3830,7 @@ def admin_dispute_detail(order_id):
         resolution_note = request.form.get('resolution_note', '')
         include_return_shipping = request.form.get('include_return_shipping') == '1'
         
-        if action in ['refund', 'release', 'partial', 'refund_with_return']:
+        if action in ['refund', 'release', 'partial', 'refund_with_return', 'force_refund']:
             # Process the resolution
             if action == 'refund':
                 new_status = 'refunded'
@@ -3843,6 +3843,10 @@ def admin_dispute_detail(order_id):
                 else:
                     resolution = 'refund_with_return: buyer_pays_return_shipping'
                 process_refund_now = False
+            elif action == 'force_refund':
+                new_status = 'refunded'
+                resolution = 'forced_refund: buyer_gets_money_no_return'
+                process_refund_now = True
             elif action == 'release':
                 new_status = 'paid'
                 resolution = 'released'

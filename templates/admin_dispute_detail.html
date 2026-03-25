@@ -90,10 +90,10 @@
       </div>
       {% endif %}
 
-      {% if order[11] == 'open' %}
+      {% if order[11] in ['open', 'return_required', 'return_pending'] %}
       <div class="card mb-4 border-warning">
         <div class="card-header bg-warning">
-          <h5>{% if session.get('lang') == 'de' %}Streitfall lösen{% else %}Resolve Dispute{% endif %}</h5>
+          <h5>{% if session.get('lang') == 'de' %}Admin-Aktionen{% else %}Admin Actions{% endif %}</h5>
         </div>
         <div class="card-body">
           <form method="POST">
@@ -104,16 +104,17 @@
                 <button type="submit" name="action" value="refund" class="btn btn-danger">{% if session.get('lang') == 'de' %}Volle Erstattung{% else %}Full Refund{% endif %}</button>
                 <button type="submit" name="action" value="refund_with_return" class="btn btn-warning">{% if session.get('lang') == 'de' %}Erstattung mit Rückgabe{% else %}Refund with Return{% endif %}</button>
                 <button type="submit" name="action" value="release" class="btn btn-success">{% if session.get('lang') == 'de' %}An Verkäufer zahlen{% else %}Pay Seller{% endif %}</button>
+                <button type="submit" name="action" value="force_refund" class="btn btn-dark">{% if session.get('lang') == 'de' %}Erstattung erzwingen{% else %}Force Refund{% endif %}</button>
               </div>
-              <small class="text-muted">{% if session.get('lang') == 'de' %}Erstattung mit Rückgabe: Käufer muss Artikel zurücksenden{% else %}Refund with Return: Buyer must return item first{% endif %}</small>
-              <div class="form-check mt-2">
-                <input class="form-check-input" type="checkbox" id="include_return_shipping" name="include_return_shipping" value="1" checked>
-                <label class="form-check-label" for="include_return_shipping">
-                  {% if session.get('lang') == 'de' %}Rückversand in Erstattung enthalten{% else %}Include return shipping in refund{% endif %}
-                </label>
-              </div>
+              <small class="text-muted">{% if session.get('lang') == 'de' %}Erstattung erzwingen: Käufer erhält volle Erstattung ohne Rückgabe{% else %}Force Refund: Buyer gets full refund without return{% endif %}</small>
             </div>
-            <div class="mb-3">
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="include_return_shipping" name="include_return_shipping" value="1" checked>
+              <label class="form-check-label" for="include_return_shipping">
+                {% if session.get('lang') == 'de' %}Rückversand in Erstattung enthalten{% else %}Include return shipping in refund{% endif %}
+              </label>
+            </div>
+            <div class="mb-3 mt-3">
               <label class="form-label">{% if session.get('lang') == 'de' %}Notiz (optional){% else %}Note (optional){% endif %}</label>
               <textarea name="resolution_note" class="form-control" rows="2" placeholder="{% if session.get('lang') == 'de' %}Grund für die Entscheidung...{% else %}Reason for decision...{% endif %}"></textarea>
             </div>
