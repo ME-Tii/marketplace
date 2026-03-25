@@ -19,15 +19,22 @@
     50% { transform: translateY(-10px); }
   }
   .hero-section {
-    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.2), rgba(102, 16, 242, 0.15), rgba(13, 110, 253, 0.05), rgba(0, 19, 115, 0.1));
+    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.25), rgba(102, 16, 242, 0.2), rgba(13, 110, 253, 0.1), rgba(0, 19, 115, 0.15));
     background-size: 400% 400%;
-    animation: gradientPulse 8s ease infinite;
+    animation: heroSteps 12s steps(4) infinite;
     border-radius: 20px;
     padding: 3rem 2rem;
     margin-bottom: 2rem;
     text-align: center;
     position: relative;
     overflow: hidden;
+  }
+  @keyframes heroSteps {
+    0% { background-position: 0% 50%; }
+    25% { background-position: 100% 0%; }
+    50% { background-position: 100% 100%; }
+    75% { background-position: 0% 100%; }
+    100% { background-position: 0% 50%; }
   }
   .hero-content {
     position: relative;
@@ -62,23 +69,19 @@
   @keyframes trustGradient {
     0%, 100% { 
       background-position: 0% 50%;
-      opacity: 0.1;
     }
     25% {
-      background-position: 50% 100%;
-      opacity: 0.2;
+      background-position: 100% 0%;
     }
     50% { 
-      background-position: 100% 50%;
-      opacity: 0.15;
+      background-position: 100% 100%;
     }
     75% {
-      background-position: 50% 0%;
-      opacity: 0.05;
+      background-position: 0% 100%;
     }
   }
   .trust-bar {
-    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.1), rgba(102, 16, 242, 0.08), rgba(13, 110, 253, 0.02), rgba(0, 19, 115, 0.05));
+    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.15), rgba(102, 16, 242, 0.12), rgba(13, 110, 253, 0.08), rgba(0, 19, 115, 0.1));
     background-size: 400% 400%;
     animation: trustGradient 6s ease infinite;
     border-radius: 10px;
