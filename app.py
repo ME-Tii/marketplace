@@ -841,6 +841,10 @@ def privacy():
 def refund_policy():
     return render_template('refund_policy.html', unread_messages=get_unread_messages_count(session.get('user_id')))
 
+@app.route('/refund-flow')
+def refund_flow():
+    return render_template('refund_flow.html', unread_messages=get_unread_messages_count(session.get('user_id')))
+
 @app.route('/dispute-policy')
 def dispute_policy():
     return render_template('dispute_policy.html', unread_messages=get_unread_messages_count(session.get('user_id')))
