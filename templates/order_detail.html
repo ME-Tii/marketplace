@@ -13,17 +13,17 @@
       {% elif order[10] == 'resolved' %}{% if session.get('lang') == 'de' %}Gelöst{% else %}Resolved{% endif %}
       {% else %}{{ order[10] }}{% endif %}
     </h5>
-    {% if order[25] %}
-    <p><strong>{% if session.get('lang') == 'de' %}Käufer-Beschwerde:{% else %}Buyer's Complaint:{% endif %}</strong> {{ order[25] }}</p>
+    {% if order[12] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Käufer-Beschwerde:{% else %}Buyer's Complaint:{% endif %}</strong> {{ order[12] }}</p>
     {% endif %}
-    {% if order[26] %}
-    <p><strong>{% if session.get('lang') == 'de' %}Verkäufer-Antwort:{% else %}Seller's Response:{% endif %}</strong> {{ order[26] }}</p>
+    {% if order[13] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Verkäufer-Antwort:{% else %}Seller's Response:{% endif %}</strong> {{ order[13] }}</p>
     {% endif %}
-    {% if order[27] %}
-    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Eröffnet am{% else %}Opened{% endif %}: {{ order[27] }}</small></p>
+    {% if order[14] %}
+    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Eröffnet am{% else %}Opened{% endif %}: {{ order[14] }}</small></p>
     {% endif %}
-    {% if order[28] %}
-    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Gelöst am{% else %}Resolved{% endif %}: {{ order[28] }}</small></p>
+    {% if order[15] %}
+    <p><small class="text-muted">{% if session.get('lang') == 'de' %}Gelöst am{% else %}Resolved{% endif %}: {{ order[15] }}</small></p>
     {% endif %}
   </div>
   {% endif %}
