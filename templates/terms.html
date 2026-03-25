@@ -4,7 +4,7 @@
   <div class="row">
     <div class="col-md-8 offset-md-2">
       <h1>{% if session.get('lang') == 'de' %}Nutzungsbedingungen{% else %}Terms of Service{% endif %}</h1>
-      <p><em>{% if session.get('lang') == 'de' %}Stand: März 2026{% else %}Last updated: March 2026{% endif %}</em></p>
+      <p><em>{% if session.get('lang') == 'de' %}Stand: März 2026 (aktualisiert){% else %}Last updated: March 2026 (updated){% endif %}</em></p>
       
       <h4>{% if session.get('lang') == 'de' %}1. Allgemeines{% else %}1. General{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}Willkommen bei ME-Tii Marketplace. Durch die Nutzung dieser Plattform erklären Sie sich mit den folgenden Nutzungsbedingungen einverstanden. Wenn Sie diesen Bedingungen nicht zustimmen, nutzen Sie die Plattform bitte nicht.{% else %}Welcome to ME-Tii Marketplace. By using this platform, you agree to these Terms of Service. If you do not agree to these terms, please do not use this platform.{% endif %}</p>
@@ -48,8 +48,29 @@
       
       <p>{% if session.get('lang') == 'de' %}<strong>8.3 Rückversandkosten:</strong> Wenn der Verkäufer für das Problem verantwortlich ist (Artikel nicht wie beschrieben, beschädigt), übernimmt der Verkäufer die Rückversandkosten. Andernfalls trägt der Käufer die Kosten.{% else %}<strong>8.3 Return Shipping:</strong> If the seller is at fault (item not as described, damaged), the seller covers return shipping costs. Otherwise, the buyer pays for return shipping.{% endif %}</p>
       
-      <h4>{% if session.get('lang') == 'de' %}9. Streitfälle{% else %}9. Disputes{% endif %}</h4>
-      <p>{% if session.get('lang') == 'de' %}Bei Problemen können Käufer oder Verkäufer einen Streitfall eröffnen. Wir werden nach besten Kräften vermitteln. Streitfälle können während des Versands oder nach der Lieferung eröffnet werden. Bei Käufen mit Abholung vor Ort wird empfohlen, dass beide Parteien einen Nachweis des Kaufs und der Abholung aufbewahren.{% else %}In case of problems, buyers or sellers can open a dispute. We will attempt to mediate to the best of our ability. Disputes can be opened during shipping or after delivery. For local pickup purchases, it is recommended that both parties keep proof of purchase and pickup.{% endif %}</p>
+      <h4>{% if session.get('lang') == 'de' %}9. Streitfälle und Schlichtung{% else %}9. Disputes and Resolution{% endif %}</h4>
+      <p>{% if session.get('lang') == 'de' %}Bei Problemen können Käufer oder Verkäufer einen Streitfall eröffnen. Unsere Schlichtungsstelle wird nach besten Kräften eine faire Lösung finden. Streitfälle können während des Versands oder nach der Lieferung eröffnet werden. Bei Käufen mit Abholung vor Ort wird empfohlen, dass beide Parteien einen Nachweis des Kaufs und der Abholung aufbewahren.{% else %}In case of problems, buyers or sellers can open a dispute. Our mediation team will attempt to reach a fair resolution to the best of our ability. Disputes can be opened during shipping or after delivery. For local pickup purchases, it is recommended that both parties keep proof of purchase and pickup.{% endif %}</p>
+      
+      <p><strong>{% if session.get('lang') == 'de' %}9.1 Mögliche Ergebnisse:{% else %}9.1 Possible Outcomes:{% endif %}</strong></p>
+      <ul>
+        <li>{% if session.get('lang') == 'de' %}<strong>Volle Erstattung:</strong> Käufer erhält den vollen Betrag zurück, einschließlich Versandkosten.{% else %}<strong>Full Refund:</strong> Buyer receives the full amount back, including shipping costs.{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}<strong>Erstattung mit Rückgabe:</strong> Käufer muss den Artikel zuerst zurücksenden. Nach Bestätigung der Rücksendung erhält der Käufer die Erstattung.{% else %}<strong>Refund with Return:</strong> Buyer must return the item first. After confirming the return, the buyer receives the refund.{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}<strong>Erstattung erzwingen:</strong> Käufer erhält volle Erstattung ohne Rückgabe (z.B. wenn Verkäufer nicht reagiert).{% else %}<strong>Force Refund:</strong> Buyer receives full refund without returning the item (e.g., when seller does not respond).{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}<strong>An Verkäufer zahlen:</strong> Zahlung wird an den Verkäufer freigegeben.{% else %}<strong>Pay Seller:</strong> Payment is released to the seller.{% endif %}</li>
+      </ul>
+      
+      <p><strong>{% if session.get('lang') == 'de' %}9.2 Rückversandkosten:{% else %}9.2 Return Shipping:{% endif %}</strong></p>
+      <p>{% if session.get('lang') == 'de' %}Die Schlichtungsstelle entscheidet, ob die Rückversandkosten in der Erstattung enthalten sind:{% else %}The mediation team decides whether return shipping costs are included in the refund:{% endif %}</p>
+      <ul>
+        <li>{% if session.get('lang') == 'de' %}<strong>Immer enthalten:</strong> Wenn der Verkäufer für das Problem verantwortlich ist{% else %}<strong>Always included:</strong> When the seller is at fault for the problem{% endif %}</li>
+        <li>{% if session.get('lang') == 'de' %}<strong>Nicht enthalten:</strong> Käufer trägt die Rückversandkosten{% else %}<strong>Not included:</strong> Buyer pays for return shipping{% endif %}</li>
+      </ul>
+      
+      <p><strong>{% if session.get('lang') == 'de' %}9.3 Rückgabe bei Abholung vor Ort:{% else %}9.3 Returns for Local Pickup:{% endif %}</strong></p>
+      <p>{% if session.get('lang') == 'de' %}Bei Käufen mit Abholung vor Ort gibt der Käufer den Artikel persönlich an den Verkäufer zurück. Die Rückerstattung erfolgt nach persönlicher Bestätigung.{% else %}For local pickup purchases, the buyer returns the item to the seller in person. Refund is processed after personal confirmation.{% endif %}</p>
+      
+      <p><strong>{% if session.get('lang') == 'de' %}9.4 Entscheidungsbefugnis:{% else %}9.4 Decision Authority:{% endif %}</strong></p>
+      <p>{% if session.get('lang') == 'de' %}Die Schlichtungsstelle hat die endgültige Entscheidungsbefugnis bei allen Streitfällen. Die Entscheidung basiert auf den vorgelegten Beweisen und der Sachlage.{% else %}The mediation team has final decision authority on all disputes. Decisions are based on the evidence submitted and the circumstances of the case.{% endif %}</p>
       
       <h4>{% if session.get('lang') == 'de' %}10. Stornierung{% else %}10. Cancellation{% endif %}</h4>
       <p>{% if session.get('lang') == 'de' %}<strong>10.1 Käufer:</strong> Käufer können eine Bestellung stornieren, solange diese noch nicht bezahlt wurde. Bei Bestellungen mit Abholung vor Ort können Käufer jederzeit nach Zahlung eine Rückerstattung beantragen.{% else %}<strong>10.1 Buyers:</strong> Buyers can cancel an order as long as it has not been paid. For local pickup orders, buyers can request a refund at any time after payment.{% endif %}</p>
