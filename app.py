@@ -4150,7 +4150,7 @@ def dispute_return_shipped(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT buyer_id, status FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT buyer_id, status, shipping_method FROM orders WHERE id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -4166,14 +4166,22 @@ def dispute_return_shipped(order_id):
         flash('This order does not require a return.', 'warning')
         return redirect(f'/order/{order_id}')
     
-    c.execute("""UPDATE orders SET 
-                 return_tracking_number = ?,
-                 return_shipped_at = CURRENT_TIMESTAMP 
-                 WHERE id = ?""", (tracking_number if tracking_number else 'No tracking', order_id))
+    if order[2] == 'local_pickup':
+        c.execute("""UPDATE orders SET 
+                     return_tracking_number = 'Local Pickup',
+                     return_shipped_at = CURRENT_TIMESTAMP 
+                     WHERE id = ?""", (order_id,))
+        flash('Return marked! The seller will confirm receipt and release the refund.', 'success')
+    else:
+        c.execute("""UPDATE orders SET 
+                     return_tracking_number = ?,
+                     return_shipped_at = CURRENT_TIMESTAMP 
+                     WHERE id = ?""", (tracking_number if tracking_number else 'No tracking', order_id))
+        flash('Return marked as shipped! The seller will confirm receipt and release the refund.', 'success')
+    
     conn.commit()
     conn.close()
     
-    flash('Return marked as shipped! The seller will confirm receipt and release the refund.', 'success')
     return redirect(f'/order/{order_id}')
 
 @app.route('/order/<int:order_id>/return/confirm', methods=['POST'])

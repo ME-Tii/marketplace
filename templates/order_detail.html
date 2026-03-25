@@ -35,6 +35,14 @@
   {% if order[5] == 'return_pending' and session.get('user_id') == order[2] %}
   <div class="alert alert-warning mt-3">
     <h5>{% if session.get('lang') == 'de' %}Rückgabe erforderlich{% else %}Return Required{% endif %}</h5>
+    
+    {% if order[15] == 'local_pickup' %}
+    <p>{% if session.get('lang') == 'de' %}Bitte geben Sie den Artikel persönlich an den Verkäufer zurück.{% else %}Please return the item to the seller in person.{% endif %}</p>
+    <form method="POST" action="/order/{{ order[0] }}/return/dispute">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Als zurückgegeben markieren{% else %}Mark as Returned{% endif %}</button>
+    </form>
+    {% else %}
     <p>{% if session.get('lang') == 'de' %}Bitte senden Sie den Artikel an die folgende Adresse des Verkäufers zurück:{% else %}Please ship the item back to the seller's return address below:{% endif %}</p>
     
     {% if order[23] %}
@@ -58,12 +66,21 @@
       <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Als zurückgesendet markieren{% else %}Mark as Shipped Back{% endif %}</button>
     </form>
     {% endif %}
+    {% endif %}
   </div>
   {% endif %}
 
   {% if order[5] == 'return_pending' and session.get('user_id') == order[3] %}
   <div class="alert alert-info mt-3">
     <h5>{% if session.get('lang') == 'de' %}Rückgabe ausstehend{% else %}Return Pending{% endif %}</h5>
+    
+    {% if order[15] == 'local_pickup' %}
+    <p>{% if session.get('lang') == 'de' %}Warten auf persönliche Rückgabe vom Käufer.{% else %}Waiting for buyer to return item in person.{% endif %}</p>
+    <form method="POST" action="/order/{{ order[0] }}/return/confirm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Rückgabe erhalten - Erstattung freigeben{% else %}Return Received - Release Refund{% endif %}</button>
+    </form>
+    {% else %}
     <p>{% if session.get('lang') == 'de' %}Warten auf Rückgabe vom Käufer.{% else %}Waiting for buyer to ship item back.{% endif %}</p>
     {% if order[26] %}
     <p><strong>{% if session.get('lang') == 'de' %}Rückgabe-Tracking:{% else %}Return Tracking:{% endif %}</strong> {{ order[26] }}</p>
@@ -71,6 +88,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Rückgabe erhalten - Erstattung freigeben{% else %}Return Received - Release Refund{% endif %}</button>
     </form>
+    {% endif %}
     {% endif %}
   </div>
   {% endif %}
