@@ -23,6 +23,13 @@
           </p>
           <p><strong>{% if session.get('lang') == 'de' %}Käufer:{% else %}Buyer:{% endif %}</strong> {{ order[34] }}</p>
           <p><strong>{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %}</strong> {{ order[35] }}</p>
+          <p><strong>{% if session.get('lang') == 'de' %}Lieferart:{% else %}Delivery:{% endif %}</strong> 
+            {% if order[15] == 'local_pickup' %}
+            <span class="badge bg-info">{% if session.get('lang') == 'de' %}Abholung vor Ort{% else %}Local Pickup{% endif %}</span>
+            {% else %}
+            <span class="badge bg-secondary">{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</span>
+            {% endif %}
+          </p>
           {% if order[8] %}
           <p><strong>{% if session.get('lang') == 'de' %}Tracking-Nummer:{% else %}Tracking Number:{% endif %}</strong> {{ order[8] }}</p>
           {% endif %}
