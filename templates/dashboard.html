@@ -9,11 +9,9 @@
   @keyframes gradientPulse {
     0%, 100% { 
       background-position: 0% 50%;
-      opacity: 0.15;
     }
     50% { 
       background-position: 100% 50%;
-      opacity: 0.25;
     }
   }
   @keyframes float {
@@ -21,7 +19,7 @@
     50% { transform: translateY(-10px); }
   }
   .hero-section {
-    background: linear-gradient(-45deg, #0d6efd, #6610f2, #0d6efd, #001373);
+    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.3), rgba(102, 16, 242, 0.3), rgba(13, 110, 253, 0.2), rgba(0, 19, 115, 0.3));
     background-size: 400% 400%;
     animation: gradientPulse 8s ease infinite;
     border-radius: 20px;
@@ -30,22 +28,6 @@
     text-align: center;
     position: relative;
     overflow: hidden;
-  }
-  .hero-section::before,
-  .hero-section::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: inherit;
-    background-size: inherit;
-    animation: inherit;
-    animation-direction: reverse;
-    animation-duration: 12s;
-    border-radius: inherit;
-    opacity: 0.5;
   }
   .hero-content {
     position: relative;
@@ -88,7 +70,7 @@
     }
   }
   .trust-bar {
-    background: linear-gradient(-45deg, #0d6efd, #6610f2, #0d6efd, #001373);
+    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.2), rgba(102, 16, 242, 0.2), rgba(13, 110, 253, 0.15), rgba(0, 19, 115, 0.2));
     background-size: 400% 400%;
     animation: trustGradient 6s ease infinite;
     border-radius: 10px;
@@ -98,8 +80,6 @@
     justify-content: center;
     gap: 3rem;
     flex-wrap: wrap;
-    position: relative;
-    overflow: hidden;
   }
   .trust-item {
     display: flex;
@@ -119,14 +99,10 @@
     color: #fff;
   }
   .features-section {
-    background: linear-gradient(-45deg, #1a1a1a, #2d2d2d, #1a1a1a, #252525);
-    background-size: 400% 400%;
-    animation: gradientPulse 10s ease infinite;
+    background: rgba(26, 26, 26, 0.8);
     border-radius: 20px;
     padding: 3rem 2rem;
     margin-bottom: 2rem;
-    position: relative;
-    overflow: hidden;
   }
   .section-title {
     text-align: center;
