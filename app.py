@@ -340,10 +340,16 @@ def inject_user_alerts():
               (session['user_id'],))
     post_reports = c.fetchone()[0]
     
+    # Check if user has Stripe connected
+    c.execute("SELECT stripe_account_id FROM users WHERE id = ?", (session['user_id'],))
+    stripe_result = c.fetchone()
+    stripe_connected = stripe_result and stripe_result[0]
+    
     conn.close()
     
     g.open_disputes = open_disputes
     g.post_reports = post_reports
+    g.stripe_connected = stripe_connected
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
