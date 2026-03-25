@@ -3830,6 +3830,15 @@ def admin_dispute_detail(order_id):
         resolution_note = request.form.get('resolution_note', '')
         include_return_shipping = request.form.get('include_return_shipping') == '1'
         
+        # Check current dispute status
+        c.execute("SELECT dispute_status, status FROM orders WHERE id = ?", (order_id,))
+        current_status = c.fetchone()
+        
+        if current_status and current_status[0] in ['refunded', 'resolved']:
+            flash('This dispute has already been resolved.', 'warning')
+            conn.close()
+            return redirect('/admin/disputes')
+        
         if action in ['refund', 'release', 'partial', 'refund_with_return', 'force_refund']:
             # Process the resolution
             if action == 'refund':
@@ -3857,14 +3866,27 @@ def admin_dispute_detail(order_id):
                 process_refund_now = True
             
             if process_refund_now:
-                # Get payment info
-                c.execute("SELECT stripe_payment_id FROM orders WHERE id = ?", (order_id,))
-                payment = c.fetchone()
+                # Get payment and order info for amount calculation
+                c.execute("SELECT stripe_payment_id, amount, shipping_cost, shipping_method FROM orders WHERE id = ?", (order_id,))
+                payment_info = c.fetchone()
                 
-                if payment and payment[0] and app.config.get('STRIPE_SECRET_KEY'):
+                if payment_info and payment_info[0] and app.config.get('STRIPE_SECRET_KEY'):
+                    total_amount = payment_info[1] or 0
+                    shipping_cost = payment_info[2] or 0
+                    shipping_method = payment_info[3]
+                    item_price = total_amount - shipping_cost
+                    
+                    # Calculate refund amount based on include_return_shipping
+                    # For local_pickup, always refund total_amount (no return shipping possible)
+                    if shipping_method == 'local_pickup':
+                        refund_amount = total_amount
+                    elif include_return_shipping:
+                        refund_amount = total_amount
+                    else:
+                        refund_amount = item_price
+                    
                     try:
-                        # Process Stripe refund
-                        stripe.Refund.create(payment_intent=payment[0])
+                        stripe.Refund.create(payment_intent=payment_info[0], amount=int(refund_amount * 100))
                     except Exception as e:
                         flash(f'Stripe refund failed: {str(e)}', 'danger')
                         conn.close()
@@ -3880,7 +3902,16 @@ def admin_dispute_detail(order_id):
                         WHERE id = ?""", 
                       (new_status if action != 'refund_with_return' else 'return_required', resolution + ': ' + resolution_note, new_status, 1 if include_return_shipping else 0, order_id))
             conn.commit()
-            flash(f'Dispute resolved: {resolution}', 'success')
+            
+            # Build success message with amount info
+            if process_refund_now:
+                if include_return_shipping:
+                    flash(f'Dispute resolved: {resolution} (${total_amount:.2f} refunded)', 'success')
+                else:
+                    flash(f'Dispute resolved: {resolution} (${item_price:.2f} refunded, buyer pays return shipping)', 'success')
+            else:
+                flash(f'Dispute resolved: {resolution}', 'success')
+            
             conn.close()
             return redirect('/admin/disputes')
     
