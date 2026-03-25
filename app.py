@@ -3828,6 +3828,7 @@ def admin_dispute_detail(order_id):
     if request.method == 'POST':
         action = request.form.get('action')
         resolution_note = request.form.get('resolution_note', '')
+        include_return_shipping = request.form.get('include_return_shipping') == '1'
         
         if action in ['refund', 'release', 'partial', 'refund_with_return']:
             # Process the resolution
@@ -3837,7 +3838,10 @@ def admin_dispute_detail(order_id):
                 process_refund_now = True
             elif action == 'refund_with_return':
                 new_status = 'return_pending'
-                resolution = 'refund_with_return_required'
+                if include_return_shipping:
+                    resolution = 'refund_with_return: shipping_included'
+                else:
+                    resolution = 'refund_with_return: buyer_pays_return_shipping'
                 process_refund_now = False
             elif action == 'release':
                 new_status = 'paid'
@@ -3867,9 +3871,10 @@ def admin_dispute_detail(order_id):
                         dispute_status = ?, 
                         dispute_resolution = ?,
                         dispute_resolved_at = CURRENT_TIMESTAMP,
-                        status = ?
+                        status = ?,
+                        seller_at_fault = ?
                         WHERE id = ?""", 
-                      (new_status if action != 'refund_with_return' else 'return_required', resolution + ': ' + resolution_note, new_status, order_id))
+                      (new_status if action != 'refund_with_return' else 'return_required', resolution + ': ' + resolution_note, new_status, 1 if include_return_shipping else 0, order_id))
             conn.commit()
             flash(f'Dispute resolved: {resolution}', 'success')
             conn.close()
@@ -4191,7 +4196,7 @@ def dispute_return_confirm(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT seller_id, status, stripe_payment_id, amount FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT seller_id, status, stripe_payment_id, amount, shipping_cost, seller_at_fault, shipping_method FROM orders WHERE id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -4207,16 +4212,28 @@ def dispute_return_confirm(order_id):
         flash('This order does not require return confirmation.', 'warning')
         return redirect(f'/order/{order_id}')
     
+    total_amount = order[3] or 0
+    shipping_cost = order[4] or 0
+    include_return_shipping = order[5] or 0
+    
+    item_price = total_amount - shipping_cost
+    if include_return_shipping:
+        refund_amount = item_price + (shipping_cost * 2) if shipping_cost else item_price
+        refund_desc = f'Full refund (item ${item_price:.2f} + return shipping ${shipping_cost * 2 if shipping_cost else 0:.2f})'
+    else:
+        refund_amount = item_price
+        refund_desc = f'Item price refund (buyer pays return shipping: ${shipping_cost:.2f})'
+    
     if order[2] and app.config.get('STRIPE_SECRET_KEY'):
         try:
-            stripe.Refund.create(payment_intent=order[2])
-            flash('Refund processed successfully!', 'success')
+            stripe.Refund.create(payment_intent=order[2], amount=int(refund_amount * 100))
+            flash(f'Refund processed: ${refund_amount:.2f}', 'success')
         except Exception as e:
             flash(f'Refund failed: {str(e)}', 'danger')
             conn.close()
             return redirect(f'/order/{order_id}')
     else:
-        flash('Refund marked as complete (no Stripe payment found).', 'success')
+        flash(f'Refund marked as complete: {refund_desc} (no Stripe payment found).', 'success')
     
     c.execute("""UPDATE orders SET 
                  status = 'refunded',
