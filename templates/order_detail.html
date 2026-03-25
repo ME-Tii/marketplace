@@ -38,6 +38,12 @@
     
     {% if order[11] == 'local_pickup' %}
     <p>{% if session.get('lang') == 'de' %}Bitte geben Sie den Artikel persönlich an den Verkäufer zurück.{% else %}Please return the item to the seller in person.{% endif %}</p>
+    {% if order[19] %}
+    <div class="bg-light p-3 rounded mb-3">
+      <strong>{% if session.get('lang') == 'de' %}Abhol-/Rückgabeort:{% else %}Meetup Location:{% endif %}</strong><br/>
+      {{ order[19] }}
+    </div>
+    {% endif %}
     <form method="POST" action="/order/{{ order[0] }}/return/dispute">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Als zurückgegeben markieren{% else %}Mark as Returned{% endif %}</button>
