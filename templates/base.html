@@ -27,6 +27,14 @@
         display: flex;
         flex-direction: column;
       }
+      .stripe-btn {
+        transition: all 0.3s ease;
+      }
+      .stripe-btn:hover {
+        background-color: #0d6efd !important;
+        color: white !important;
+        transform: scale(1.05);
+      }
       .content-wrapper {
         flex: 1;
       }
@@ -275,7 +283,7 @@
               </li>
               {% if not g.stripe_connected %}
               <li class="nav-item ms-2">
-                <a class="nav-link border border-primary rounded text-primary text-nowrap px-2" href="/connect_stripe">
+                <a class="nav-link border border-primary rounded text-primary text-nowrap px-2 stripe-btn" href="/connect_stripe">
                   {% if session.get('lang') == 'de' %}Stripe verbinden{% else %}Connect Stripe{% endif %}
                 </a>
               </li>
