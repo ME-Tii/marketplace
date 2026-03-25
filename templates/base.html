@@ -269,8 +269,8 @@
               </li>
               {% if session.get('user_id') %}
               {% if not g.stripe_connected %}
-              <li class="nav-item">
-                <a class="nav-link bg-primary rounded text-white text-nowrap px-2" href="/connect_stripe">
+              <li class="nav-item ms-2">
+                <a class="nav-link border border-primary rounded text-primary text-nowrap px-2" href="/connect_stripe">
                   {% if session.get('lang') == 'de' %}Stripe verbinden{% else %}Connect Stripe{% endif %}
                 </a>
               </li>
