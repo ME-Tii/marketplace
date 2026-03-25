@@ -45,17 +45,17 @@
     {% else %}
     <p>{% if session.get('lang') == 'de' %}Bitte senden Sie den Artikel an die folgende Adresse des Verkäufers zurück:{% else %}Please ship the item back to the seller's return address below:{% endif %}</p>
     
-    {% if order[23] %}
+    {% if order[19] %}
     <div class="bg-light p-3 rounded mb-3">
       <strong>{% if session.get('lang') == 'de' %}Rücksendeadresse:{% else %}Return Address:{% endif %}</strong><br/>
-      {{ order[23] }}
+      {{ order[19] }}
     </div>
     {% else %}
     <p class="text-danger">{% if session.get('lang') == 'de' %}Der Verkäufer hat keine Rücksendeadresse hinterlegt.{% else %}Seller has not provided a return address.{% endif %}</p>
     {% endif %}
     
-    {% if order[26] %}
-    <p><strong>{% if session.get('lang') == 'de' %}Ihre Rückgabe-Tracking-Nummer:{% else %}Your Return Tracking Number:{% endif %}</strong> {{ order[26] }}</p>
+    {% if order[35] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Ihre Rückgabe-Tracking-Nummer:{% else %}Your Return Tracking Number:{% endif %}</strong> {{ order[35] }}</p>
     {% else %}
     <form method="POST" action="/order/{{ order[0] }}/return/dispute">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -81,14 +81,14 @@
       <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Rückgabe erhalten - Erstattung freigeben{% else %}Return Received - Release Refund{% endif %}</button>
     </form>
     {% else %}
-    {% if not order[23] %}
+    {% if not order[19] %}
     <div class="alert alert-warning">
       <p>{% if session.get('lang') == 'de' %}<strong>Wichtig:</strong> Sie haben keine Rücksendeadresse hinterlegt. Bitte fügen Sie eine in Ihrem <a href="/profile/edit">Profil</a> hinzu, damit der Käufer weiß, wohin er zurücksenden soll.{% else %}<strong>Important:</strong> You have not set a return address. Please add one in your <a href="/profile/edit">profile</a> so the buyer knows where to return the item.{% endif %}</p>
     </div>
     {% endif %}
     <p>{% if session.get('lang') == 'de' %}Warten auf Rückgabe vom Käufer.{% else %}Waiting for buyer to ship item back.{% endif %}</p>
-    {% if order[26] %}
-    <p><strong>{% if session.get('lang') == 'de' %}Rückgabe-Tracking:{% else %}Return Tracking:{% endif %}</strong> {{ order[26] }}</p>
+    {% if order[35] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Rückgabe-Tracking:{% else %}Return Tracking:{% endif %}</strong> {{ order[35] }}</p>
     <form method="POST" action="/order/{{ order[0] }}/return/confirm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Rückgabe erhalten - Erstattung freigeben{% else %}Return Received - Release Refund{% endif %}</button>
