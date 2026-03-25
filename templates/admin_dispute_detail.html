@@ -23,11 +23,11 @@
           </p>
           <p><strong>{% if session.get('lang') == 'de' %}Käufer:{% else %}Buyer:{% endif %}</strong> {{ order[34] }}</p>
           <p><strong>{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %}</strong> {{ order[35] }}</p>
-          {% if order[7] %}
-          <p><strong>{% if session.get('lang') == 'de' %}Tracking-Nummer:{% else %}Tracking Number:{% endif %}</strong> {{ order[7] }}</p>
+          {% if order[8] %}
+          <p><strong>{% if session.get('lang') == 'de' %}Tracking-Nummer:{% else %}Tracking Number:{% endif %}</strong> {{ order[8] }}</p>
           {% endif %}
-          {% if order[3] %}
-          <p><strong>{% if session.get('lang') == 'de' %}Stripe Payment ID:{% else %}Stripe Payment ID:{% endif %}</strong> {{ order[3] }}</p>
+          {% if order[6] %}
+          <p><strong>{% if session.get('lang') == 'de' %}Stripe Payment ID:{% else %}Stripe Payment ID:{% endif %}</strong> {{ order[6] }}</p>
           {% endif %}
         </div>
       </div>
