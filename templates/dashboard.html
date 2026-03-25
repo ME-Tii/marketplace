@@ -6,16 +6,10 @@
 {% block content %}
 
 <style>
-  @keyframes colorWaveX {
-    0%, 100% { background-position: 0% 0%; }
-    25% { background-position: 100% 25%; }
-    50% { background-position: 0% 50%; }
-    75% { background-position: 100% 75%; }
-  }
-  @keyframes colorWaveY {
-    0%, 100% { background-position: 0% 0%; }
-    33% { background-position: 0% 100%; }
-    66% { background-position: 0% 0%; }
+  @keyframes colorWave {
+    0% { background-position: 0% 100%; }
+    50% { background-position: 100% 0%; }
+    100% { background-position: 0% 100%; }
   }
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -26,9 +20,9 @@
     50% { transform: translateY(-10px); }
   }
   .hero-section {
-    background: linear-gradient(45deg, rgba(13, 110, 253, 0.5), transparent 40%, rgba(102, 16, 242, 0.5), transparent 60%, rgba(13, 110, 253, 0.5));
-    background-size: 150% 150%;
-    animation: colorWaveX 6s ease-in-out infinite, colorWaveY 4s ease-in-out infinite;
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.5), transparent 50%, rgba(102, 16, 242, 0.5));
+    background-size: 200% 200%;
+    animation: colorWave 8s ease-in-out infinite;
     border-radius: 20px;
     padding: 3rem 2rem;
     margin-bottom: 2rem;
@@ -75,9 +69,9 @@
     border-radius: 50px;
   }
   .trust-bar {
-    background: linear-gradient(45deg, rgba(13, 110, 253, 0.35), transparent 40%, rgba(102, 16, 242, 0.35), transparent 60%, rgba(13, 110, 253, 0.35));
-    background-size: 150% 150%;
-    animation: colorWaveX 6s ease-in-out infinite, colorWaveY 4s ease-in-out infinite;
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.35), transparent 50%, rgba(102, 16, 242, 0.35));
+    background-size: 200% 200%;
+    animation: colorWave 8s ease-in-out infinite;
     border-radius: 10px;
     padding: 1rem 2rem;
     margin-bottom: 2rem;
