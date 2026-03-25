@@ -36,7 +36,7 @@
   <div class="alert alert-warning mt-3">
     <h5>{% if session.get('lang') == 'de' %}Rückgabe erforderlich{% else %}Return Required{% endif %}</h5>
     
-    {% if order[15] == 'local_pickup' %}
+    {% if order[11] == 'local_pickup' %}
     <p>{% if session.get('lang') == 'de' %}Bitte geben Sie den Artikel persönlich an den Verkäufer zurück.{% else %}Please return the item to the seller in person.{% endif %}</p>
     <form method="POST" action="/order/{{ order[0] }}/return/dispute">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -74,7 +74,7 @@
   <div class="alert alert-info mt-3">
     <h5>{% if session.get('lang') == 'de' %}Rückgabe ausstehend{% else %}Return Pending{% endif %}</h5>
     
-    {% if order[15] == 'local_pickup' %}
+    {% if order[11] == 'local_pickup' %}
     <p>{% if session.get('lang') == 'de' %}Warten auf persönliche Rückgabe vom Käufer.{% else %}Waiting for buyer to return item in person.{% endif %}</p>
     <form method="POST" action="/order/{{ order[0] }}/return/confirm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
