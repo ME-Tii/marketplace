@@ -11,6 +11,10 @@
     50% { background-position: 100% 0%; }
     100% { background-position: 0% 100%; }
   }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
@@ -25,6 +29,14 @@
     text-align: center;
     position: relative;
     overflow: hidden;
+  }
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    animation: pulse 4s ease-in-out infinite;
+    border-radius: inherit;
   }
   .hero-content {
     position: relative;
@@ -67,6 +79,16 @@
     justify-content: center;
     gap: 3rem;
     flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+  }
+  .trust-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    animation: pulse 4s ease-in-out infinite;
+    border-radius: inherit;
   }
   .trust-item {
     display: flex;
