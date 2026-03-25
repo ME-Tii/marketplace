@@ -7,9 +7,8 @@
 
 <style>
   @keyframes colorWave {
-    0% { background-position: 0% 100%; }
-    50% { background-position: 100% 0%; }
-    100% { background-position: 0% 100%; }
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 200%; }
   }
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -22,7 +21,7 @@
   .hero-section {
     background: linear-gradient(135deg, rgba(13, 110, 253, 0.5), transparent 50%, rgba(102, 16, 242, 0.5));
     background-size: 200% 200%;
-    animation: colorWave 8s ease-in-out infinite;
+    animation: colorWave 10s linear infinite;
     border-radius: 20px;
     padding: 3rem 2rem;
     margin-bottom: 2rem;
@@ -71,7 +70,7 @@
   .trust-bar {
     background: linear-gradient(135deg, rgba(13, 110, 253, 0.35), transparent 50%, rgba(102, 16, 242, 0.35));
     background-size: 200% 200%;
-    animation: colorWave 8s ease-in-out infinite;
+    animation: colorWave 10s linear infinite;
     border-radius: 10px;
     padding: 1rem 2rem;
     margin-bottom: 2rem;
