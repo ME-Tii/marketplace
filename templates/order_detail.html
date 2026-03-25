@@ -5,12 +5,13 @@
   <h2>{% if session.get('lang') == 'de' %}Bestellung{% else %}Order{% endif %} #{{ order[0] }}</h2>
 
   {% if order[10] %}
-  <div class="alert alert-{% if order[10] == 'open' %}danger{% elif order[10] in ['refunded', 'resolved'] %}warning{% else %}info{% endif %} mt-3">
+  <div class="alert alert-{% if order[10] == 'open' %}danger{% elif order[10] in ['refunded', 'resolved'] %}warning{% elif order[10] == 'return_required' %}warning{% else %}info{% endif %} mt-3">
     <h5>
       {% if session.get('lang') == 'de' %}Streitfall: {% else %}Dispute: {% endif %}
       {% if order[10] == 'open' %}{% if session.get('lang') == 'de' %}Offen{% else %}Open{% endif %}
       {% elif order[10] == 'refunded' %}{% if session.get('lang') == 'de' %}Erstattet{% else %}Refunded{% endif %}
       {% elif order[10] == 'resolved' %}{% if session.get('lang') == 'de' %}Gelöst{% else %}Resolved{% endif %}
+      {% elif order[10] == 'return_required' %}{% if session.get('lang') == 'de' %}Rückgabe erforderlich{% else %}Return Required{% endif %}
       {% else %}{{ order[10] }}{% endif %}
     </h5>
     {% if order[27] %}
@@ -27,6 +28,49 @@
     {% endif %}
     {% if order[30] %}
     <p><small class="text-muted">{% if session.get('lang') == 'de' %}Gelöst am{% else %}Resolved{% endif %}: {{ order[30] }}</small></p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if order[5] == 'return_pending' and session.get('user_id') == order[2] %}
+  <div class="alert alert-warning mt-3">
+    <h5>{% if session.get('lang') == 'de' %}Rückgabe erforderlich{% else %}Return Required{% endif %}</h5>
+    <p>{% if session.get('lang') == 'de' %}Bitte senden Sie den Artikel an die folgende Adresse des Verkäufers zurück:{% else %}Please ship the item back to the seller's return address below:{% endif %}</p>
+    
+    {% if order[23] %}
+    <div class="bg-light p-3 rounded mb-3">
+      <strong>{% if session.get('lang') == 'de' %}Rücksendeadresse:{% else %}Return Address:{% endif %}</strong><br/>
+      {{ order[23] }}
+    </div>
+    {% else %}
+    <p class="text-danger">{% if session.get('lang') == 'de' %}Der Verkäufer hat keine Rücksendeadresse hinterlegt.{% else %}Seller has not provided a return address.{% endif %}</p>
+    {% endif %}
+    
+    {% if order[26] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Ihre Rückgabe-Tracking-Nummer:{% else %}Your Return Tracking Number:{% endif %}</strong> {{ order[26] }}</p>
+    {% else %}
+    <form method="POST" action="/order/{{ order[0] }}/return/dispute">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div class="mb-3">
+        <label class="form-label">{% if session.get('lang') == 'de' %}Tracking-Nummer (optional){% else %}Tracking Number (optional){% endif %}</label>
+        <input type="text" class="form-control" name="tracking_number" placeholder="{% if session.get('lang') == 'de' %}Geben Sie die Tracking-Nummer ein...{% else %}Enter tracking number...{% endif %}" />
+      </div>
+      <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Als zurückgesendet markieren{% else %}Mark as Shipped Back{% endif %}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if order[5] == 'return_pending' and session.get('user_id') == order[3] %}
+  <div class="alert alert-info mt-3">
+    <h5>{% if session.get('lang') == 'de' %}Rückgabe ausstehend{% else %}Return Pending{% endif %}</h5>
+    <p>{% if session.get('lang') == 'de' %}Warten auf Rückgabe vom Käufer.{% else %}Waiting for buyer to ship item back.{% endif %}</p>
+    {% if order[26] %}
+    <p><strong>{% if session.get('lang') == 'de' %}Rückgabe-Tracking:{% else %}Return Tracking:{% endif %}</strong> {{ order[26] }}</p>
+    <form method="POST" action="/order/{{ order[0] }}/return/confirm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-success">{% if session.get('lang') == 'de' %}Rückgabe erhalten - Erstattung freigeben{% else %}Return Received - Release Refund{% endif %}</button>
+    </form>
     {% endif %}
   </div>
   {% endif %}

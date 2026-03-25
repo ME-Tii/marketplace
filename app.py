@@ -3829,31 +3829,38 @@ def admin_dispute_detail(order_id):
         action = request.form.get('action')
         resolution_note = request.form.get('resolution_note', '')
         
-        if action in ['refund', 'release', 'partial']:
+        if action in ['refund', 'release', 'partial', 'refund_with_return']:
             # Process the resolution
             if action == 'refund':
                 new_status = 'refunded'
                 resolution = 'full_refund'
+                process_refund_now = True
+            elif action == 'refund_with_return':
+                new_status = 'return_pending'
+                resolution = 'refund_with_return_required'
+                process_refund_now = False
             elif action == 'release':
                 new_status = 'paid'
                 resolution = 'released'
+                process_refund_now = False
             else:  # partial
                 new_status = 'refunded'
                 resolution = 'partial_refund'
+                process_refund_now = True
             
-            # Get payment info
-            c.execute("SELECT stripe_payment_id FROM orders WHERE id = ?", (order_id,))
-            payment = c.fetchone()
-            
-            if payment and payment[0] and app.config.get('STRIPE_SECRET_KEY'):
-                try:
-                    if action in ['refund', 'partial']:
+            if process_refund_now:
+                # Get payment info
+                c.execute("SELECT stripe_payment_id FROM orders WHERE id = ?", (order_id,))
+                payment = c.fetchone()
+                
+                if payment and payment[0] and app.config.get('STRIPE_SECRET_KEY'):
+                    try:
                         # Process Stripe refund
                         stripe.Refund.create(payment_intent=payment[0])
-                except Exception as e:
-                    flash(f'Stripe refund failed: {str(e)}', 'danger')
-                    conn.close()
-                    return redirect(f'/admin/dispute/{order_id}')
+                    except Exception as e:
+                        flash(f'Stripe refund failed: {str(e)}', 'danger')
+                        conn.close()
+                        return redirect(f'/admin/dispute/{order_id}')
             
             # Update order
             c.execute("""UPDATE orders SET 
@@ -3862,7 +3869,7 @@ def admin_dispute_detail(order_id):
                         dispute_resolved_at = CURRENT_TIMESTAMP,
                         status = ?
                         WHERE id = ?""", 
-                      (new_status, resolution + ': ' + resolution_note, new_status, order_id))
+                      (new_status if action != 'refund_with_return' else 'return_required', resolution + ': ' + resolution_note, new_status, order_id))
             conn.commit()
             flash(f'Dispute resolved: {resolution}', 'success')
             conn.close()
@@ -4129,6 +4136,85 @@ def refund_return(order_id):
         send_email(buyer_info[0], 'Refund Issued - Marketplace', 
                   f'Your refund of ${refund_amount:.2f} for "{buyer_info[3]}" has been processed. The refund will appear on your payment method within 5-10 business days.')
     
+    conn.commit()
+    conn.close()
+    
+    return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/return/dispute', methods=['POST'])
+def dispute_return_shipped(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    tracking_number = request.form.get('tracking_number', '')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT buyer_id, status FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[1] != 'return_pending':
+        conn.close()
+        flash('This order does not require a return.', 'warning')
+        return redirect(f'/order/{order_id}')
+    
+    c.execute("""UPDATE orders SET 
+                 return_tracking_number = ?,
+                 return_shipped_at = CURRENT_TIMESTAMP 
+                 WHERE id = ?""", (tracking_number if tracking_number else 'No tracking', order_id))
+    conn.commit()
+    conn.close()
+    
+    flash('Return marked as shipped! The seller will confirm receipt and release the refund.', 'success')
+    return redirect(f'/order/{order_id}')
+
+@app.route('/order/<int:order_id>/return/confirm', methods=['POST'])
+def dispute_return_confirm(order_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT seller_id, status, stripe_payment_id, amount FROM orders WHERE id = ?", (order_id,))
+    order = c.fetchone()
+    
+    if not order:
+        conn.close()
+        return 'Order not found', 404
+    
+    if session.get('username') != 'admin' and order[0] != session['user_id']:
+        conn.close()
+        return 'Access denied', 403
+    
+    if order[1] != 'return_pending':
+        conn.close()
+        flash('This order does not require return confirmation.', 'warning')
+        return redirect(f'/order/{order_id}')
+    
+    if order[2] and app.config.get('STRIPE_SECRET_KEY'):
+        try:
+            stripe.Refund.create(payment_intent=order[2])
+            flash('Refund processed successfully!', 'success')
+        except Exception as e:
+            flash(f'Refund failed: {str(e)}', 'danger')
+            conn.close()
+            return redirect(f'/order/{order_id}')
+    else:
+        flash('Refund marked as complete (no Stripe payment found).', 'success')
+    
+    c.execute("""UPDATE orders SET 
+                 status = 'refunded',
+                 dispute_status = 'refunded',
+                 return_completed_at = CURRENT_TIMESTAMP
+                 WHERE id = ?""", (order_id,))
     conn.commit()
     conn.close()
     

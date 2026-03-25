@@ -100,10 +100,12 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <div class="mb-3">
               <label class="form-label">{% if session.get('lang') == 'de' %}Aktion{% else %}Action{% endif %}</label>
-              <div class="d-flex gap-2">
-                <button type="submit" name="action" value="refund" class="btn btn-danger">{% if session.get('lang') == 'de' %}Käufer erstatten{% else %}Refund Buyer{% endif %}</button>
+              <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" name="action" value="refund" class="btn btn-danger">{% if session.get('lang') == 'de' %}Volle Erstattung{% else %}Full Refund{% endif %}</button>
+                <button type="submit" name="action" value="refund_with_return" class="btn btn-warning">{% if session.get('lang') == 'de' %}Erstattung mit Rückgabe{% else %}Refund with Return{% endif %}</button>
                 <button type="submit" name="action" value="release" class="btn btn-success">{% if session.get('lang') == 'de' %}An Verkäufer zahlen{% else %}Pay Seller{% endif %}</button>
               </div>
+              <small class="text-muted">{% if session.get('lang') == 'de' %}Erstattung mit Rückgabe: Käufer muss Artikel zurücksenden{% else %}Refund with Return: Buyer must return item first{% endif %}</small>
             </div>
             <div class="mb-3">
               <label class="form-label">{% if session.get('lang') == 'de' %}Notiz (optional){% else %}Note (optional){% endif %}</label>
