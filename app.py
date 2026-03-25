@@ -1166,7 +1166,12 @@ def reset_password(token):
     user_id, username, reset_sent_at = user
     if reset_sent_at:
         from datetime import datetime
-        sent_time = datetime.strptime(reset_sent_at, '%Y-%m-%d %H:%M:%S.%f')
+        try:
+            # Try with microseconds first
+            sent_time = datetime.strptime(reset_sent_at, '%Y-%m-%d %H:%M:%S.%f')
+        except ValueError:
+            # Try without microseconds
+            sent_time = datetime.strptime(reset_sent_at, '%Y-%m-%d %H:%M:%S')
         hours_elapsed = (datetime.now() - sent_time).total_seconds() / 3600
         if hours_elapsed > 24:
             conn.close()
