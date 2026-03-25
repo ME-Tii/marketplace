@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Erstattungsprozess{% else %}Refund Process Flow{% endif %} - Marketplace{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h1>{% if session.get('lang') == 'de' %}Erstattungsprozess{% else %}Refund Process Flow{% endif %}</h1>
+  <p class="text-muted">{% if session.get('lang') == 'de' %}Übersicht aller Erstattungsszenarien{% else %}Overview of all refund scenarios{% endif %}</p>
+
+  <div class="mt-4">
+    <h4>{% if session.get('lang') == 'de' %}1. Streitfall-Auflösung (Admin){% else %}1. Dispute Resolution (Admin){% endif %}</h4>
+    <div class="card bg-light p-4 mb-4">
+      <div class="d-flex flex-wrap justify-content-center gap-3">
+        <div class="card text-center" style="width: 200px;">
+          <div class="card-header bg-warning">{% if session.get('lang') == 'de' %}Streitfall eröffnet{% else %}Dispute Opened{% endif %}</div>
+          <div class="card-body">
+            <p class="small">{% if session.get('lang') == 'de' %}Käufer/Verkäufer öffnet Streitfall{% else %}Buyer/Seller opens dispute{% endif %}</p>
+          </div>
+        </div>
+        <div class="align-self-center">→</div>
+        <div class="card text-center" style="width: 200px;">
+          <div class="card-header bg-info">{% if session.get('lang') == 'de' %}Admin prüft{% else %}Admin Reviews{% endif %}</div>
+          <div class="card-body">
+            <p class="small">{% if session.get('lang') == 'de' %}Beweise werden geprüft{% else %}Evidence reviewed{% endif %}</p>
+          </div>
+        </div>
+        <div class="align-self-center">→</div>
+        <div class="card text-center border-warning" style="width: 200px;">
+          <div class="card-header">{% if session.get('lang') == 'de' %}Entscheidung{% else %}Decision{% endif %}</div>
+          <div class="card-body">
+            <p class="small">{% if session.get('lang') == 'de' %}Admin wählt Option{% else %}Admin chooses option{% endif %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h5 class="mt-4">{% if session.get('lang') == 'de' %}Admin-Optionen:{% else %}Admin Options:{% endif %}</h5>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card h-100 border-danger">
+          <div class="card-header bg-danger text-white">{% if session.get('lang') == 'de' %}Volle Erstattung{% else %}Full Refund{% endif %}</div>
+          <div class="card-body">
+            <ul class="small">
+              <li>{% if session.get('lang') == 'de' %}Sofortige Rückerstattung{% else %}Immediate refund{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Keine Rückgabe{% else %}No return required{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Rückversand optional{% else %}Return shipping optional{% endif %}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 border-warning">
+          <div class="card-header bg-warning">{% if session.get('lang') == 'de' %}Erstattung mit Rückgabe{% else %}Refund with Return{% endif %}</div>
+          <div class="card-body">
+            <ul class="small">
+              <li>{% if session.get('lang') == 'de' %}Käufer muss zurückgeben{% else %}Buyer must return item{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Nach Bestätigung → Erstattung{% else %}After confirmation → Refund{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Rückversand optional{% else %}Return shipping optional{% endif %}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 border-dark">
+          <div class="card-header bg-dark text-white">{% if session.get('lang') == 'de' %}Erstattung erzwingen{% else %}Force Refund{% endif %}</div>
+          <div class="card-body">
+            <ul class="small">
+              <li>{% if session.get('lang') == 'de' %}Sofortige Rückerstattung{% else %}Immediate refund{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Keine Rückgabe{% else %}No return required{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Voller Betrag{% else %}Full amount{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Wenn Verkäufer nicht reagiert{% else %}When seller doesn't respond{% endif %}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row g-3 mt-2">
+      <div class="col-md-6">
+        <div class="card h-100 border-success">
+          <div class="card-header bg-success text-white">{% if session.get('lang') == 'de' %}An Verkäufer zahlen{% else %}Pay Seller{% endif %}</div>
+          <div class="card-body">
+            <ul class="small">
+              <li>{% if session.get('lang') == 'de' %}Keine Rückerstattung{% else %}No refund{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Geld an Verkäufer{% else %}Money to seller{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Käufer hat verloren{% else %}Buyer loses{% endif %}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100 border-secondary">
+          <div class="card-header bg-secondary text-white">{% if session.get('lang') == 'de' %}Teilersetzung{% else %}Partial Refund{% endif %}</div>
+          <div class="card-body">
+            <ul class="small">
+              <li>{% if session.get('lang') == 'de' %}Sofortige Rückerstattung{% else %}Immediate refund{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Teilbetrag{% else %}Partial amount{% endif %}</li>
+              <li>{% if session.get('lang') == 'de' %}Geteilte Schuld{% else %}Shared fault{% endif %}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-5">
+
+  <h4>{% if session.get('lang') == 'de' %}2. Rückgabe-Prozess{% else %}2. Return Process{% endif %}</h4>
+  <div class="card bg-light p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-center gap-2 align-items-start">
+      <div class="card text-center" style="width: 180px;">
+        <div class="card-header bg-warning">{% if session.get('lang') == 'de' %}Rückgabe erforderlich{% else %}Return Required{% endif %}</div>
+        <div class="card-body">
+          <p class="small">{% if session.get('lang') == 'de' %}Admin wählt "Rückgabe"{% else %}Admin chooses "Return"{% endif %}</p>
+        </div>
+      </div>
+      <div class="align-self-center">→</div>
+      <div class="card text-center" style="width: 180px;">
+        <div class="card-header bg-info">{% if session.get('lang') == 'de' %}Liefertyp prüfen{% else %}Check Delivery Type{% endif %}</div>
+        <div class="card-body">
+          <p class="small">{% if session.get('lang') == 'de' %}Versand oder Abholung{% else %}Shipping or Pickup{% endif %}</p>
+        </div>
+      </div>
+      <div class="align-self-center">→</div>
+      <div class="card text-center border-primary" style="width: 180px;">
+        <div class="card-header bg-primary text-white">{% if session.get('lang') == 'de' %}Käufer gibt zurück{% else %}Buyer Returns{% endif %}</div>
+        <div class="card-body">
+          <p class="small">{% if session.get('lang') == 'de' %}Versand oder persönlich{% else %}Ship or in person{% endif %}</p>
+        </div>
+      </div>
+      <div class="align-self-center">→</div>
+      <div class="card text-center border-success" style="width: 180px;">
+        <div class="card-header bg-success text-white">{% if session.get('lang') == 'de' %}Verkäufer bestätigt{% else %}Seller Confirms{% endif %}</div>
+        <div class="card-body">
+          <p class="small">{% if session.get('lang') == 'de' %}Rückgabe erhalten{% else %}Return received{% endif %}</p>
+        </div>
+      </div>
+      <div class="align-self-center">→</div>
+      <div class="card text-center" style="width: 180px;">
+        <div class="card-header bg-success">{% if session.get('lang') == 'de' %}Erstattung{% else %}Refund Issued{% endif %}</div>
+        <div class="card-body">
+          <p class="small">{% if session.get('lang') == 'de' %}Geld an Käufer{% else %}Money to buyer{% endif %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header bg-primary text-white">{% if session.get('lang') == 'de' %}Versand-Rückgabe{% else %}Shipping Return{% endif %}</div>
+        <div class="card-body">
+          <ol class="small">
+            <li>{% if session.get('lang') == 'de' %}Käufer sieht Rücksendeadresse{% else %}Buyer sees return address{% endif %}</li>
+            <li>{% if session.get('lang') == 'de' %}Käufer sendet Paket zurück{% else %}Buyer ships package back{% endif %}</li>
+            <li>{% if session.get('lang') == 'de' %}Tracking-Nummer eingeben{% else %}Enter tracking number{% endif %}</li>
+            <li>{% if session.get('lang') == 'de' %}Verkäufer bestätigt Erhalt{% else %}Seller confirms receipt{% endif %}</li>
+            <li>{% if session.get('lang') == 'de' %}Erstattung wird freigegeben{% else %}Refund is released{% endif %}</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header bg-info">{% if session.get('lang') == 'de' %}Abholung vor Ort Rückgabe{% else %}Local Pickup Return{% endif %}</div>
+        <div class="card-body">
+          <ol class="small">
+            <li>{% if session.get('lang') == 'de' %}Käufer sieht Rückgabeort{% else %}Buyer sees meetup location{% endif %}</li>
+            <li>{% if session.get('lang') == 'de' %}Persönliches Treffen vereinbaren{% else %}Arrange meetup{% endif %}</li>
+            <li>{% if session.get('lang') == 'de' %}Artikel persönlich übergeben{% else %}Hand over item in person{% endif %}</li>
+            <li>{% if session.get('lang') == 'de' %}Käufer markiert als zurückgegeben{% else %}Buyer marks as returned{% endif %}</li>
+            <li>{% if session.get('lang') == 'de' %}Erstattung wird freigegeben{% else %}Refund is released{% endif %}</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-5">
+
+  <h4>{% if session.get('lang') == 'de' %}3. Rückversand-Logik{% else %}3. Return Shipping Logic{% endif %}</h4>
+  <div class="table-responsive">
+    <table class="table table-bordered">
+      <thead class="table-dark">
+        <tr>
+          <th>{% if session.get('lang') == 'de' %}Szenario{% else %}Scenario{% endif %}</th>
+          <th>{% if session.get('lang') == 'de' %}Erstattungsbetrag{% else %}Refund Amount{% endif %}</th>
+          <th>{% if session.get('lang') == 'de' %}Anmerkung{% else %}Note{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge bg-success">{% if session.get('lang') == 'de' %}Rückversand inklusive{% else %}Return shipping included{% endif %}</span></td>
+          <td>{% if session.get('lang') == 'de' %}Artikel + Versand (voll){% else %}Item + Shipping (full){% endif %}</td>
+          <td>{% if session.get('lang') == 'de' %}Verkäufer ist verantwortlich{% else %}Seller is at fault{% endif %}</td>
+        </tr>
+        <tr>
+          <td><span class="badge bg-warning">{% if session.get('lang') == 'de' %}Rückversand nicht inklusive{% else %}Return shipping excluded{% endif %}</span></td>
+          <td>{% if session.get('lang') == 'de' %}Nur Artikelpreis{% else %}Item price only{% endif %}</td>
+          <td>{% if session.get('lang') == 'de' %}Käufer zahlt Rückversand{% else %}Buyer pays return shipping{% endif %}</td>
+        </tr>
+        <tr>
+          <td><span class="badge bg-info">{% if session.get('lang') == 'de' %}Abholung vor Ort{% else %}Local Pickup{% endif %}</span></td>
+          <td>{% if session.get('lang') == 'de' %}Immer voller Betrag{% else %}Always full amount{% endif %}</td>
+          <td>{% if session.get('lang') == 'de' %}Kein Rückversand möglich{% else %}No return shipping possible{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="my-5">
+
+  <h4>{% if session.get('lang') == 'de' %}4. Andere Erstattungsszenarien{% else %}4. Other Refund Scenarios{% endif %}</h4>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">{% if session.get('lang') == 'de' %}Automatische Stornierung{% else %}Auto-Cancellation{% endif %}</div>
+        <div class="card-body">
+          <p class="small">{% if session.get('lang') == 'de' %}Nach 7 Tagen ohne Versand → Volle Rückerstattung{% else %}After 7 days without shipping → Full refund{% endif %}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">{% if session.get('lang') == 'de' %}Manuelle Stornierung{% else %}Manual Cancellation{% endif %}</div>
+        <div class="card-body">
+          <p class="small">{% if session.get('lang') == 'de' %}Käufer storniert vor Versand → Volle Rückerstattung{% else %}Buyer cancels before shipping → Full refund{% endif %}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">{% if session.get('lang') == 'de' %}Rückgabe-Anfrage{% else %}Return Request{% endif %}</div>
+        <div class="card-body">
+          <p class="small">{% if session.get('lang') == 'de' %}Käufer fordert Rückgabe → Verkäufer genehmigt → Rückgabe → Erstattung{% else %}Buyer requests return → Seller approves → Return → Refund{% endif %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <a href="/dashboard" class="btn btn-primary">{% if session.get('lang') == 'de' %}Zurück zum Marktplatz{% else %}Back to Marketplace{% endif %}</a>
+  </div>
+</div>
+{% endblock %}
