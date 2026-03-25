@@ -3874,21 +3874,20 @@ def admin_dispute_detail(order_id):
                 c.execute("SELECT stripe_payment_id, amount, shipping_cost, shipping_method FROM orders WHERE id = ?", (order_id,))
                 payment_info = c.fetchone()
                 
+                total_amount = payment_info[1] if payment_info else 0
+                shipping_cost = payment_info[2] if payment_info else 0
+                shipping_method = payment_info[3] if payment_info else None
+                item_price = total_amount - shipping_cost
+                
+                # Calculate refund amount
+                if shipping_method == 'local_pickup':
+                    refund_amount = total_amount
+                elif include_return_shipping:
+                    refund_amount = total_amount
+                else:
+                    refund_amount = item_price
+                
                 if payment_info and payment_info[0] and app.config.get('STRIPE_SECRET_KEY'):
-                    total_amount = payment_info[1] or 0
-                    shipping_cost = payment_info[2] or 0
-                    shipping_method = payment_info[3]
-                    item_price = total_amount - shipping_cost
-                    
-                    # Calculate refund amount based on include_return_shipping
-                    # For local_pickup, always refund total_amount (no return shipping possible)
-                    if shipping_method == 'local_pickup':
-                        refund_amount = total_amount
-                    elif include_return_shipping:
-                        refund_amount = total_amount
-                    else:
-                        refund_amount = item_price
-                    
                     try:
                         stripe.Refund.create(payment_intent=payment_info[0], amount=int(refund_amount * 100))
                     except Exception as e:
@@ -3909,7 +3908,7 @@ def admin_dispute_detail(order_id):
             
             # Build success message with amount info
             if process_refund_now:
-                if include_return_shipping:
+                if shipping_method == 'local_pickup' or include_return_shipping:
                     flash(f'Dispute resolved: {resolution} (${total_amount:.2f} refunded)', 'success')
                 else:
                     flash(f'Dispute resolved: {resolution} (${item_price:.2f} refunded, buyer pays return shipping)', 'success')
