@@ -462,6 +462,14 @@ def init_db():
         c.execute("ALTER TABLE users ADD COLUMN verification_sent_at DATETIME")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN reset_token TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN reset_sent_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
     c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123')))
     c.execute('''CREATE TABLE IF NOT EXISTS posts
                  (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, description TEXT, type TEXT, image TEXT, links TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
@@ -1086,6 +1094,115 @@ def login():
     else:
         app.logger.warning(f"User not found for identifier: {identifier}")
     return redirect('/login?error=Invalid credentials')
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        
+        if not email:
+            return render_template('forgot_password.html', error='Please enter your email address', unread_messages=0)
+        
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("SELECT id, username FROM users WHERE email = ?", (email,))
+        user = c.fetchone()
+        
+        if user:
+            # Generate reset token
+            import secrets
+            reset_token = secrets.token_urlsafe(32)
+            c.execute("UPDATE users SET reset_token = ?, reset_sent_at = CURRENT_TIMESTAMP WHERE id = ?", 
+                      (reset_token, user[0]))
+            conn.commit()
+            
+            # Build reset link
+            reset_url = request.url_root + f'reset-password/{reset_token}'
+            if request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https':
+                reset_url = reset_url.replace('http://', 'https://')
+            
+            # Send email
+            lang = session.get('lang', 'en')
+            subject = 'Password Reset - ME-Tii Marketplace' if lang != 'de' else 'Passwort zurücksetzen - ME-Tii Marketplace'
+            body = f'''Click the following link to reset your password:
+{reset_url}
+
+This link expires in 24 hours.
+
+If you didn't request this, ignore this email.
+'''
+            html_body = f'''
+<p>Click the following link to reset your password:</p>
+<p><a href="{reset_url}">{reset_url}</a></p>
+<p><strong>This link expires in 24 hours.</strong></p>
+<p>If you didn't request this, ignore this email.</p>
+'''
+            send_email(email, subject, body, html_body)
+        
+        conn.close()
+        
+        # Always show success to prevent email enumeration
+        return render_template('forgot_password.html', 
+                             success='If an account exists with this email, you will receive password reset instructions.',
+                             unread_messages=0)
+    
+    return render_template('forgot_password.html', unread_messages=0)
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT id, username, reset_sent_at FROM users WHERE reset_token = ?", (token,))
+    user = c.fetchone()
+    
+    if not user:
+        conn.close()
+        return render_template('message.html', 
+                             title='Invalid Link' if session.get('lang') != 'de' else 'Ungültiger Link',
+                             message='This password reset link is invalid or has expired. Please request a new one.',
+                             unread_messages=0)
+    
+    # Check if token is expired (24 hours)
+    user_id, username, reset_sent_at = user
+    if reset_sent_at:
+        from datetime import datetime
+        sent_time = datetime.strptime(reset_sent_at, '%Y-%m-%d %H:%M:%S.%f')
+        hours_elapsed = (datetime.now() - sent_time).total_seconds() / 3600
+        if hours_elapsed > 24:
+            conn.close()
+            return render_template('message.html', 
+                                 title='Link Expired' if session.get('lang') != 'de' else 'Link abgelaufen',
+                                 message='This password reset link has expired. Please request a new one.',
+                                 unread_messages=0)
+    
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not new_password or len(new_password) < 6:
+            conn.close()
+            return render_template('reset_password.html', token=token, 
+                                 error='Password must be at least 6 characters', unread_messages=0)
+        
+        if new_password != confirm_password:
+            conn.close()
+            return render_template('reset_password.html', token=token, 
+                                 error='Passwords do not match', unread_messages=0)
+        
+        # Update password and clear token
+        hashed = generate_password_hash(new_password)
+        c.execute("UPDATE users SET password = ?, reset_token = NULL, reset_sent_at = NULL WHERE id = ?", 
+                 (hashed, user_id))
+        conn.commit()
+        conn.close()
+        
+        return render_template('message.html', 
+                             title='Password Reset' if session.get('lang') != 'de' else 'Passwort zurückgesetzt',
+                             message='Your password has been reset. You can now login with your new password.',
+                             unread_messages=0)
+    
+    conn.close()
+    return render_template('reset_password.html', token=token, unread_messages=0)
 
 @app.route('/verify-email/<token>')
 def verify_email(token):
