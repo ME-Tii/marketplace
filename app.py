@@ -1196,7 +1196,7 @@ def dashboard():
         c.execute("SELECT id, name, name_de, icon FROM categories ORDER BY sort_order")
         categories = c.fetchall()
         
-        base_query = """SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, posts.is_featured, posts.featured_until, posts.location,
+        base_query = """SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, posts.is_featured, posts.featured_until, posts.location, posts.quantity,
                         GROUP_CONCAT(categories.id) as cat_ids, GROUP_CONCAT(categories.name) as cat_names
                         FROM posts 
                         JOIN users ON posts.user_id = users.id

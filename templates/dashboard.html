@@ -324,15 +324,15 @@
               {% endif %}
               <a href="/post/{{ post[0] }}" class="text-decoration-none text-white">{{ post[1] }}</a>
             </h5>
-            {% if post[12] %}
-            <p class="mb-1"><small class="text-primary">{{ post[12] }}</small></p>
+            {% if post[14] %}
+            <p class="mb-1"><small class="text-primary">{{ post[14] }}</small></p>
             {% endif %}
             <p class="card-text text-secondary">{{ post[2][:100] }}{% if post[2]|length > 100 %}...{% endif %}</p>
             {% if post[6] %}
-            <p class="fw-bold text-primary fs-5">${{ post[6] }}</p>
+            <p class="fw-bold text-primary fs-5">${{ post[6] }} {% if post[12] and post[12] > 1 %}<small class="text-secondary">(x{{ post[12] }})</small>{% endif %}</p>
             {% endif %}
-            {% if post[12] %}
-            <p class="text-muted small"><small>📍 {{ post[12] }}</small></p>
+            {% if post[11] %}
+            <p class="text-muted small"><small>📍 {{ post[11] }}</small></p>
             {% endif %}
             <a href="/post/{{ post[0] }}"><img src="{{ post[4] or '/static/pictures/placeholder.png' }}" class="img-fluid mb-2 rounded" alt="{{ post[1] }}"/></a>
             <div class="mt-auto">
