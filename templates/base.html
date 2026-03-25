@@ -268,6 +268,11 @@
                 >
               </li>
               {% if session.get('user_id') %}
+              <li class="nav-item">
+                <span class="navbar-text text-primary"
+                  >{{ current_username }}</span
+                >
+              </li>
               {% if not g.stripe_connected %}
               <li class="nav-item ms-2">
                 <a class="nav-link border border-primary rounded text-primary text-nowrap px-2" href="/connect_stripe">
@@ -275,11 +280,6 @@
                 </a>
               </li>
               {% endif %}
-              <li class="nav-item">
-                <span class="navbar-text text-primary"
-                  >{{ current_username }}</span
-                >
-              </li>
               <li class="nav-item">
                 <a id="nav-profile"
                   class="nav-link text-nowrap"
