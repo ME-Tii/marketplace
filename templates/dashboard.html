@@ -249,7 +249,7 @@
     <div class="stripe-modal-content">
       <h3>{% if session.get('lang') == 'de' %}Verkaufen Sie und erhalten Sie Zahlungen!{% else %}Start Selling & Receive Payments!{% endif %}</h3>
       <p>{% if session.get('lang') == 'de' %}Um Produkte zu verkaufen und Zahlungen zu empfangen, müssen Sie Ihr Stripe-Konto verbinden.{% else %}To sell products and receive payments, you need to connect your Stripe account.{% endif %}</p>
-      <a href="/connect_stripe" class="btn btn-primary btn-lg">{% if session.get('lang') == 'de' %}Jetzt Stripe verbinden{% else %}Connect Stripe Now{% endif %}</a>
+      <a href="/connect/stripe" class="btn btn-primary btn-lg">{% if session.get('lang') == 'de' %}Jetzt Stripe verbinden{% else %}Connect Stripe Now{% endif %}</a>
       <button type="button" class="btn btn-link text-muted" onclick="closeStripeModal()">{% if session.get('lang') == 'de' %}Später erinnern{% else %}Remind me later{% endif %}</button>
     </div>
   </div>
