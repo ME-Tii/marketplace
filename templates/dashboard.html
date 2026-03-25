@@ -19,7 +19,7 @@
     50% { transform: translateY(-10px); }
   }
   .hero-section {
-    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.3), rgba(102, 16, 242, 0.3), rgba(13, 110, 253, 0.2), rgba(0, 19, 115, 0.3));
+    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.2), rgba(102, 16, 242, 0.15), rgba(13, 110, 253, 0.05), rgba(0, 19, 115, 0.1));
     background-size: 400% 400%;
     animation: gradientPulse 8s ease infinite;
     border-radius: 20px;
@@ -62,15 +62,23 @@
   @keyframes trustGradient {
     0%, 100% { 
       background-position: 0% 50%;
-      opacity: 0.15;
+      opacity: 0.1;
+    }
+    25% {
+      background-position: 50% 100%;
+      opacity: 0.2;
     }
     50% { 
       background-position: 100% 50%;
-      opacity: 0.25;
+      opacity: 0.15;
+    }
+    75% {
+      background-position: 50% 0%;
+      opacity: 0.05;
     }
   }
   .trust-bar {
-    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.2), rgba(102, 16, 242, 0.2), rgba(13, 110, 253, 0.15), rgba(0, 19, 115, 0.2));
+    background: linear-gradient(-45deg, rgba(13, 110, 253, 0.1), rgba(102, 16, 242, 0.08), rgba(13, 110, 253, 0.02), rgba(0, 19, 115, 0.05));
     background-size: 400% 400%;
     animation: trustGradient 6s ease infinite;
     border-radius: 10px;
