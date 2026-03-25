@@ -1080,18 +1080,6 @@ def login():
             session['user_id'] = user[0]
             session['username'] = user[2]
             app.logger.info(f"Login successful for {user[2]}")
-            
-            # Check if user has Stripe connected
-            conn = sqlite3.connect('database.db')
-            c = conn.cursor()
-            c.execute("SELECT stripe_account_id FROM users WHERE id = ?", (user[0],))
-            stripe_result = c.fetchone()
-            stripe_connected = stripe_result and stripe_result[0]
-            conn.close()
-            
-            if not stripe_connected:
-                flash('Connect with Stripe to start selling and receive payments! <a href="/connect_stripe" class="alert-link">Connect Stripe now</a>', 'info')
-            
             return redirect('/dashboard')
         else:
             app.logger.warning(f"Invalid password for {user[2]}")

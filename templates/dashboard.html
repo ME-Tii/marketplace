@@ -6,6 +6,51 @@
 {% block content %}
 
 <style>
+  .stripe-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+  }
+  .stripe-modal-content {
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    border: 2px solid #0d6efd;
+    border-radius: 20px;
+    padding: 3rem;
+    text-align: center;
+    max-width: 500px;
+    margin: 1rem;
+    animation: slideUp 0.3s ease;
+  }
+  .stripe-modal-content h3 {
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+  .stripe-modal-content p {
+    color: #ccc;
+    margin-bottom: 2rem;
+  }
+  .stripe-modal-content .btn-primary {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    border: none;
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
   @keyframes colorWave {
     0% { background-position: 0% 0%; }
     100% { background-position: 200% 200%; }
@@ -198,6 +243,17 @@
 </style>
 
 <div class="container mt-4">
+  
+  {% if session.get('user_id') and not g.stripe_connected %}
+  <div id="stripe-modal" class="stripe-modal">
+    <div class="stripe-modal-content">
+      <h3>{% if session.get('lang') == 'de' %}Verkaufen Sie und erhalten Sie Zahlungen!{% else %}Start Selling & Receive Payments!{% endif %}</h3>
+      <p>{% if session.get('lang') == 'de' %}Um Produkte zu verkaufen und Zahlungen zu empfangen, müssen Sie Ihr Stripe-Konto verbinden.{% else %}To sell products and receive payments, you need to connect your Stripe account.{% endif %}</p>
+      <a href="/connect_stripe" class="btn btn-primary btn-lg">{% if session.get('lang') == 'de' %}Jetzt Stripe verbinden{% else %}Connect Stripe Now{% endif %}</a>
+      <button type="button" class="btn btn-link text-muted" onclick="closeStripeModal()">{% if session.get('lang') == 'de' %}Später erinnern{% else %}Remind me later{% endif %}</button>
+    </div>
+  </div>
+  {% endif %}
   
   {% if not session.get('user_id') %}
   <div class="hero-section">
@@ -421,5 +477,18 @@
       document.getElementById('posts-container').style.display = 'flex';
     }, 300);
   });
+  
+  // Stripe modal
+  function closeStripeModal() {
+    localStorage.setItem('stripe_modal_dismissed', Date.now());
+    document.getElementById('stripe-modal').style.display = 'none';
+  }
+  
+  // Check if modal was dismissed recently (within 24 hours)
+  const dismissed = localStorage.getItem('stripe_modal_dismissed');
+  if (dismissed && Date.now() - dismissed < 86400000) {
+    const modal = document.getElementById('stripe-modal');
+    if (modal) modal.style.display = 'none';
+  }
 </script>
 {% endblock %}
