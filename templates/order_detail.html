@@ -43,6 +43,8 @@
       <strong>{% if session.get('lang') == 'de' %}Abhol-/Rückgabeort:{% else %}Meetup Location:{% endif %}</strong><br/>
       {{ order[19] }}
     </div>
+    {% else %}
+    <p class="text-muted">{% if session.get('lang') == 'de' %}(Kein Rückgabeort angegeben){% else %}(No meetup location set){% endif %}</p>
     {% endif %}
     <form method="POST" action="/order/{{ order[0] }}/return/dispute">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
