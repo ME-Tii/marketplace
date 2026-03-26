@@ -255,7 +255,6 @@
   </div>
   {% endif %}
   
-  {% if not session.get('user_id') %}
   <div class="hero-section">
     <div class="hero-content">
       <h1 class="hero-title">{% if session.get('lang') == 'de' %}Dein Community Marktplatz{% else %}Your Community Marketplace{% endif %}</h1>
@@ -276,7 +275,6 @@
       </div>
     </div>
   </div>
-  {% endif %}
 
   <div class="trust-bar">
     <div class="trust-item">
