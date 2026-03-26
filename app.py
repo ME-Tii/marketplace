@@ -9,6 +9,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -45,6 +47,13 @@ if os.environ.get('FLASK_ENV') == 'production':
 else:
     # For local development, skip Talisman to avoid HTTPS redirects
     pass
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 @app.route('/webhook/stripe', methods=['POST'])
 def stripe_webhook():
@@ -876,6 +885,7 @@ def about():
     return render_template('about.html', unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/contact', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def contact():
     success = False
     name = ''
@@ -1010,6 +1020,7 @@ def disconnect_stripe():
 
 
 @app.route('/login')
+@limiter.limit("10 per minute")
 def login_page():
     app.logger.info("Login page accessed")
     error = request.args.get('error')
@@ -1029,6 +1040,7 @@ def register_page():
         return f"Template error: {str(e)}", 500
 
 @app.route('/register', methods=['POST'])
+@limiter.limit("5 per minute")
 def register():
     username = request.form.get('username')
     email = request.form.get('email')
@@ -1077,6 +1089,7 @@ Marketplace Team"""
         conn.close()
 
 @app.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
     app.logger.info("Login attempt")
     identifier = request.form.get('email')
@@ -1108,6 +1121,7 @@ def login():
     return redirect('/login?error=Invalid credentials')
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
+@limiter.limit("3 per hour")
 def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
