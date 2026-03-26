@@ -13,23 +13,18 @@
 
         body {
             min-height: 100vh;
-            background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 70%, #90EE90 70%, #228B22 100%);
+            background: transparent;
             overflow: hidden;
             position: relative;
         }
 
         .ground {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 30%;
-            background: linear-gradient(180deg, #228B22 0%, #1a6b1a 100%);
+            display: none;
         }
 
         .walk-container {
             position: absolute;
-            bottom: 12%;
+            bottom: 0;
             left: 0;
             animation: walk 15s linear infinite;
         }
@@ -195,139 +190,9 @@
                 transform: translate(-20px, -10px) scale(0.3);
             }
         }
-
-        /* Sun */
-        .sun {
-            position: absolute;
-            top: 30px;
-            right: 50px;
-            width: 60px;
-            height: 60px;
-            background: #FFD700;
-            border-radius: 50%;
-            box-shadow: 0 0 40px #FFD700, 0 0 60px #FFA500;
-            animation: sunGlow 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes sunGlow {
-            0% {
-                box-shadow: 0 0 40px #FFD700, 0 0 60px #FFA500;
-            }
-            100% {
-                box-shadow: 0 0 50px #FFD700, 0 0 80px #FFA500;
-            }
-        }
-
-        /* Clouds */
-        .cloud {
-            position: absolute;
-            background: white;
-            border-radius: 50px;
-            opacity: 0.9;
-            animation: cloudFloat 20s linear infinite;
-        }
-
-        .cloud::before, .cloud::after {
-            content: '';
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-        }
-
-        .cloud.c1 {
-            top: 40px;
-            left: -150px;
-            width: 100px;
-            height: 40px;
-            animation-duration: 25s;
-        }
-
-        .cloud.c1::before {
-            width: 50px;
-            height: 50px;
-            top: -25px;
-            left: 15px;
-        }
-
-        .cloud.c1::after {
-            width: 35px;
-            height: 35px;
-            top: -18px;
-            left: 55px;
-        }
-
-        .cloud.c2 {
-            top: 80px;
-            left: -100px;
-            width: 80px;
-            height: 30px;
-            animation-duration: 30s;
-            animation-delay: 5s;
-        }
-
-        .cloud.c2::before {
-            width: 40px;
-            height: 40px;
-            top: -20px;
-            left: 10px;
-        }
-
-        .cloud.c2::after {
-            width: 30px;
-            height: 30px;
-            top: -15px;
-            left: 40px;
-        }
-
-        @keyframes cloudFloat {
-            0% {
-                transform: translateX(0);
-            }
-            100% {
-                transform: translateX(calc(100vw + 200px));
-            }
-        }
-
-        /* Birds */
-        .bird {
-            position: absolute;
-            font-size: 20px;
-            animation: birdFly 8s linear infinite;
-        }
-
-        .bird:nth-child(1) {
-            top: 60px;
-            animation-delay: 0s;
-        }
-
-        .bird:nth-child(2) {
-            top: 90px;
-            animation-delay: 2s;
-            font-size: 16px;
-        }
-
-        @keyframes birdFly {
-            0% {
-                transform: translateX(-50px);
-            }
-            100% {
-                transform: translateX(calc(100vw + 50px));
-            }
-        }
     </style>
 </head>
 <body>
-    <!-- Sun -->
-    <div class="sun"></div>
-
-    <!-- Clouds -->
-    <div class="cloud c1"></div>
-    <div class="cloud c2"></div>
-
-    <!-- Birds -->
-    <div class="bird">🕊️</div>
-    <div class="bird">🐦</div>
-
     <!-- Walking Stickman -->
     <div class="walk-container">
         <div class="stickman">
@@ -337,13 +202,10 @@
             <div class="arm right"></div>
             <div class="leg left"></div>
             <div class="leg right"></div>
-            <div class="dust"></div>
-            <div class="dust"></div>
-            <div class="dust"></div>
+        <div class="dust"></div>
+        <div class="dust"></div>
+        <div class="dust"></div>
         </div>
     </div>
-
-    <!-- Ground -->
-    <div class="ground"></div>
 </body>
 </html>
