@@ -203,6 +203,7 @@
         </div>
         {% if username == 'admin' and is_owner %}
         <div class="mb-3">
+          <a href="/admin" class="btn btn-primary">{% if session.get('lang') == 'de' %}Admin Dashboard{% else %}Admin Dashboard{% endif %}</a>
           <a href="/admin/disputes" class="btn btn-warning">{% if session.get('lang') == 'de' %}Streitfälle verwalten{% else %}Manage Disputes{% endif %}</a>
         </div>
         <div class="col-md-6">
