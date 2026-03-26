@@ -3946,8 +3946,11 @@ def admin_dashboard():
     c.execute("SELECT COALESCE(SUM(amount), 0) FROM orders WHERE status IN ('paid', 'shipped', 'delivered')")
     total_revenue = c.fetchone()[0]
     
-    c.execute("SELECT COALESCE(SUM(transaction_fee), 0) FROM orders WHERE status IN ('paid', 'shipped', 'delivered')")
-    platform_cut = c.fetchone()[0]
+    try:
+        c.execute("SELECT COALESCE(SUM(transaction_fee), 0) FROM orders WHERE status IN ('paid', 'shipped', 'delivered')")
+        platform_cut = c.fetchone()[0]
+    except:
+        platform_cut = total_revenue * 0.10
     
     c.execute("SELECT COUNT(*) FROM posts WHERE is_active = 1")
     active_listings = c.fetchone()[0]
