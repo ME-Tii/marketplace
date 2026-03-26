@@ -3977,7 +3977,59 @@ def admin_dashboard():
     """)
     recent_users = c.fetchall()
     
+    c.execute("SELECT status, COUNT(*) FROM orders GROUP BY status")
+    orders_by_status = c.fetchall()
+    
+    c.execute("""SELECT DATE(created_at) as date, SUM(amount) 
+                  FROM orders 
+                  WHERE status IN ('paid', 'shipped', 'delivered') 
+                  AND created_at >= DATE('now', '-30 days')
+                  GROUP BY DATE(created_at) 
+                  ORDER BY date""")
+    revenue_by_day = c.fetchall()
+    
     conn.close()
+    
+    import io
+    import base64
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    
+    chart_orders = None
+    if orders_by_status:
+        fig, ax = plt.subplots(figsize=(6, 4))
+        labels = [str(s[0]) for s in orders_by_status]
+        sizes = [s[1] for s in orders_by_status]
+        colors = ['#ffc107', '#17a2b8', '#28a745', '#dc3545', '#6c757d']
+        ax.bar(labels, sizes, color=colors[:len(labels)])
+        ax.set_xlabel('Status')
+        ax.set_ylabel('Count')
+        ax.set_title('Orders by Status')
+        plt.tight_layout()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=80)
+        buf.seek(0)
+        chart_orders = base64.b64encode(buf.read()).decode('utf-8')
+        plt.close()
+    
+    chart_revenue = None
+    if revenue_by_day:
+        fig, ax = plt.subplots(figsize=(8, 4))
+        dates = [str(r[0]) for r in revenue_by_day]
+        amounts = [float(r[1]) for r in revenue_by_day]
+        ax.plot(dates, amounts, marker='o', color='#28a745', linewidth=2)
+        ax.fill_between(dates, amounts, alpha=0.3, color='#28a745')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Revenue ($)')
+        ax.set_title('Revenue (Last 30 Days)')
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=80)
+        buf.seek(0)
+        chart_revenue = base64.b64encode(buf.read()).decode('utf-8')
+        plt.close()
     
     return render_template('admin_dashboard.html', 
                          total_users=total_users,
@@ -3989,6 +4041,8 @@ def admin_dashboard():
                          recent_disputes=recent_disputes,
                          recent_orders=recent_orders,
                          recent_users=recent_users,
+                         chart_orders=chart_orders,
+                         chart_revenue=chart_revenue,
                          unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/admin/orders')

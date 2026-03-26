@@ -58,6 +58,35 @@
     </div>
   </div>
   
+  {% if chart_orders or chart_revenue %}
+  <div class="row mb-4">
+    <div class="col-md-6">
+      {% if chart_orders %}
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellungen nach Status{% else %}Orders by Status{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <img src="data:image/png;base64,{{ chart_orders }}" class="img-fluid" alt="Orders Chart">
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="col-md-6">
+      {% if chart_revenue %}
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Umsatz (30 Tage){% else %}Revenue (30 Days){% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <img src="data:image/png;base64,{{ chart_revenue }}" class="img-fluid" alt="Revenue Chart">
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  
   <div class="row">
     <div class="col-md-6">
       <div class="card mb-4">
@@ -151,7 +180,7 @@
               <tr>
                 <td><a href="/profile/{{ u[1] }}">{{ u[1] }}</a></td>
                 <td>{{ u[2] }}</td>
-                <td>{{ (u[3] or '')[:10] if u[3] else '-' }}</td>
+                <td>{{ u[3][:10] if u[3] else '-' }}</td>
               </tr>
               {% endfor %}
             </tbody>
