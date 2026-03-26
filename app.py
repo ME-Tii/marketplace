@@ -479,6 +479,10 @@ def init_db():
         c.execute("ALTER TABLE users ADD COLUMN reset_sent_at DATETIME")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN created_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
     c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123')))
     c.execute('''CREATE TABLE IF NOT EXISTS posts
                  (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, description TEXT, type TEXT, image TEXT, links TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
@@ -3969,7 +3973,7 @@ def admin_dashboard():
     recent_orders = c.fetchall()
     
     c.execute("""
-        SELECT id, username, email, verification_sent_at FROM users ORDER BY id DESC LIMIT 10
+        SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT 10
     """)
     recent_users = c.fetchall()
     
@@ -4015,7 +4019,7 @@ def admin_users():
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT id, username, email, verification_sent_at FROM users ORDER BY id DESC")
+    c.execute("SELECT id, username, email, created_at FROM users ORDER BY id DESC")
     users = c.fetchall()
     conn.close()
     
