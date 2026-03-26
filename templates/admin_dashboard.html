@@ -64,6 +64,7 @@
           {% for s in orders_by_status %}
           {% set total = total + s[1] %}
           {% endfor %}
+          {% if total > 0 %}
           {% for s in orders_by_status %}
           {% if s[1] > 0 %}
           <div class="mb-3">
@@ -77,6 +78,9 @@
           </div>
           {% endif %}
           {% endfor %}
+          {% else %}
+          <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Bestellungen vorhanden{% else %}No orders yet{% endif %}</p>
+          {% endif %}
           {% else %}
           <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Bestellungen vorhanden{% else %}No orders yet{% endif %}</p>
           {% endif %}
