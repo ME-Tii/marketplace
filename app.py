@@ -882,6 +882,17 @@ def contact():
     email = ''
     subject = ''
     message = ''
+    user_email = ''
+    
+    # Get user's email if logged in
+    if session.get('user_id'):
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("SELECT username, email FROM users WHERE id = ?", (session['user_id'],))
+        user = c.fetchone()
+        if user:
+            user_email = user[1] or ''
+        conn.close()
     
     if request.method == 'POST':
         name = request.form.get('name', '')
@@ -892,7 +903,7 @@ def contact():
         if name and email and subject and message:
             try:
                 send_email(
-                    app.config.get('ADMIN_EMAIL', 'support@me-tii.com'),
+                    'thomasseitz22@gmail.com',
                     f'Contact Form: {subject}',
                     f'Name: {name}\nEmail: {email}\nSubject: {subject}\n\nMessage:\n{message}'
                 )
@@ -910,7 +921,8 @@ def contact():
                           name=name,
                           email=email,
                           subject=subject,
-                          message=message)
+                          message=message,
+                          user_email=user_email)
 
 @app.route('/connect/stripe')
 def connect_stripe():
