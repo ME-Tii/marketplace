@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Alle Bestellungen{% else %}All Orders{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">{% if session.get('lang') == 'de' %}Alle Bestellungen{% else %}All Orders{% endif %}</h1>
+  
+  <div class="mb-4">
+    <a href="/admin" class="btn btn-secondary">&larr; {% if session.get('lang') == 'de' %}Zurück zum Dashboard{% else %}Back to Dashboard{% endif %}</a>
+  </div>
+  
+  {% if orders %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>{% if session.get('lang') == 'de' %}Artikel{% else %}Item{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Käufer{% else %}Buyer{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Verkäufer{% else %}Seller{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Betrag{% else %}Amount{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Status{% else %}Status{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Streitfall{% else %}Dispute{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Datum{% else %}Date{% endif %}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td>#{{ o[0] }}</td>
+        <td>{{ o[7][:30] }}{% if o[7]|length > 30 %}...{% endif %}</td>
+        <td><a href="/profile/{{ o[5] }}">{{ o[5] }}</a></td>
+        <td><a href="/profile/{{ o[6] }}">{{ o[6] }}</a></td>
+        <td>${{ o[1] }}</td>
+        <td>
+          <span class="badge bg-{% if o[2] == 'pending' %}secondary{% elif o[2] == 'paid' %}warning{% elif o[2] == 'shipped' %}info{% elif o[2] == 'delivered' %}success{% elif o[2] == 'refunded' %}danger{% else %}secondary{% endif %}">
+            {{ o[2] }}
+          </span>
+        </td>
+        <td>
+          {% if o[4] == 'open' %}
+          <span class="badge bg-danger">{% if session.get('lang') == 'de' %}Offen{% else %}Open{% endif %}</span>
+          {% elif o[4] == 'resolved' %}
+          <span class="badge bg-success">{% if session.get('lang') == 'de' %}Gelöst{% else %}Resolved{% endif %}</span>
+          {% elif o[4] == 'refunded' %}
+          <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Erstattet{% else %}Refunded{% endif %}</span>
+          {% else %}
+          <span class="text-muted">-</span>
+          {% endif %}
+        </td>
+        <td>{{ o[3][:10] }}</td>
+        <td>
+          <a href="/order/{{ o[0] }}" class="btn btn-sm btn-primary">{% if session.get('lang') == 'de' %}Ansehen{% else %}View{% endif %}</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Bestellungen gefunden.{% else %}No orders found.{% endif %}</p>
+  {% endif %}
+</div>
+{% endblock %}

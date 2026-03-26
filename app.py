@@ -4010,6 +4010,27 @@ def admin_dashboard():
                          recent_users=recent_users,
                          unread_messages=get_unread_messages_count(session.get('user_id')))
 
+@app.route('/admin/orders')
+def admin_orders():
+    if 'user_id' not in session or session.get('username') != 'admin':
+        return 'Access denied', 403
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""
+        SELECT o.id, o.amount, o.status, o.created_at, o.dispute_status,
+               buyer.username, seller.username, p.title
+        FROM orders o
+        JOIN users buyer ON o.buyer_id = buyer.id
+        JOIN users seller ON o.seller_id = seller.id
+        JOIN posts p ON o.post_id = p.id
+        ORDER BY o.created_at DESC
+    """)
+    orders = c.fetchall()
+    conn.close()
+    
+    return render_template('admin_orders.html', orders=orders, unread_messages=get_unread_messages_count(session.get('user_id')))
+
 # Dispute resolution routes for admin
 @app.route('/admin/disputes')
 def admin_disputes():
