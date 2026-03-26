@@ -151,7 +151,7 @@
           <h5 class="mb-0">{% if session.get('lang') == 'de' %}Besuche (7 Tage){% else %}Traffic (7 Days){% endif %}</h5>
         </div>
         <div class="card-body p-2">
-          {% if visits_by_day and visits_by_day|length > 0 and max_visits > 0 %}
+          {% if visits_by_day and visits_by_day|length > 0 %}
           {% set max_visits = 1 %}
           {% for v in visits_by_day %}
             {% if v[1] > max_visits %}{% set max_visits = v[1] %}{% endif %}
