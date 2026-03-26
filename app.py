@@ -804,6 +804,30 @@ def fix_notifications():
     conn.close()
     return f'Fixed notification preferences for {rows} users'
 
+    # Create visits table for analytics
+    c.execute('''CREATE TABLE IF NOT EXISTS visits
+                 (id INTEGER PRIMARY KEY, path TEXT, ip_address TEXT, user_agent TEXT, visited_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    try:
+        c.execute("CREATE INDEX IF NOT EXISTS idx_visits_date ON visits(DATE(visited_at))")
+    except:
+        pass
+
+@app.before_request
+def track_visit():
+    from flask import request
+    ignored_paths = ['/static/', '/webhook/', '/cron/', '/favicon']
+    if any(request.path.startswith(p) for p in ignored_paths):
+        return
+    try:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO visits (path, ip_address, user_agent) VALUES (?, ?, ?)",
+                   (request.path, request.remote_addr, request.headers.get('User-Agent', '')[:200]))
+        conn.commit()
+        conn.close()
+    except:
+        pass
+
 @app.route('/test_email')
 def test_email():
     if 'user_id' not in session:
@@ -3992,6 +4016,31 @@ def admin_dashboard():
     c.execute("SELECT status, COUNT(*) FROM orders GROUP BY status")
     orders_by_status = c.fetchall()
     
+    # Traffic stats
+    c.execute("SELECT COUNT(*) FROM visits")
+    total_visits = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM visits WHERE DATE(visited_at) = DATE('now')")
+    today_visits = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM visits WHERE DATE(visited_at) = DATE('now', '-1 day')")
+    yesterday_visits = c.fetchone()[0]
+    
+    c.execute("""SELECT DATE(visited_at) as date, COUNT(*) 
+                  FROM visits 
+                  WHERE visited_at >= DATE('now', '-7 days')
+                  GROUP BY DATE(visited_at)
+                  ORDER BY date""")
+    visits_by_day = c.fetchall()
+    
+    c.execute("""SELECT path, COUNT(*) as cnt 
+                  FROM visits 
+                  WHERE visited_at >= DATE('now', '-7 days')
+                  GROUP BY path 
+                  ORDER BY cnt DESC 
+                  LIMIT 10""")
+    top_pages = c.fetchall()
+    
     conn.close()
     
     return render_template('admin_dashboard.html', 
@@ -4006,6 +4055,11 @@ def admin_dashboard():
                          recent_orders=recent_orders,
                          recent_users=recent_users,
                          orders_by_status=orders_by_status,
+                         total_visits=total_visits,
+                         today_visits=today_visits,
+                         yesterday_visits=yesterday_visits,
+                         visits_by_day=visits_by_day,
+                         top_pages=top_pages,
                          unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/admin/orders')
