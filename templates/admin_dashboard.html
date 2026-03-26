@@ -59,30 +59,28 @@
           <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellungen nach Status{% else %}Orders by Status{% endif %}</h5>
         </div>
         <div class="card-body">
-          {% if orders_by_status %}
+          {% if orders_by_status and orders_by_status|length > 0 %}
           {% set total = 0 %}
           {% for s in orders_by_status %}
           {% set total = total + s[1] %}
           {% endfor %}
           {% if total > 0 %}
           {% for s in orders_by_status %}
-          {% if s[1] > 0 %}
           <div class="mb-3">
             <div class="d-flex justify-content-between mb-1">
-              <span>{{ s[0] }}</span>
-              <span>{{ s[1] }}</span>
+              <span class="text-capitalize">{{ s[0] }}</span>
+              <span class="badge bg-secondary">{{ s[1] }}</span>
             </div>
             <div class="progress" style="height: 24px;">
               <div class="progress-bar bg-{% if s[0] == 'pending' %}secondary{% elif s[0] == 'paid' %}warning{% elif s[0] == 'shipped' %}info{% elif s[0] == 'delivered' %}success{% elif s[0] == 'refunded' %}danger{% else %}secondary{% endif %}" role="progressbar" style="width: {{ (s[1] / total * 100)|round }}%"></div>
             </div>
           </div>
-          {% endif %}
           {% endfor %}
           {% else %}
-          <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Bestellungen vorhanden{% else %}No orders yet{% endif %}</p>
+          <p class="text-muted text-center">{% if session.get('lang') == 'de' %}Keine aktiven Bestellungen{% else %}No active orders{% endif %}</p>
           {% endif %}
           {% else %}
-          <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Bestellungen vorhanden{% else %}No orders yet{% endif %}</p>
+          <p class="text-muted text-center">{% if session.get('lang') == 'de' %}Keine Bestellungen vorhanden{% else %}No orders yet{% endif %}</p>
           {% endif %}
         </div>
       </div>
