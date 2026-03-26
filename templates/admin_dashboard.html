@@ -145,28 +145,28 @@
   </div>
   
   <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-6">
       <div class="card mb-4">
         <div class="card-header">
           <h5 class="mb-0">{% if session.get('lang') == 'de' %}Besuche (7 Tage){% else %}Traffic (7 Days){% endif %}</h5>
         </div>
-        <div class="card-body">
-          {% if visits_by_day and visits_by_day|length > 0 %}
+        <div class="card-body p-2">
+          {% if visits_by_day and visits_by_day|length > 0 and max_visits > 0 %}
           {% set max_visits = 1 %}
           {% for v in visits_by_day %}
             {% if v[1] > max_visits %}{% set max_visits = v[1] %}{% endif %}
           {% endfor %}
-          <div class="d-flex align-items-end gap-2" style="height: 150px;">
+          <div class="d-flex align-items-end gap-1" style="height: 100px; overflow-x: auto;">
             {% for v in visits_by_day %}
-            <div class="text-center flex-grow-1">
-              <div class="bg-primary rounded-top" style="height: {{ (v[1] / max_visits * 130)|round if max_visits > 0 else 0 }}px; min-height: 4px;"></div>
-              <small class="text-muted">{{ v[0][5:] }}</small>
-              <div><small class="fw-bold">{{ v[1] }}</small></div>
+            <div class="text-center flex-shrink-0" style="width: 40px;">
+              <div class="bg-primary rounded-top" style="height: {{ (v[1] / max_visits * 80)|round if max_visits > 0 else 4 }}px; min-height: 4px; width: 30px; margin: 0 auto;"></div>
+              <small class="text-muted d-block" style="font-size: 10px;">{{ v[0][5:] }}</small>
+              <small class="fw-bold d-block" style="font-size: 10px;">{{ v[1] }}</small>
             </div>
             {% endfor %}
           </div>
           {% else %}
-          <p class="text-muted text-center">{% if session.get('lang') == 'de' %}Keine Besuchsdaten{% else %}No traffic data yet{% endif %}</p>
+          <p class="text-muted text-center py-3">{% if session.get('lang') == 'de' %}Keine Besuchsdaten{% else %}No traffic data yet{% endif %}</p>
           {% endif %}
         </div>
       </div>
