@@ -4,64 +4,50 @@
 <div class="container mt-4">
   <h1 class="mb-4">{% if session.get('lang') == 'de' %}Admin Dashboard{% else %}Admin Dashboard{% endif %}</h1>
   
-  <div class="row mb-4">
+  <div class="row g-3 mb-4">
     <div class="col-md-3">
-      <div class="card text-white bg-primary">
-        <div class="card-body">
-          <h5 class="card-title">{% if session.get('lang') == 'de' %}Nutzer{% else %}Users{% endif %}</h5>
-          <h2>{{ total_users }}</h2>
-        </div>
+      <div class="card text-white bg-primary p-3">
+        <h5 class="card-title">{% if session.get('lang') == 'de' %}Nutzer{% else %}Users{% endif %}</h5>
+        <h2>{{ total_users }}</h2>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card text-white bg-success">
-        <div class="card-body">
-          <h5 class="card-title">{% if session.get('lang') == 'de' %}Bestellungen{% else %}Orders{% endif %}</h5>
-          <h2>{{ total_orders }}</h2>
-        </div>
+      <div class="card text-white bg-success p-3">
+        <h5 class="card-title">{% if session.get('lang') == 'de' %}Bestellungen{% else %}Orders{% endif %}</h5>
+        <h2>{{ total_orders }}</h2>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card text-white bg-danger">
-        <div class="card-body">
-          <h5 class="card-title">{% if session.get('lang') == 'de' %}Offene Streitfälle{% else %}Open Disputes{% endif %}</h5>
-          <h2>{{ open_disputes }}</h2>
-        </div>
+      <div class="card text-white bg-danger p-3">
+        <h5 class="card-title">{% if session.get('lang') == 'de' %}Offene Streitfälle{% else %}Open Disputes{% endif %}</h5>
+        <h2>{{ open_disputes }}</h2>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card text-white bg-info">
-        <div class="card-body">
-          <h5 class="card-title">{% if session.get('lang') == 'de' %}Umsatz{% else %}Revenue{% endif %}</h5>
-          <h2>${{ "%.2f"|format(total_revenue) }}</h2>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-white bg-warning">
-        <div class="card-body">
-          <h5 class="card-title">{% if session.get('lang') == 'de' %}Plattform-Einnahmen (10%){% else %}Platform Cut (10%){% endif %}</h5>
-          <h2>${{ "%.2f"|format(platform_cut) }}</h2>
-        </div>
+      <div class="card text-white bg-info p-3">
+        <h5 class="card-title">{% if session.get('lang') == 'de' %}Umsatz{% else %}Revenue{% endif %}</h5>
+        <h2>${{ "%.2f"|format(total_revenue) }}</h2>
       </div>
     </div>
   </div>
   
-  <div class="row mb-4">
+  <div class="row g-3 mb-4">
     <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">{% if session.get('lang') == 'de' %}Aktive Inserate{% else %}Active Listings{% endif %}</h5>
-          <h2>{{ active_listings }}</h2>
-        </div>
+      <div class="card text-dark bg-warning p-3">
+        <h5 class="card-title">{% if session.get('lang') == 'de' %}Plattform-Einnahmen (10%){% else %}Platform Cut (10%){% endif %}</h5>
+        <h2>${{ "%.2f"|format(platform_cut) }}</h2>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">{% if session.get('lang') == 'de' %}Alle Streitfälle{% else %}Total Disputes{% endif %}</h5>
-          <h2>{{ total_disputes }}</h2>
-        </div>
+      <div class="card p-3">
+        <h5 class="card-title">{% if session.get('lang') == 'de' %}Aktive Inserate{% else %}Active Listings{% endif %}</h5>
+        <h2>{{ active_listings }}</h2>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3">
+        <h5 class="card-title">{% if session.get('lang') == 'de' %}Alle Streitfälle{% else %}Total Disputes{% endif %}</h5>
+        <h2>{{ total_disputes }}</h2>
       </div>
     </div>
   </div>
@@ -80,12 +66,12 @@
           {% endfor %}
           {% for s in orders_by_status %}
           {% if s[1] > 0 %}
-          <div class="mb-2">
-            <div class="d-flex justify-content-between">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
               <span>{{ s[0] }}</span>
               <span>{{ s[1] }}</span>
             </div>
-            <div class="progress" style="height: 20px;">
+            <div class="progress" style="height: 24px;">
               <div class="progress-bar bg-{% if s[0] == 'pending' %}secondary{% elif s[0] == 'paid' %}warning{% elif s[0] == 'shipped' %}info{% elif s[0] == 'delivered' %}success{% elif s[0] == 'refunded' %}danger{% else %}secondary{% endif %}" role="progressbar" style="width: {{ (s[1] / total * 100)|round }}%"></div>
             </div>
           </div>
