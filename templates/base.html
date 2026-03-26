@@ -35,6 +35,60 @@
         color: white !important;
         transform: scale(1.05);
       }
+      .toast-container {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .toast {
+        background: #2d2d2d;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 15px 20px;
+        min-width: 300px;
+        max-width: 400px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        animation: slideIn 0.3s ease;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .toast.toast-success { border-left: 4px solid #198754; }
+      .toast.toast-danger { border-left: 4px solid #dc3545; }
+      .toast.toast-warning { border-left: 4px solid #ffc107; }
+      .toast.toast-info { border-left: 4px solid #0dcaf0; }
+      .toast-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+      }
+      .toast-content { flex: 1; }
+      .toast-title { font-weight: 600; margin-bottom: 2px; }
+      .toast-message { color: #ccc; font-size: 0.9rem; }
+      .toast-close {
+        background: none;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        padding: 0;
+        font-size: 1.2rem;
+        line-height: 1;
+      }
+      .toast-close:hover { color: #fff; }
+      .toast.hiding {
+        animation: slideOut 0.3s ease forwards;
+      }
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
       .content-wrapper {
         flex: 1;
       }
@@ -350,6 +404,58 @@
         </div>
       </div>
     </div>
+    
+    <div id="toast-container" class="toast-container"></div>
+    
+    <script>
+    function showToast(title, message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      
+      const icons = {
+        success: '✓',
+        danger: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+      };
+      
+      toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="dismissToast(this.parentElement)">&times;</button>
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => dismissToast(toast), 5000);
+    }
+    
+    function dismissToast(toast) {
+      if (toast && toast.parentElement) {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const flashData = {{ get_flashed_messages(with_categories=true)|tojson }};
+      flashData.forEach(([category, message]) => {
+        const title = category === 'success' ? 'Success' : 
+                     category === 'danger' ? 'Error' : 
+                     category === 'warning' ? 'Warning' : 'Info';
+        if (message.includes('<')) {
+          const temp = document.createElement('div');
+          temp.innerHTML = message;
+          message = temp.textContent || temp.innerText || message;
+        }
+        setTimeout(() => showToast(title, message, category), 100);
+      });
+    });
+    </script>
     
     <footer class="bg-dark text-white py-4 mt-5">
       <div class="container">
