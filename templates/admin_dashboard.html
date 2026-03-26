@@ -58,34 +58,36 @@
     </div>
   </div>
   
-  {% if chart_orders or chart_revenue %}
   <div class="row mb-4">
     <div class="col-md-6">
-      {% if chart_orders %}
       <div class="card">
         <div class="card-header">
           <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellungen nach Status{% else %}Orders by Status{% endif %}</h5>
         </div>
         <div class="card-body">
+          {% if chart_orders %}
           <img src="data:image/png;base64,{{ chart_orders }}" class="img-fluid" alt="Orders Chart">
+          {% else %}
+          <p class="text-muted text-center">{% if session.get('lang') == 'de' %}Keine Bestellungen vorhanden{% else %}No orders yet{% endif %}</p>
+          {% endif %}
         </div>
       </div>
-      {% endif %}
     </div>
     <div class="col-md-6">
-      {% if chart_revenue %}
       <div class="card">
         <div class="card-header">
           <h5 class="mb-0">{% if session.get('lang') == 'de' %}Umsatz (30 Tage){% else %}Revenue (30 Days){% endif %}</h5>
         </div>
         <div class="card-body">
+          {% if chart_revenue %}
           <img src="data:image/png;base64,{{ chart_revenue }}" class="img-fluid" alt="Revenue Chart">
+          {% else %}
+          <p class="text-muted text-center">{% if session.get('lang') == 'de' %}Kein Umsatz vorhanden{% else %}No revenue data yet{% endif %}</p>
+          {% endif %}
         </div>
       </div>
-      {% endif %}
     </div>
   </div>
-  {% endif %}
   
   <div class="row">
     <div class="col-md-6">
