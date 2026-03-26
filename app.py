@@ -669,6 +669,10 @@ def init_db():
         c.execute("ALTER TABLE orders ADD COLUMN dispute_resolution TEXT")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE orders ADD COLUMN platform_fee REAL DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
     # Return fields
     try:
         c.execute("ALTER TABLE orders ADD COLUMN return_status TEXT")
@@ -3665,7 +3669,7 @@ def buyer_cancel_local_pickup(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT buyer_id, seller_id, status, shipping_method, amount, stripe_payment_id FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT buyer_id, seller_id, status, shipping_method, amount, stripe_payment_id, COALESCE(transaction_fee, 0) FROM orders WHERE id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -3681,10 +3685,11 @@ def buyer_cancel_local_pickup(order_id):
         conn.close()
         return redirect(f'/order/{order_id}')
     
-    # Process refund
+    # Process refund (including platform fee)
+    refund_amount = order[4] + order[6]  # amount + transaction_fee
     if order[5]:  # Has Stripe payment ID
         try:
-            stripe.Refund.create(payment_intent=order[5], amount=int(order[4] * 100))
+            stripe.Refund.create(payment_intent=order[5], amount=int(refund_amount * 100))
             c.execute("UPDATE orders SET status = 'refunded', cancelled_at = CURRENT_TIMESTAMP WHERE id = ?", (order_id,))
             flash('Refund has been processed. Your money will be returned within 5-10 business days.', 'success')
         except Exception as e:
@@ -3941,7 +3946,8 @@ def admin_dashboard():
     c.execute("SELECT COALESCE(SUM(amount), 0) FROM orders WHERE status IN ('paid', 'shipped', 'delivered')")
     total_revenue = c.fetchone()[0]
     
-    platform_cut = total_revenue * 0.10
+    c.execute("SELECT COALESCE(SUM(transaction_fee), 0) FROM orders WHERE status IN ('paid', 'shipped', 'delivered')")
+    platform_cut = c.fetchone()[0]
     
     c.execute("SELECT COUNT(*) FROM posts WHERE is_active = 1")
     active_listings = c.fetchone()[0]
@@ -4111,21 +4117,22 @@ def admin_dispute_detail(order_id):
             
             if process_refund_now:
                 # Get payment and order info for amount calculation
-                c.execute("SELECT stripe_payment_id, amount, shipping_cost, shipping_method FROM orders WHERE id = ?", (order_id,))
+                c.execute("SELECT stripe_payment_id, amount, shipping_cost, shipping_method, COALESCE(transaction_fee, 0) FROM orders WHERE id = ?", (order_id,))
                 payment_info = c.fetchone()
                 
                 total_amount = payment_info[1] if payment_info else 0
                 shipping_cost = payment_info[2] if payment_info else 0
                 shipping_method = payment_info[3] if payment_info else None
-                item_price = total_amount - shipping_cost
+                transaction_fee = payment_info[4] if payment_info else 0
+                item_price = total_amount - shipping_cost - transaction_fee
                 
-                # Calculate refund amount
+                # Calculate refund amount (includes platform fee)
                 if shipping_method == 'local_pickup':
-                    refund_amount = total_amount
+                    refund_amount = total_amount + transaction_fee
                 elif include_return_shipping:
-                    refund_amount = total_amount
+                    refund_amount = total_amount + transaction_fee
                 else:
-                    refund_amount = item_price
+                    refund_amount = item_price + transaction_fee
                 
                 if payment_info and payment_info[0] and app.config.get('STRIPE_SECRET_KEY'):
                     try:
@@ -4350,7 +4357,7 @@ def refund_return(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT seller_id, return_status, stripe_payment_id, amount, shipping_cost, seller_at_fault, shipping_method FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT seller_id, return_status, stripe_payment_id, amount, shipping_cost, seller_at_fault, shipping_method, COALESCE(transaction_fee, 0) FROM orders WHERE id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -4372,35 +4379,36 @@ def refund_return(order_id):
     seller_at_fault = order[5] or 0
     
     # Calculate refund:
-    # - Seller at fault: refund = item_price + 2x shipping (full refund + extra for return shipping)
-    # - Buyer at fault: refund = item_price only (buyer pays return shipping)
-    item_price = total_amount - shipping_cost
+    # - Seller at fault: refund = item_price + 2x shipping + transaction_fee (full refund + extra for return shipping + platform fee back)
+    # - Buyer at fault: refund = item_price + transaction_fee (buyer pays return shipping but gets platform fee back)
+    transaction_fee = order[7]
+    item_price = total_amount - shipping_cost - transaction_fee
     if seller_at_fault:
-        refund_amount = item_price + (shipping_cost * 2)
+        refund_amount = item_price + (shipping_cost * 2) + transaction_fee
     else:
-        refund_amount = item_price
+        refund_amount = item_price + transaction_fee
     
     # Process Stripe refund if payment exists
     if order[2] and app.config.get('STRIPE_SECRET_KEY'):
         try:
             stripe.Refund.create(payment_intent=order[2], amount=int(refund_amount * 100))
             if order[6] == 'local_pickup':
-                flash(f'Refund issued: ${refund_amount:.2f} (full refund for local pickup)', 'success')
+                flash(f'Refund issued: ${refund_amount:.2f} (includes ${transaction_fee:.2f} platform fee)', 'success')
             elif seller_at_fault:
-                flash(f'Refund issued: ${refund_amount:.2f} (item ${item_price:.2f} + return shipping ${shipping_cost:.2f} x2)', 'success')
+                flash(f'Refund issued: ${refund_amount:.2f} (item + shipping + ${transaction_fee:.2f} platform fee)', 'success')
             else:
-                flash(f'Refund issued: ${refund_amount:.2f} (item price, buyer pays return shipping)', 'success')
+                flash(f'Refund issued: ${refund_amount:.2f} (item + ${transaction_fee:.2f} platform fee)', 'success')
         except Exception as e:
             flash(f'Stripe refund failed: {str(e)}', 'danger')
             conn.close()
             return redirect(f'/order/{order_id}')
     else:
         if order[6] == 'local_pickup':
-            flash(f'Refund issued: ${refund_amount:.2f} (full refund for local pickup)', 'success')
+            flash(f'Refund issued: ${refund_amount:.2f} (includes ${transaction_fee:.2f} platform fee)', 'success')
         elif seller_at_fault:
-            flash(f'Refund issued: ${refund_amount:.2f} (item ${item_price:.2f} + return shipping ${shipping_cost:.2f} x2)', 'success')
+            flash(f'Refund issued: ${refund_amount:.2f} (item + shipping + ${transaction_fee:.2f} platform fee)', 'success')
         else:
-            flash(f'Refund issued: ${refund_amount:.2f} (item price, buyer pays return shipping)', 'success')
+            flash(f'Refund issued: ${refund_amount:.2f} (item + ${transaction_fee:.2f} platform fee)', 'success')
     
     c.execute("""UPDATE orders SET 
                  return_status = 'completed',
@@ -4474,7 +4482,7 @@ def dispute_return_confirm(order_id):
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT seller_id, status, stripe_payment_id, amount, shipping_cost, seller_at_fault, shipping_method FROM orders WHERE id = ?", (order_id,))
+    c.execute("SELECT seller_id, status, stripe_payment_id, amount, shipping_cost, seller_at_fault, shipping_method, COALESCE(transaction_fee, 0) FROM orders WHERE id = ?", (order_id,))
     order = c.fetchone()
     
     if not order:
@@ -4493,14 +4501,15 @@ def dispute_return_confirm(order_id):
     total_amount = order[3] or 0
     shipping_cost = order[4] or 0
     include_return_shipping = order[5] or 0
+    transaction_fee = order[7] or 0
     
-    item_price = total_amount - shipping_cost
+    item_price = total_amount - shipping_cost - transaction_fee
     if include_return_shipping:
-        refund_amount = item_price + (shipping_cost * 2) if shipping_cost else item_price
-        refund_desc = f'Full refund (item ${item_price:.2f} + return shipping ${shipping_cost * 2 if shipping_cost else 0:.2f})'
+        refund_amount = item_price + (shipping_cost * 2) + transaction_fee if shipping_cost else item_price + transaction_fee
+        refund_desc = f'Full refund (item + shipping + ${transaction_fee:.2f} platform fee)'
     else:
-        refund_amount = item_price
-        refund_desc = f'Item price refund (buyer pays return shipping: ${shipping_cost:.2f})'
+        refund_amount = item_price + transaction_fee
+        refund_desc = f'Item price refund (includes ${transaction_fee:.2f} platform fee)'
     
     if order[2] and app.config.get('STRIPE_SECRET_KEY'):
         try:
