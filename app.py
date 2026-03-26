@@ -3955,28 +3955,34 @@ def admin_dashboard():
     c.execute("SELECT COUNT(*) FROM posts WHERE is_active = 1")
     active_listings = c.fetchone()[0]
     
-    c.execute("""
-        SELECT o.id, o.amount, o.dispute_status, buyer.username, seller.username, p.title, o.created_at
-        FROM orders o
-        JOIN users buyer ON o.buyer_id = buyer.id
-        JOIN users seller ON o.seller_id = seller.id
-        JOIN posts p ON o.post_id = p.id
-        WHERE o.dispute_status = 'open'
-        ORDER BY o.dispute_opened_at DESC
-        LIMIT 5
-    """)
-    recent_disputes = c.fetchall()
+    try:
+        c.execute("""
+            SELECT o.id, o.amount, o.dispute_status, buyer.username, seller.username, p.title, o.created_at
+            FROM orders o
+            JOIN users buyer ON o.buyer_id = buyer.id
+            JOIN users seller ON o.seller_id = seller.id
+            JOIN posts p ON o.post_id = p.id
+            WHERE o.dispute_status = 'open'
+            ORDER BY o.dispute_opened_at DESC
+            LIMIT 5
+        """)
+        recent_disputes = c.fetchall()
+    except:
+        recent_disputes = []
     
-    c.execute("""
-        SELECT o.id, o.amount, o.status, buyer.username, seller.username, p.title, o.created_at
-        FROM orders o
-        JOIN users buyer ON o.buyer_id = buyer.id
-        JOIN users seller ON o.seller_id = seller.id
-        JOIN posts p ON o.post_id = p.id
-        ORDER BY o.created_at DESC
-        LIMIT 5
-    """)
-    recent_orders = c.fetchall()
+    try:
+        c.execute("""
+            SELECT o.id, o.amount, o.status, buyer.username, seller.username, p.title, o.created_at
+            FROM orders o
+            JOIN users buyer ON o.buyer_id = buyer.id
+            JOIN users seller ON o.seller_id = seller.id
+            JOIN posts p ON o.post_id = p.id
+            ORDER BY o.created_at DESC
+            LIMIT 5
+        """)
+        recent_orders = c.fetchall()
+    except:
+        recent_orders = []
     
     c.execute("""
         SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT 10
