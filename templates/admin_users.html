@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Alle Nutzer{% else %}All Users{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">{% if session.get('lang') == 'de' %}Alle Nutzer{% else %}All Users{% endif %}</h1>
+  
+  <div class="mb-4">
+    <a href="/admin" class="btn btn-secondary">&larr; {% if session.get('lang') == 'de' %}Zurück zum Dashboard{% else %}Back to Dashboard{% endif %}</a>
+  </div>
+  
+  {% if users %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>{% if session.get('lang') == 'de' %}Username{% else %}Username{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}E-Mail{% else %}Email{% endif %}</th>
+        <th>{% if session.get('lang') == 'de' %}Erstellt{% else %}Created{% endif %}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u[0] }}</td>
+        <td><a href="/profile/{{ u[1] }}">{{ u[1] }}</a></td>
+        <td>{{ u[2] }}</td>
+        <td>{{ (u[3] or '')[:10] if u[3] else '-' }}</td>
+        <td>
+          {% if u[1] != 'admin' %}
+          <form method="post" action="/delete_user/{{ u[1] }}" style="display: inline" onsubmit="return confirm('{% if session.get('lang') == 'de' %}Möchten Sie {{ u[1] }} wirklich löschen?{% else %}Are you sure you want to delete {{ u[1] }}?{% endif %}');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-danger btn-sm">{% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Nutzer gefunden.{% else %}No users found.{% endif %}</p>
+  {% endif %}
+</div>
+{% endblock %}

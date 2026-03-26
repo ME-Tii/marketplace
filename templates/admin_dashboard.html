@@ -170,6 +170,10 @@
         </div>
         <div class="card-body">
           <div class="list-group">
+            <a href="/admin/users" class="list-group-item list-group-item-action">
+              {% if session.get('lang') == 'de' %}Alle Nutzer verwalten{% else %}Manage All Users{% endif %}
+              <span class="badge bg-primary float-end">{{ total_users }}</span>
+            </a>
             <a href="/admin/disputes" class="list-group-item list-group-item-action">
               {% if session.get('lang') == 'de' %}Alle Streitfälle verwalten{% else %}Manage All Disputes{% endif %}
               <span class="badge bg-danger float-end">{{ total_disputes }}</span>
