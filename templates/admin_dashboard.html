@@ -152,14 +152,14 @@
         </div>
         <div class="card-body">
           {% if visits_by_day and visits_by_day|length > 0 %}
-          {% set max_visits = 0 %}
+          {% set max_visits = 1 %}
           {% for v in visits_by_day %}
             {% if v[1] > max_visits %}{% set max_visits = v[1] %}{% endif %}
           {% endfor %}
           <div class="d-flex align-items-end gap-2" style="height: 150px;">
             {% for v in visits_by_day %}
             <div class="text-center flex-grow-1">
-              <div class="bg-primary rounded-top" style="height: {{ (v[1] / max_visits * 130)|round }}px; min-height: 4px;"></div>
+              <div class="bg-primary rounded-top" style="height: {{ (v[1] / max_visits * 130)|round if max_visits > 0 else 0 }}px; min-height: 4px;"></div>
               <small class="text-muted">{{ v[0][5:] }}</small>
               <div><small class="fw-bold">{{ v[1] }}</small></div>
             </div>

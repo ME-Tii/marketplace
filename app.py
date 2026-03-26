@@ -479,6 +479,12 @@ def init_db():
     except sqlite3.OperationalError:
         pass
     c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123')))
+    c.execute('''CREATE TABLE IF NOT EXISTS visits
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, ip_address TEXT, user_agent TEXT, visited_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    try:
+        c.execute("CREATE INDEX IF NOT EXISTS idx_visits_date ON visits(visited_at)")
+    except:
+        pass
     c.execute('''CREATE TABLE IF NOT EXISTS posts
                  (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, description TEXT, type TEXT, image TEXT, links TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
     c.execute('''CREATE TABLE IF NOT EXISTS post_images
@@ -803,14 +809,6 @@ def fix_notifications():
     rows = c.rowcount
     conn.close()
     return f'Fixed notification preferences for {rows} users'
-
-    # Create visits table for analytics
-    c.execute('''CREATE TABLE IF NOT EXISTS visits
-                 (id INTEGER PRIMARY KEY, path TEXT, ip_address TEXT, user_agent TEXT, visited_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
-    try:
-        c.execute("CREATE INDEX IF NOT EXISTS idx_visits_date ON visits(DATE(visited_at))")
-    except:
-        pass
 
 @app.before_request
 def track_visit():
