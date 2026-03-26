@@ -11,12 +11,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import requests
-import io
-import base64
 import stripe
 import smtplib
 from email.mime.text import MIMEText
