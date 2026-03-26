@@ -91,7 +91,7 @@
     {% else %}
     {% if not order[19] %}
     <div class="alert alert-warning">
-      <p>{% if session.get('lang') == 'de' %}<strong>Wichtig:</strong> Sie haben keine Rücksendeadresse hinterlegt. Bitte fügen Sie eine in Ihrem <a href="/profile/edit">Profil</a> hinzu, damit der Käufer weiß, wohin er zurücksenden soll.{% else %}<strong>Important:</strong> You have not set a return address. Please add one in your <a href="/profile/edit">profile</a> so the buyer knows where to return the item.{% endif %}</p>
+      <p>{% if session.get('lang') == 'de' %}<strong>Wichtig:</strong> Sie haben keine Rücksendeadresse hinterlegt. Bitte fügen Sie eine in Ihrem <a href="/edit_profile">Profil</a> hinzu, damit der Käufer weiß, wohin er zurücksenden soll.{% else %}<strong>Important:</strong> You have not set a return address. Please add one in your <a href="/edit_profile">profile</a> so the buyer knows where to return the item.{% endif %}</p>
     </div>
     {% endif %}
     <p>{% if session.get('lang') == 'de' %}Warten auf Rückgabe vom Käufer.{% else %}Waiting for buyer to ship item back.{% endif %}</p>
