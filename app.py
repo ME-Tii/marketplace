@@ -1535,9 +1535,6 @@ def profile(username):
     if 'user_id' in session and session['user_id'] != user_id:
         c.execute("SELECT 1 FROM noticed_users WHERE user_id = ? AND noticed_user_id = ?", (session['user_id'], user_id))
         is_noticed = c.fetchone() is not None
-    # For admin, get all users with search and pagination
-    all_users = []
-    total_users = 0
     reports = []
     
     # Get notification preferences if owner
@@ -1545,33 +1542,13 @@ def profile(username):
     if is_owner:
         notification_prefs = get_user_notification_prefs(user_id)
     
-    search_term = request.args.get('search', '').strip()
-    page = int(request.args.get('page', 1))
-    per_page = 5
     if username == 'admin' and session.get('user_id') == user_id:
-        # Count total users
-        count_query = "SELECT COUNT(*) FROM users"
-        params = []
-        if search_term:
-            count_query += " WHERE username LIKE ? OR email LIKE ?"
-            params.extend(['%' + search_term + '%', '%' + search_term + '%'])
-        c.execute(count_query, params)
-        total_users = c.fetchone()[0]
-        # Get paginated users
-        query = "SELECT username, email, password FROM users"
-        if search_term:
-            query += " WHERE username LIKE ? OR email LIKE ?"
-        query += " ORDER BY username LIMIT ? OFFSET ?"
-        params.extend([per_page, (page - 1) * per_page])
-        c.execute(query, params)
-        all_users = c.fetchall()
         # Get reported posts
         c.execute("SELECT posts.id, posts.title, reports.reason, reports.description, reports.id, reports.timestamp, users_reporter.username FROM reports JOIN posts ON reports.post_id = posts.id JOIN users AS users_reporter ON reports.reporter_id = users_reporter.id ORDER BY reports.timestamp DESC")
         reports = c.fetchall()
     conn.close()
     success = request.args.get('success')
-    total_pages = (total_users + per_page - 1) // per_page if total_users > 0 else 1
-    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, all_users=all_users, search_term=search_term, current_page=page, total_pages=total_pages, per_page=per_page, reports=reports, query=query, notification_prefs=notification_prefs, total_ratings=total_ratings, avg_rating=avg_rating, user_bids=user_bids, accepted_bids_count=accepted_bids_count)
+    return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, reports=reports, notification_prefs=notification_prefs, total_ratings=total_ratings, avg_rating=avg_rating, user_bids=user_bids, accepted_bids_count=accepted_bids_count)
 
 @app.route('/settings/notifications', methods=['POST'])
 def update_notifications():
