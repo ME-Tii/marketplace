@@ -73,10 +73,26 @@
           <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellungen nach Status{% else %}Orders by Status{% endif %}</h5>
         </div>
         <div class="card-body">
-          {% if chart_orders %}
-          <img src="data:image/png;base64,{{ chart_orders }}" class="img-fluid" alt="Orders Chart">
+          {% if orders_by_status %}
+          {% set total = 0 %}
+          {% for s in orders_by_status %}
+          {% set total = total + s[1] %}
+          {% endfor %}
+          {% for s in orders_by_status %}
+          {% if s[1] > 0 %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between">
+              <span>{{ s[0] }}</span>
+              <span>{{ s[1] }}</span>
+            </div>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar bg-{% if s[0] == 'pending' %}secondary{% elif s[0] == 'paid' %}warning{% elif s[0] == 'shipped' %}info{% elif s[0] == 'delivered' %}success{% elif s[0] == 'refunded' %}danger{% else %}secondary{% endif %}" role="progressbar" style="width: {{ (s[1] / total * 100)|round }}%"></div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
           {% else %}
-          <p class="text-muted text-center">{% if session.get('lang') == 'de' %}Keine Bestellungen vorhanden{% else %}No orders yet{% endif %}</p>
+          <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Bestellungen vorhanden{% else %}No orders yet{% endif %}</p>
           {% endif %}
         </div>
       </div>
@@ -84,14 +100,36 @@
     <div class="col-md-6">
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Umsatz (30 Tage){% else %}Revenue (30 Days){% endif %}</h5>
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Umsatz-Übersicht{% else %}Revenue Overview{% endif %}</h5>
         </div>
         <div class="card-body">
-          {% if chart_revenue %}
-          <img src="data:image/png;base64,{{ chart_revenue }}" class="img-fluid" alt="Revenue Chart">
-          {% else %}
-          <p class="text-muted text-center">{% if session.get('lang') == 'de' %}Kein Umsatz vorhanden{% else %}No revenue data yet{% endif %}</p>
-          {% endif %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span>{% if session.get('lang') == 'de' %}Gesamtumsatz{% else %}Total Revenue{% endif %}</span>
+              <span>${{ "%.2f"|format(total_revenue) }}</span>
+            </div>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span>{% if session.get('lang') == 'de' %}Plattform-Einnahmen (10%){% else %}Platform Cut (10%){% endif %}</span>
+              <span>${{ "%.2f"|format(platform_cut) }}</span>
+            </div>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar bg-warning" role="progressbar" style="width: 10%"></div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span>{% if session.get('lang') == 'de' %}An Verkäufer (90%){% else %}To Sellers (90%){% endif %}</span>
+              <span>${{ "%.2f"|format(total_revenue - platform_cut) }}</span>
+            </div>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar bg-primary" role="progressbar" style="width: 90%"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
