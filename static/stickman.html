@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walking Stickman</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 70%, #90EE90 70%, #228B22 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30%;
+            background: linear-gradient(180deg, #228B22 0%, #1a6b1a 100%);
+        }
+
+        .walk-container {
+            position: absolute;
+            bottom: 12%;
+            left: 0;
+            animation: walk 15s linear infinite;
+        }
+
+        @keyframes walk {
+            0% {
+                transform: translateX(-100px);
+            }
+            100% {
+                transform: translateX(calc(100vw + 100px));
+            }
+        }
+
+        .stickman {
+            position: relative;
+            width: 60px;
+            height: 100px;
+        }
+
+        /* Head */
+        .head {
+            position: absolute;
+            top: 0;
+            left: 15px;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #333;
+            border-radius: 50%;
+            background: transparent;
+        }
+
+        /* Eyes */
+        .head::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 5px;
+            width: 4px;
+            height: 4px;
+            background: #333;
+            border-radius: 50%;
+            box-shadow: 12px 0 0 #333;
+        }
+
+        /* Smile */
+        .head::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            width: 15px;
+            height: 8px;
+            border: 2px solid #333;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            background: transparent;
+        }
+
+        /* Body */
+        .body {
+            position: absolute;
+            top: 30px;
+            left: 28px;
+            width: 3px;
+            height: 35px;
+            background: #333;
+        }
+
+        /* Arms */
+        .arm {
+            position: absolute;
+            top: 35px;
+            width: 25px;
+            height: 3px;
+            background: #333;
+            transform-origin: 0 50%;
+            animation: armSwing 0.5s ease-in-out infinite alternate;
+        }
+
+        .arm.left {
+            left: 28px;
+            transform: rotate(-30deg);
+        }
+
+        .arm.right {
+            left: 28px;
+            transform: rotate(30deg);
+            animation-delay: 0.25s;
+        }
+
+        @keyframes armSwing {
+            0% {
+                transform: rotate(-30deg);
+            }
+            100% {
+                transform: rotate(30deg);
+            }
+        }
+
+        /* Legs */
+        .leg {
+            position: absolute;
+            top: 63px;
+            width: 3px;
+            height: 35px;
+            background: #333;
+            transform-origin: top center;
+        }
+
+        .leg.left {
+            left: 28px;
+            animation: legSwing 0.5s ease-in-out infinite alternate;
+        }
+
+        .leg.right {
+            left: 28px;
+            animation: legSwing 0.5s ease-in-out infinite alternate-reverse;
+            animation-delay: 0.25s;
+        }
+
+        @keyframes legSwing {
+            0% {
+                transform: rotate(-25deg);
+            }
+            100% {
+                transform: rotate(25deg);
+            }
+        }
+
+        /* Dust particles */
+        .dust {
+            position: absolute;
+            bottom: -5px;
+            left: 10px;
+            width: 6px;
+            height: 6px;
+            background: rgba(139, 119, 101, 0.6);
+            border-radius: 50%;
+            animation: dustMove 0.5s ease-out infinite;
+        }
+
+        .dust:nth-child(2) {
+            left: 15px;
+            animation-delay: 0.1s;
+            width: 4px;
+            height: 4px;
+        }
+
+        .dust:nth-child(3) {
+            left: 5px;
+            animation-delay: 0.2s;
+            width: 5px;
+            height: 5px;
+        }
+
+        @keyframes dustMove {
+            0% {
+                opacity: 0.8;
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-20px, -10px) scale(0.3);
+            }
+        }
+
+        /* Sun */
+        .sun {
+            position: absolute;
+            top: 30px;
+            right: 50px;
+            width: 60px;
+            height: 60px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 40px #FFD700, 0 0 60px #FFA500;
+            animation: sunGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes sunGlow {
+            0% {
+                box-shadow: 0 0 40px #FFD700, 0 0 60px #FFA500;
+            }
+            100% {
+                box-shadow: 0 0 50px #FFD700, 0 0 80px #FFA500;
+            }
+        }
+
+        /* Clouds */
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.9;
+            animation: cloudFloat 20s linear infinite;
+        }
+
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .cloud.c1 {
+            top: 40px;
+            left: -150px;
+            width: 100px;
+            height: 40px;
+            animation-duration: 25s;
+        }
+
+        .cloud.c1::before {
+            width: 50px;
+            height: 50px;
+            top: -25px;
+            left: 15px;
+        }
+
+        .cloud.c1::after {
+            width: 35px;
+            height: 35px;
+            top: -18px;
+            left: 55px;
+        }
+
+        .cloud.c2 {
+            top: 80px;
+            left: -100px;
+            width: 80px;
+            height: 30px;
+            animation-duration: 30s;
+            animation-delay: 5s;
+        }
+
+        .cloud.c2::before {
+            width: 40px;
+            height: 40px;
+            top: -20px;
+            left: 10px;
+        }
+
+        .cloud.c2::after {
+            width: 30px;
+            height: 30px;
+            top: -15px;
+            left: 40px;
+        }
+
+        @keyframes cloudFloat {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(calc(100vw + 200px));
+            }
+        }
+
+        /* Birds */
+        .bird {
+            position: absolute;
+            font-size: 20px;
+            animation: birdFly 8s linear infinite;
+        }
+
+        .bird:nth-child(1) {
+            top: 60px;
+            animation-delay: 0s;
+        }
+
+        .bird:nth-child(2) {
+            top: 90px;
+            animation-delay: 2s;
+            font-size: 16px;
+        }
+
+        @keyframes birdFly {
+            0% {
+                transform: translateX(-50px);
+            }
+            100% {
+                transform: translateX(calc(100vw + 50px));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sun -->
+    <div class="sun"></div>
+
+    <!-- Clouds -->
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+
+    <!-- Birds -->
+    <div class="bird">🕊️</div>
+    <div class="bird">🐦</div>
+
+    <!-- Walking Stickman -->
+    <div class="walk-container">
+        <div class="stickman">
+            <div class="head"></div>
+            <div class="body"></div>
+            <div class="arm left"></div>
+            <div class="arm right"></div>
+            <div class="leg left"></div>
+            <div class="leg right"></div>
+            <div class="dust"></div>
+            <div class="dust"></div>
+            <div class="dust"></div>
+        </div>
+    </div>
+
+    <!-- Ground -->
+    <div class="ground"></div>
+</body>
+</html>
