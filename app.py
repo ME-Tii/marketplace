@@ -3946,6 +3946,8 @@ def admin_dashboard():
     c.execute("SELECT COALESCE(SUM(amount), 0) FROM orders WHERE status IN ('paid', 'shipped', 'delivered')")
     total_revenue = c.fetchone()[0]
     
+    platform_cut = total_revenue * 0.10
+    
     c.execute("SELECT COUNT(*) FROM posts WHERE is_active = 1")
     active_listings = c.fetchone()[0]
     
@@ -4037,6 +4039,7 @@ def admin_dashboard():
                          open_disputes=open_disputes,
                          total_disputes=total_disputes,
                          total_revenue=total_revenue,
+                         platform_cut=platform_cut,
                          active_listings=active_listings,
                          recent_disputes=recent_disputes,
                          recent_orders=recent_orders,

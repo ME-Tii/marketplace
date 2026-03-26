@@ -37,6 +37,14 @@
         </div>
       </div>
     </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-warning">
+        <div class="card-body">
+          <h5 class="card-title">{% if session.get('lang') == 'de' %}Plattform-Einnahmen (10%){% else %}Platform Cut (10%){% endif %}</h5>
+          <h2>${{ "%.2f"|format(platform_cut) }}</h2>
+        </div>
+      </div>
+    </div>
   </div>
   
   <div class="row mb-4">
