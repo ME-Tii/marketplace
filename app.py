@@ -3941,6 +3941,75 @@ def respond_to_dispute(order_id):
     flash('Response submitted!', 'success')
     return redirect(f'/order/{order_id}')
 
+# Admin Dashboard
+@app.route('/admin')
+def admin_dashboard():
+    if 'user_id' not in session or session.get('username') != 'admin':
+        return 'Access denied', 403
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    c.execute("SELECT COUNT(*) FROM users")
+    total_users = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM orders")
+    total_orders = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM orders WHERE dispute_status = 'open'")
+    open_disputes = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM orders WHERE dispute_status IS NOT NULL")
+    total_disputes = c.fetchone()[0]
+    
+    c.execute("SELECT COALESCE(SUM(amount), 0) FROM orders WHERE status IN ('paid', 'shipped', 'delivered')")
+    total_revenue = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM posts WHERE is_active = 1")
+    active_listings = c.fetchone()[0]
+    
+    c.execute("""
+        SELECT o.id, o.amount, o.dispute_status, buyer.username, seller.username, p.title, o.created_at
+        FROM orders o
+        JOIN users buyer ON o.buyer_id = buyer.id
+        JOIN users seller ON o.seller_id = seller.id
+        JOIN posts p ON o.post_id = p.id
+        WHERE o.dispute_status = 'open'
+        ORDER BY o.dispute_opened_at DESC
+        LIMIT 5
+    """)
+    recent_disputes = c.fetchall()
+    
+    c.execute("""
+        SELECT o.id, o.amount, o.status, buyer.username, seller.username, p.title, o.created_at
+        FROM orders o
+        JOIN users buyer ON o.buyer_id = buyer.id
+        JOIN users seller ON o.seller_id = seller.id
+        JOIN posts p ON o.post_id = p.id
+        ORDER BY o.created_at DESC
+        LIMIT 5
+    """)
+    recent_orders = c.fetchall()
+    
+    c.execute("""
+        SELECT id, username, email, created_at FROM users ORDER BY created_at DESC LIMIT 5
+    """)
+    recent_users = c.fetchall()
+    
+    conn.close()
+    
+    return render_template('admin_dashboard.html', 
+                         total_users=total_users,
+                         total_orders=total_orders,
+                         open_disputes=open_disputes,
+                         total_disputes=total_disputes,
+                         total_revenue=total_revenue,
+                         active_listings=active_listings,
+                         recent_disputes=recent_disputes,
+                         recent_orders=recent_orders,
+                         recent_users=recent_users,
+                         unread_messages=get_unread_messages_count(session.get('user_id')))
+
 # Dispute resolution routes for admin
 @app.route('/admin/disputes')
 def admin_disputes():
