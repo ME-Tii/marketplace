@@ -499,9 +499,9 @@
     <div class="text-center py-5">
       <p class="text-muted fs-4">{% if session.get('lang') == 'de' %}Keine Beiträge gefunden{% else %}No listings found{% endif %}</p>
       {% if session.get('user_id') %}
-      <a href="/create_post_page" class="btn btn-primary">{% if session.get('lang') == 'de' %}Erster Beitrag{% else %}Create First Post{% endif %}</a>
+      <a href="/create_post_page" class="btn btn-primary mt-3">{% if session.get('lang') == 'de' %}Erster Beitrag{% else %}Create First Post{% endif %}</a>
       {% else %}
-      <a href="/register" class="btn btn-primary">{% if session.get('lang') == 'de' %}Jetzt registrieren{% else %}Sign Up Now{% endif %}</a>
+      <a href="/register" class="btn btn-primary mt-3">{% if session.get('lang') == 'de' %}Jetzt registrieren{% else %}Sign Up Now{% endif %}</a>
       {% endif %}
     </div>
     {% endif %}
