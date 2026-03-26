@@ -178,24 +178,6 @@
               <div class="flex-grow-1">
                 <strong>{{ user[0] }}</strong> - {{ user[1] }}<br />
               </div>
-              {% if user[0] != 'admin' %}
-              <form
-                method="post"
-                action="/delete_user/{{ user[0] }}"
-                style="display: inline"
-                onsubmit="return confirm('Are you sure you want to delete {{ user[0] }}?');"
-              >
-                <input
-                  type="hidden"
-                  name="csrf_token"
-                  value="{{ csrf_token() }}"
-                />
-                <button type="submit" class="btn btn-danger btn-sm">
-                  {% if session.get('lang') == 'de' %}Löschen{% else %}Delete{%
-                  endif %}
-                </button>
-              </form>
-              {% endif %}
             </li>
             {% endfor %}
           </ul>
