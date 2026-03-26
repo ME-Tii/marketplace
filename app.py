@@ -3992,7 +3992,7 @@ def admin_dashboard():
     recent_orders = c.fetchall()
     
     c.execute("""
-        SELECT id, username, email, verification_sent_at FROM users ORDER BY id DESC LIMIT 5
+        SELECT id, username, email, verification_sent_at FROM users ORDER BY id DESC LIMIT 10
     """)
     recent_users = c.fetchall()
     
