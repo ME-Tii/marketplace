@@ -363,7 +363,7 @@ def send_email(to_email, subject, body, html_body=None):
     
     try:
         message = Mail(
-            from_email=app.config.get('DEFAULT_FROM_EMAIL', 'ME-Tii Marketplace <noreply@me-tii.com>'),
+            from_email=app.config.get('DEFAULT_FROM_EMAIL', 'Marketplace <noreply@marketplace.com>'),
             to_emails=to_email,
             subject=subject,
             html_content=html_body or body)
@@ -813,7 +813,7 @@ def test_email():
         return redirect('/profile/' + username)
     
     success = send_email(user_email, 'Test Email - Marketplace', 
-                        'This is a test email from ME-Tii Marketplace.')
+                        'This is a test email from Marketplace.')
     
     if success:
         flash(f'Test email sent to {user_email}!', 'success')
@@ -1123,7 +1123,7 @@ def forgot_password():
             
             # Send email
             lang = session.get('lang', 'en')
-            subject = 'Password Reset - ME-Tii Marketplace' if lang != 'de' else 'Passwort zurücksetzen - ME-Tii Marketplace'
+            subject = 'Password Reset - Marketplace' if lang != 'de' else 'Passwort zurücksetzen - Marketplace'
             body = f'''Click the following link to reset your password:
 {reset_url}
 

@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}{% if session.get('lang') == 'de' %}Über uns - ME-Tii{% else %}About Us - ME-Tii{% endif %}{% endblock %}
+{% block title %}{% if session.get('lang') == 'de' %}Über uns{% else %}About Us{% endif %}{% endblock %}
 {% block content %}
 <div class="container mt-5">
   <div class="row justify-content-center">
     <div class="col-lg-8">
-      <h1 class="mb-4 text-center">{% if session.get('lang') == 'de' %}Über ME-Tii{% else %}About ME-Tii{% endif %}</h1>
+      <h1 class="mb-4 text-center">{% if session.get('lang') == 'de' %}Über Marketplace{% else %}About Marketplace{% endif %}</h1>
       
       <div class="card mb-4">
         <div class="card-body">
           <h2 class="h4 mb-3">{% if session.get('lang') == 'de' %}Unsere Mission{% else %}Our Mission{% endif %}</h2>
           <p class="lead">
             {% if session.get('lang') == 'de' %}
-            ME-Tii ist dein lokaler Community-Marktplatz. Wir verbinden Menschen, um sicher und einfach Waren zu kaufen, verkaufen und tauschen.
+            Marketplace ist dein lokaler Community-Marktplatz. Wir verbinden Menschen, um sicher und einfach Waren zu kaufen, verkaufen und tauschen.
             {% else %}
-            ME-Tii is your local community marketplace. We connect people to buy, sell, and trade items safely and easily.
+            Marketplace is your local community marketplace. We connect people to buy, sell, and trade items safely and easily.
             {% endif %}
           </p>
         </div>

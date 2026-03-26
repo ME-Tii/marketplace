@@ -15,7 +15,7 @@ def keep_awake():
                 print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Pinged {url}, status: {response.status_code}")
             except Exception as e:
                 print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Error pinging {url}: {e}")
-        time.sleep(600)  # Sleep for 10 minutes (600 seconds)
+        time.sleep(300)  # Sleep for 5 minutes (300 seconds)
 
 if __name__ == '__main__':
     keep_awake()

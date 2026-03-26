@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{% if session.get('lang') == 'de' %}Datenschutzrichtlinie{% else %}Privacy Policy{% endif %} - ME-Tii{% endblock %}
+{% block title %}{% if session.get('lang') == 'de' %}Datenschutzrichtlinie{% else %}Privacy Policy{% endif %}{% endblock %}
 {% block content %}
 <div class="container mt-5">
   <h1>{% if session.get('lang') == 'de' %}Datenschutzrichtlinie{% else %}Privacy Policy{% endif %}</h1>
   <p class="text-muted">Last updated: {% if session.get('lang') == 'de' %}Aktualisiert am {% endif %}{% if session.get('lang') != 'de' %}March 2026{% else %}März 2026{% endif %}</p>
 
   <h3 class="mt-4">{% if session.get('lang') == 'de' %}1. Einleitung{% else %}1. Introduction{% endif %}</h3>
-  <p>{% if session.get('lang') == 'de' %}ME-Tii betreibt einen Marktplatz, der Käufer und Verkäufer verbindet. Diese Richtlinie erklärt, wie wir Ihre persönlichen Daten erheben, verwenden und schützen.{% else %}ME-Tii operates a marketplace connecting buyers and sellers. This policy explains how we collect, use, and protect your personal information.{% endif %}</p>
+  <p>{% if session.get('lang') == 'de' %}Marketplace betreibt einen Marktplatz, der Käufer und Verkäufer verbindet. Diese Richtlinie erklärt, wie wir Ihre persönlichen Daten erheben, verwenden und schützen.{% else %}Marketplace operates a marketplace connecting buyers and sellers. This policy explains how we collect, use, and protect your personal information.{% endif %}</p>
 
   <h3 class="mt-4">{% if session.get('lang') == 'de' %}2. Informationen, die wir erheben{% else %}2. Information We Collect{% endif %}</h3>
   <ul>

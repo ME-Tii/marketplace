@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if session.get('lang') == 'de' %}ME-Tii - Dein Community Marktplatz{% else %}ME-Tii - Your Community Marketplace{% endif %}{% endblock %}
+{% block title %}{% if session.get('lang') == 'de' %}Dein Community Marktplatz{% else %}Your Community Marketplace{% endif %}{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}"/>
 {% endblock %}
