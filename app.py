@@ -3202,7 +3202,7 @@ def process_checkout(post_id):
         item_total = post[1] * quantity
     shipping_cost = 0
     if delivery_method == 'shipping' and post[4]:
-        shipping_cost = post[5] or 0
+        shipping_cost = (post[5] or 0) * quantity
     total_amount = item_total + shipping_cost
     app.logger.info(f"process_checkout: item_total={item_total}, shipping={shipping_cost}, total_amount={total_amount}")
     
