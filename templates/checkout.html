@@ -33,7 +33,7 @@
       </div>
       <div class="form-check">
         <input type="radio" class="form-check-input" name="delivery_method" id="shipping" value="shipping" onchange="toggleAddress()" {% if existing_order and existing_order[12] == 'shipping' %}checked{% endif %} />
-        <label class="form-check-label" for="shipping">{% if session.get('lang') == 'de' %}Versand (${{ post[5] }}){% else %}Shipping (${{ post[5] }}){% endif %}</label>
+        <label class="form-check-label" for="shipping">{% if session.get('lang') == 'de' %}Versand (${{ post[5] }}/Stück){% else %}Shipping (${{ post[5] }}/item){% endif %}</label>
       </div>
       {% elif post[3] %}
       <input type="hidden" name="delivery_method" value="local_pickup" />
@@ -110,7 +110,7 @@ function updateTotal() {
   var shipping = 0;
   var method = document.querySelector('input[name="delivery_method"]:checked');
   if (method && method.value === 'shipping') {
-    shipping = {{ post[5] or 0 }};
+    shipping = ({{ post[5] or 0 }}) * qty;
   }
   var total = (qty * itemPrice) + shipping;
   document.getElementById('total_amount').textContent = '$' + total.toFixed(2);
