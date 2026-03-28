@@ -42,8 +42,12 @@
           <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             
-            {% set has_local = items|selectattr('8')|list|length > 0 %}
-            {% set has_shipping = items|selectattr('9')|list|length > 0 %}
+            {% set has_local = false %}
+            {% set has_shipping = false %}
+            {% for item in items %}
+              {% if item[8] %}{% set has_local = true %}{% endif %}
+              {% if item[9] %}{% set has_shipping = true %}{% endif %}
+            {% endfor %}
             
             {% if has_local %}
             <div class="form-check mb-2">
