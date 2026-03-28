@@ -18,6 +18,19 @@
         </a>
       </div>
       {% endif %}
+      
+      {% if is_owner and not stripe_account_id and posts|length > 0 %}
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <h5 class="alert-heading">{% if session.get('lang') == 'de' %}Zahlungen erhalten{% else %}Receive Payments{% endif %}</h5>
+        <p class="mb-2">{% if session.get('lang') == 'de' %}Sie haben aktive Einträge, aber kein Stripe-Konto verbunden. Käufer können Ihnen derzeit nicht direkt bezahlen.{% else %}You have active listings but no Stripe account connected. Buyers cannot pay you directly yet.{% endif %}</p>
+        <hr>
+        <a href="/connect/stripe" class="btn btn-primary">
+          {% if session.get('lang') == 'de' %}Jetzt mit Stripe verbinden{% else %}Connect with Stripe Now{% endif %}
+        </a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endif %}
+      
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
       {% for category, message in messages %}
