@@ -121,7 +121,6 @@ def stripe_webhook():
                                   (order_id, seller_id, amount, None))
                     
                     c.execute("UPDATE orders SET status = 'paid', stripe_payment_id = ? WHERE id = ?", (payment_id, order_id))
-                    c.execute("UPDATE posts SET quantity = quantity - ? WHERE id = ?", (quantity, order[6] if False else None))
                     c.execute("UPDATE posts SET quantity = quantity - (SELECT quantity FROM orders WHERE id = ?) WHERE id = (SELECT post_id FROM orders WHERE id = ?)", (order_id, order_id))
                     
                     if buyer_email_notif and buyer_notify:
