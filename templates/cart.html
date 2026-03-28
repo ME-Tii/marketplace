@@ -35,14 +35,23 @@
               <p class="text-muted small mb-2">{% if session.get('lang') == 'de' %}Verkäufer{% else %}Seller{% endif %}: <a href="/profile/{{ item[11] }}">{{ item[11] }}</a></p>
               <p class="text-success fw-bold mb-2">${{ "%.2f"|format(item[5]) }}</p>
               
+              {% if item[7] <= 0 %}
+              <div class="alert alert-danger py-1 px-2 d-inline-block mb-2">
+                <small>{% if session.get('lang') == 'de' %}Nicht auf Lager{% else %}Out of Stock{% endif %}</small>
+              </div>
+              {% elif item[1] > item[7] %}
+              <div class="alert alert-warning py-1 px-2 d-inline-block mb-2">
+                <small>{% if session.get('lang') == 'de' %}Nur {{ item[7] }} auf Lager{% else %}Only {{ item[7] }} in stock{% endif %}</small>
+              </div>
+              {% endif %}
+              
               <div class="d-flex align-items-center">
                 <form action="/update_cart/{{ item[0] }}" method="POST" class="d-flex align-items-center">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <label class="me-2 small">{% if session.get('lang') == 'de' %}Menge{% else %}Qty{% endif %}:</label>
-                  <input type="number" name="quantity" value="{{ item[1] }}" min="1" max="{{ item[7] }}" class="form-control form-control-sm" style="width: 70px;">
+                  <input type="number" name="quantity" value="{{ item[1] }}" min="1" max="{{ item[7] if item[7] > 0 else 1 }}" class="form-control form-control-sm" style="width: 70px;">
                   <button type="submit" class="btn btn-sm btn-outline-primary ms-2">{% if session.get('lang') == 'de' %}Aktualisieren{% else %}Update{% endif %}</button>
                 </form>
-                <span class="ms-3 text-muted small">{% if session.get('lang') == 'de' %}Auf Lager{% else %}Stock{% endif %}: {{ item[7] }}</span>
               </div>
               
               {% if item[8] or item[9] %}

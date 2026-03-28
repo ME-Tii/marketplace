@@ -1329,6 +1329,11 @@ def checkout_cart():
         for item in items:
             cart_id, quantity, post_id, title, price, image, user_id, stock, local_pickup, shipping_available, shipping_cost, seller_username = item
             
+            if stock is None or stock <= 0:
+                conn.close()
+                flash(f'"{title}" is out of stock.', 'warning')
+                return redirect('/cart')
+            
             if quantity > stock:
                 conn.close()
                 flash(f'Not enough stock for "{title}". Only {stock} available.', 'warning')
