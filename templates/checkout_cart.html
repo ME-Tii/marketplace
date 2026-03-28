@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Warenkorb bezahlen{% else %}Checkout Cart{% endif %} - Marketplace{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">{% if session.get('lang') == 'de' %}Warenkorb bezahlen{% else %}Checkout Cart{% endif %}</h2>
+  
+  <div class="row">
+    <div class="col-lg-8">
+      {% for item in items %}
+      <div class="card mb-3">
+        <div class="row g-0">
+          <div class="col-md-2">
+            {% if item[5] %}
+            <img src="{{ item[5] }}" class="img-fluid rounded-start" alt="{{ item[3] }}" style="height: 80px; object-fit: cover;">
+            {% else %}
+            <img src="/static/pictures/placeholder.png" class="img-fluid rounded-start" alt="No image" style="height: 80px; object-fit: cover;">
+            {% endif %}
+          </div>
+          <div class="col-md-10">
+            <div class="card-body py-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-0">{{ item[3] }}</h6>
+                  <small class="text-muted">{% if session.get('lang') == 'de' %}Verkäufer{% else %}Seller{% endif %}: {{ item[11] }}</small>
+                </div>
+                <div class="text-end">
+                  <span class="badge bg-secondary mb-1">Qty: {{ item[1] }}</span>
+                  <p class="mb-0 fw-bold">${{ "%.2f"|format(item[4] * item[1]) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      
+      <div class="card mt-4">
+        <div class="card-header">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Versandart{% else %}Shipping Method{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            {% set has_local = items|selectattr('8')|list|length > 0 %}
+            {% set has_shipping = items|selectattr('9')|list|length > 0 %}
+            
+            {% if has_local %}
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="shipping_method" id="local_pickup" value="local_pickup" checked>
+              <label class="form-check-label" for="local_pickup">
+                <strong>{% if session.get('lang') == 'de' %}Lokale Abholung{% else %}Local Pickup{% endif %}</strong>
+                <small class="text-muted d-block">{% if session.get('lang') == 'de' %}Artikel persönlich abholen{% else %}Pick up items in person{% endif %}</small>
+              </label>
+            </div>
+            {% endif %}
+            
+            {% if has_shipping %}
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="shipping_method" id="shipping" value="shipping" {% if not has_local %}checked{% endif %}>
+              <label class="form-check-label" for="shipping">
+                <strong>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</strong>
+                <small class="text-muted d-block">{% if session.get('lang') == 'de' %}Artikel werden zu Ihnen geliefert{% else %}Items shipped to your address{% endif %}</small>
+              </label>
+            </div>
+            {% endif %}
+            
+            <button type="submit" class="btn btn-success btn-lg w-100 mt-4">
+              {% if session.get('lang') == 'de' %}Weiter zur Zahlung{% else %}Continue to Payment{% endif %}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellübersicht{% else %}Order Summary{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span>{% if session.get('lang') == 'de' %}Zwischensumme{% else %}Subtotal{% endif %}</span>
+            <span>${{ "%.2f"|format(subtotal) }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</span>
+            <span>${{ "%.2f"|format(total_shipping) }}</span>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between fw-bold fs-5">
+            <span>{% if session.get('lang') == 'de' %}Gesamt{% else %}Total{% endif %}</span>
+            <span>${{ "%.2f"|format(total) }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <a href="/cart" class="btn btn-outline-secondary w-100 mt-3">
+        {% if session.get('lang') == 'de' %}Zurück zum Warenkorb{% else %}Back to Cart{% endif %}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

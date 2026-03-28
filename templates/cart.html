@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Warenkorb{% else %}Shopping Cart{% endif %} - Marketplace{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">{% if session.get('lang') == 'de' %}Warenkorb{% else %}Shopping Cart{% endif %}</h2>
+  
+  {% if items %}
+  <div class="row">
+    <div class="col-lg-8">
+      {% for item in items %}
+      <div class="card mb-3">
+        <div class="row g-0">
+          <div class="col-md-3">
+            {% if item[6] %}
+            <img src="{{ item[6] }}" class="img-fluid rounded-start" alt="{{ item[4] }}" style="height: 120px; object-fit: cover;">
+            {% else %}
+            <img src="/static/pictures/placeholder.png" class="img-fluid rounded-start" alt="No image" style="height: 120px; object-fit: cover;">
+            {% endif %}
+          </div>
+          <div class="col-md-9">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <h5 class="card-title mb-1">
+                  <a href="/post/{{ item[3] }}" class="text-decoration-none">{{ item[4] }}</a>
+                </h5>
+                <form action="/remove_from_cart/{{ item[0] }}" method="POST" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-link text-danger p-0" title="{% if session.get('lang') == 'de' %}Entfernen{% else %}Remove{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                  </button>
+                </form>
+              </div>
+              <p class="text-muted small mb-2">{% if session.get('lang') == 'de' %}Verkäufer{% else %}Seller{% endif %}: <a href="/profile/{{ item[11] }}">{{ item[11] }}</a></p>
+              <p class="text-success fw-bold mb-2">${{ "%.2f"|format(item[5]) }}</p>
+              
+              <div class="d-flex align-items-center">
+                <form action="/update_cart/{{ item[0] }}" method="POST" class="d-flex align-items-center">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <label class="me-2 small">{% if session.get('lang') == 'de' %}Menge{% else %}Qty{% endif %}:</label>
+                  <input type="number" name="quantity" value="{{ item[1] }}" min="1" max="{{ item[7] }}" class="form-control form-control-sm" style="width: 70px;">
+                  <button type="submit" class="btn btn-sm btn-outline-primary ms-2">{% if session.get('lang') == 'de' %}Aktualisieren{% else %}Update{% endif %}</button>
+                </form>
+                <span class="ms-3 text-muted small">{% if session.get('lang') == 'de' %}Auf Lager{% else %}Stock{% endif %}: {{ item[7] }}</span>
+              </div>
+              
+              {% if item[8] or item[9] %}
+              <div class="mt-2 small">
+                {% if item[8] %}<span class="badge bg-secondary">{% if session.get('lang') == 'de' %}Abholung{% else %}Local Pickup{% endif %}</span>{% endif %}
+                {% if item[9] %}<span class="badge bg-secondary">{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %} ${{ "%.2f"|format(item[10]) }}</span>{% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      
+      <div class="text-end">
+        <form action="/clear_cart" method="POST" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-danger btn-sm">{% if session.get('lang') == 'de' %}Warenkorb leeren{% else %}Clear Cart{% endif %}</button>
+        </form>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellübersicht{% else %}Order Summary{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span>{% if session.get('lang') == 'de' %}Zwischensumme{% else %}Subtotal{% endif %}</span>
+            <span>${{ "%.2f"|format(subtotal) }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</span>
+            <span>${{ "%.2f"|format(total_shipping) }}</span>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between fw-bold">
+            <span>{% if session.get('lang') == 'de' %}Gesamt{% else %}Total{% endif %}</span>
+            <span>${{ "%.2f"|format(total) }}</span>
+          </div>
+          
+          <form action="/checkout/cart" method="GET">
+            <button type="submit" class="btn btn-success w-100 mt-3">
+              {% if session.get('lang') == 'de' %}Zur Kasse{% else %}Proceed to Checkout{% endif %}
+            </button>
+          </form>
+          
+          <a href="/dashboard" class="btn btn-outline-secondary w-100 mt-2">
+            {% if session.get('lang') == 'de' %}Weiter einkaufen{% else %}Continue Shopping{% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <div style="font-size: 64px;" class="mb-3">🛒</div>
+    <h4 class="text-muted">{% if session.get('lang') == 'de' %}Ihr Warenkorb ist leer{% else %}Your cart is empty{% endif %}</h4>
+    <p class="text-muted">{% if session.get('lang') == 'de' %}Entdecken Sie unsere Artikel und fügen Sie welche hinzu!{% else %}Explore our listings and add some items!{% endif %}</p>
+    <a href="/dashboard" class="btn btn-primary">{% if session.get('lang') == 'de' %}Zum Marktplatz{% else %}Browse Marketplace{% endif %}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

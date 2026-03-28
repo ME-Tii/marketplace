@@ -96,6 +96,16 @@
           {% else %}
           <a href="/checkout/{{ post[0] }}" class="btn btn-success">Buy Now</a>
           {% endif %}
+          
+          {% if post[3] == 'sell' %}
+          <form action="/add_to_cart/{{ post[0] }}" method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" class="btn btn-outline-primary">
+              🛒 Add to Cart
+            </button>
+          </form>
+          {% endif %}
         {% endif %}
         
         {% if not (local_pickup or shipping_available) and post[6] %}
@@ -139,5 +149,32 @@
       {% endif %}
     </div>
   </div>
+  
+  {% if related_products %}
+  <div class="mt-5">
+    <h4 class="mb-4">{% if session.get('lang') == 'de' %}Ähnliche Artikel{% else %}Related Products{% endif %}</h4>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+      {% for product in related_products %}
+      <div class="col">
+        <div class="card h-100">
+          {% if product[3] %}
+          <img src="{{ product[3] }}" class="card-img-top" alt="{{ product[1] }}" style="height: 150px; object-fit: cover;">
+          {% else %}
+          <img src="/static/pictures/placeholder.png" class="card-img-top" alt="No image" style="height: 150px; object-fit: cover;">
+          {% endif %}
+          <div class="card-body">
+            <h6 class="card-title text-truncate">{{ product[1] }}</h6>
+            <p class="text-success fw-bold mb-1">${{ "%.2f"|format(product[2]) if product[2] else '0.00' }}</p>
+            <small class="text-muted">by {{ product[4] }}</small>
+          </div>
+          <div class="card-footer bg-transparent border-top-0">
+            <a href="/post/{{ product[0] }}" class="btn btn-sm btn-outline-primary w-100">View</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

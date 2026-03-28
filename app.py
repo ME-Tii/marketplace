@@ -413,6 +413,16 @@ def get_unread_messages_count(user_id):
     conn.close()
     return count
 
+def get_cart_count(user_id):
+    if not user_id:
+        return 0
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT COALESCE(SUM(quantity), 0) FROM cart WHERE user_id = ?", (user_id,))
+    count = c.fetchone()[0]
+    conn.close()
+    return count
+
 def init_db():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -749,6 +759,10 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS addresses
                  (id INTEGER PRIMARY KEY, user_id INTEGER, order_id INTEGER,
                   full_name TEXT, street TEXT, city TEXT, state TEXT, zip_code TEXT, country TEXT, phone TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS cart
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, post_id INTEGER NOT NULL,
+                  quantity INTEGER DEFAULT 1, added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(user_id, post_id))''')
     # Add sample posts if none exist
     c.execute("SELECT COUNT(*) FROM posts")
     if c.fetchone()[0] == 0:
@@ -786,11 +800,13 @@ def inject_user():
         c.execute("""SELECT COUNT(*) FROM orders 
                      WHERE (buyer_id = ? OR seller_id = ?) AND status IN ('paid', 'shipped', 'pending')""", (user_id, user_id))
         pending_orders = c.fetchone()[0]
+        c.execute("SELECT COALESCE(SUM(quantity), 0) FROM cart WHERE user_id = ?", (user_id,))
+        cart_count = c.fetchone()[0]
         conn.close()
         if user:
             session['username'] = user[0]
-            return {'current_username': user[0], 'pending_offers': pending_offers, 'pending_orders': pending_orders}
-    return {'current_username': None, 'pending_offers': 0, 'pending_orders': 0}
+            return {'current_username': user[0], 'pending_offers': pending_offers, 'pending_orders': pending_orders, 'cart_count': cart_count}
+    return {'current_username': None, 'pending_offers': 0, 'pending_orders': 0, 'cart_count': 0}
 
 
 @app.route('/fix_notifications')
@@ -1144,6 +1160,204 @@ def login():
     else:
         app.logger.warning(f"User not found for identifier: {identifier}")
     return redirect('/login?error=Invalid credentials')
+
+@app.route('/cart')
+def view_cart():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""SELECT c.id, c.quantity, c.added_at, p.id, p.title, p.price, p.image, p.quantity as stock,
+                 p.local_pickup, p.shipping_available, p.shipping_cost, u.username
+                 FROM cart c
+                 JOIN posts p ON c.post_id = p.id
+                 JOIN users u ON p.user_id = u.id
+                 WHERE c.user_id = ? AND p.is_active = 1
+                 ORDER BY c.added_at DESC""", (session['user_id'],))
+    items = c.fetchall()
+    
+    subtotal = sum(item[5] * item[1] for item in items)
+    total_shipping = sum((item[9] * item[10] if item[8] else 0) * item[1] for item in items)
+    total = subtotal + total_shipping
+    
+    conn.close()
+    
+    return render_template('cart.html', items=items, subtotal=subtotal, total_shipping=total_shipping, total=total,
+                         unread_messages=get_unread_messages_count(session.get('user_id')),
+                         cart_count=get_cart_count(session.get('user_id')))
+
+@app.route('/add_to_cart/<int:post_id>', methods=['POST'])
+def add_to_cart(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    quantity = int(request.form.get('quantity', 1))
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    c.execute("SELECT id, quantity, price, title FROM posts WHERE id = ? AND is_active = 1", (post_id,))
+    post = c.fetchone()
+    
+    if not post:
+        conn.close()
+        flash('Item not found or unavailable.', 'danger')
+        return redirect(request.referrer or '/dashboard')
+    
+    if post[1] < quantity:
+        conn.close()
+        flash(f'Not enough stock. Only {post[1]} available.', 'warning')
+        return redirect(request.referrer or f'/post/{post_id}')
+    
+    if session['user_id'] == post[0]:
+        conn.close()
+        flash('You cannot add your own item to cart.', 'warning')
+        return redirect(request.referrer or f'/post/{post_id}')
+    
+    c.execute("SELECT quantity FROM cart WHERE user_id = ? AND post_id = ?", (session['user_id'], post_id))
+    existing = c.fetchone()
+    
+    if existing:
+        new_qty = existing[0] + quantity
+        if new_qty > post[1]:
+            conn.close()
+            flash(f'Cart already has {existing[0]}. Only {post[1]} available.', 'warning')
+            return redirect(request.referrer or f'/post/{post_id}')
+        c.execute("UPDATE cart SET quantity = ? WHERE user_id = ? AND post_id = ?", (new_qty, session['user_id'], post_id))
+        flash(f'Updated quantity for "{post[3]}"', 'success')
+    else:
+        c.execute("INSERT INTO cart (user_id, post_id, quantity) VALUES (?, ?, ?)", (session['user_id'], post_id, quantity))
+        flash(f'Added "{post[3]}" to cart', 'success')
+    
+    conn.commit()
+    conn.close()
+    
+    return redirect(request.referrer or f'/post/{post_id}')
+
+@app.route('/update_cart/<int:cart_id>', methods=['POST'])
+def update_cart(cart_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    quantity = int(request.form.get('quantity', 1))
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    c.execute("SELECT c.post_id, p.quantity FROM cart c JOIN posts p ON c.post_id = p.id WHERE c.id = ? AND c.user_id = ?", (cart_id, session['user_id']))
+    item = c.fetchone()
+    
+    if not item:
+        conn.close()
+        flash('Cart item not found.', 'danger')
+        return redirect('/cart')
+    
+    if quantity <= 0:
+        c.execute("DELETE FROM cart WHERE id = ?", (cart_id,))
+        flash('Item removed from cart.', 'info')
+    elif quantity > item[1]:
+        conn.close()
+        flash(f'Only {item[1]} available in stock.', 'warning')
+        return redirect('/cart')
+    else:
+        c.execute("UPDATE cart SET quantity = ? WHERE id = ?", (quantity, cart_id))
+        flash('Cart updated.', 'success')
+    
+    conn.commit()
+    conn.close()
+    
+    return redirect('/cart')
+
+@app.route('/remove_from_cart/<int:cart_id>', methods=['POST'])
+def remove_from_cart(cart_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM cart WHERE id = ? AND user_id = ?", (cart_id, session['user_id']))
+    conn.commit()
+    conn.close()
+    
+    flash('Item removed from cart.', 'info')
+    return redirect('/cart')
+
+@app.route('/clear_cart', methods=['POST'])
+def clear_cart():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM cart WHERE user_id = ?", (session['user_id'],))
+    conn.commit()
+    conn.close()
+    
+    flash('Cart cleared.', 'info')
+    return redirect('/cart')
+
+@app.route('/checkout/cart', methods=['GET', 'POST'])
+def checkout_cart():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""SELECT c.id, c.quantity, p.id, p.title, p.price, p.image, p.seller_id, p.quantity as stock,
+                 p.local_pickup, p.shipping_available, p.shipping_cost, u.username
+                 FROM cart c
+                 JOIN posts p ON c.post_id = p.id
+                 JOIN users u ON p.user_id = u.id
+                 WHERE c.user_id = ? AND p.is_active = 1
+                 ORDER BY c.added_at DESC""", (session['user_id'],))
+    items = c.fetchall()
+    
+    if not items:
+        conn.close()
+        flash('Your cart is empty.', 'warning')
+        return redirect('/cart')
+    
+    subtotal = sum(item[4] * item[1] for item in items)
+    total_shipping = sum((item[9] * item[10] if item[8] else 0) * item[1] for item in items)
+    total = subtotal + total_shipping
+    
+    if request.method == 'POST':
+        shipping_method = request.form.get('shipping_method', 'local_pickup')
+        
+        order_ids = []
+        for item in items:
+            cart_id, quantity, post_id, title, price, image, seller_id, stock, local_pickup, shipping_available, shipping_cost, seller_username = item
+            
+            if quantity > stock:
+                conn.close()
+                flash(f'Not enough stock for "{title}". Only {stock} available.', 'warning')
+                return redirect('/cart')
+            
+            shipping_cost_item = shipping_cost if shipping_method == 'shipping' and shipping_available else 0
+            item_total = (price * quantity) + shipping_cost_item
+            
+            c.execute("""INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, quantity)
+                         VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)""",
+                      (post_id, session['user_id'], seller_id, price * quantity, shipping_method, shipping_cost_item, quantity))
+            order_id = c.lastrowid
+            order_ids.append(order_id)
+            
+            c.execute("UPDATE posts SET quantity = quantity - ? WHERE id = ?", (quantity, post_id))
+            c.execute("DELETE FROM cart WHERE id = ?", (cart_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        if len(order_ids) == 1:
+            return redirect(f'/checkout/{order_ids[0]}')
+        else:
+            return redirect('/orders')
+    
+    conn.close()
+    return render_template('checkout_cart.html', items=items, subtotal=subtotal, total_shipping=total_shipping, total=total,
+                         unread_messages=get_unread_messages_count(session.get('user_id')),
+                         cart_count=get_cart_count(session.get('user_id')))
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 @limiter.limit("3 per hour")
@@ -2409,10 +2623,51 @@ def post_detail(post_id):
         c.execute("SELECT image_url FROM post_images WHERE post_id = ? ORDER BY sort_order", (post_id,))
         additional_images = [row[0] for row in c.fetchall()]
         
+        # Get related products - same category, not same post, active, with price
+        c.execute("""SELECT c.id as cat_id FROM posts_categories pc 
+                     JOIN categories c ON pc.category_id = c.id 
+                     WHERE pc.post_id = ?""", (post_id,))
+        post_categories = [row[0] for row in c.fetchall()]
+        
+        if post_categories:
+            placeholders = ','.join('?' * len(post_categories))
+            c.execute(f"""SELECT p.id, p.title, p.price, p.image, u.username,
+                          GROUP_CONCAT(c.name) as cat_names
+                          FROM posts p
+                          JOIN users u ON p.user_id = u.id
+                          LEFT JOIN posts_categories pc ON p.id = pc.post_id
+                          LEFT JOIN categories c ON pc.category_id = c.id
+                          WHERE pc.category_id IN ({placeholders})
+                          AND p.id != ?
+                          AND p.is_active = 1
+                          AND p.type = 'sell'
+                          AND p.quantity > 0
+                          GROUP BY p.id
+                          ORDER BY p.is_featured DESC, p.timestamp DESC
+                          LIMIT 8""", post_categories + [post_id])
+        else:
+            c.execute("""SELECT p.id, p.title, p.price, p.image, u.username,
+                         GROUP_CONCAT(c.name) as cat_names
+                         FROM posts p
+                         JOIN users u ON p.user_id = u.id
+                         LEFT JOIN posts_categories pc ON p.id = pc.post_id
+                         LEFT JOIN categories c ON pc.category_id = c.id
+                         WHERE p.id != ?
+                         AND p.is_active = 1
+                         AND p.type = 'sell'
+                         AND p.quantity > 0
+                         GROUP BY p.id
+                         ORDER BY p.is_featured DESC, p.timestamp DESC
+                         LIMIT 8""", (post_id,))
+        
+        related_products = c.fetchall()
+        
         conn.close()
         if not post:
             return 'Post not found', 404
-        return render_template('post_detail.html', post=post, categories=categories, additional_images=additional_images, unread_messages=get_unread_messages_count(session.get('user_id')))
+        return render_template('post_detail.html', post=post, categories=categories, additional_images=additional_images, 
+                             related_products=related_products,
+                             unread_messages=get_unread_messages_count(session.get('user_id')))
     except Exception as e:
         app.logger.error(f"Error in post_detail for id {post_id}: {str(e)}")
         return "Internal Server Error", 500
