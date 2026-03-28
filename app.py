@@ -69,46 +69,138 @@ def stripe_webhook():
     
     if event['type'] == 'checkout.session.completed':
         session_obj = event['data']['object']
-        order_id = session_obj.get('metadata', {}).get('order_id')
+        metadata = session_obj.get('metadata', {})
+        payment_type = metadata.get('type')
         payment_id = session_obj.get('payment_intent')
         
-        if order_id:
-            conn = sqlite3.connect('database.db')
-            c = conn.cursor()
-            c.execute("UPDATE orders SET status = 'paid', stripe_payment_id = ? WHERE id = ?",
-                     (payment_id, order_id))
-            c.execute("""SELECT o.buyer_id, o.seller_id, o.amount, p.title, buyer.email, seller.email, 
-                         COALESCE(buyer.email_notifications, 1), COALESCE(buyer.notify_order, 1),
-                         COALESCE(seller.email_notifications, 1), COALESCE(seller.notify_order, 1),
-                         o.post_id, o.quantity
-                         FROM orders o
-                         JOIN posts p ON o.post_id = p.id
-                         JOIN users buyer ON o.buyer_id = buyer.id
-                         JOIN users seller ON o.seller_id = seller.id
-                         WHERE o.id = ?""", (order_id,))
-            order_info = c.fetchone()
-            if order_info:
-                buyer_email = order_info[4]
-                seller_email = order_info[5]
-                buyer_email_notif = order_info[6]
-                buyer_notify = order_info[7]
-                seller_email_notif = order_info[8]
-                seller_notify = order_info[9]
-                post_title = order_info[3]
-                amount = order_info[2]
-                post_id = order_info[10]
-                order_qty = order_info[11] or 1
+        if payment_type == 'cart':
+            order_ids_str = metadata.get('order_ids', '')
+            if order_ids_str:
+                order_ids = [int(oid.strip()) for oid in order_ids_str.split(',') if oid.strip()]
                 
-                c.execute("UPDATE posts SET quantity = quantity - ? WHERE id = ?", (order_qty, post_id))
+                conn = sqlite3.connect('database.db')
+                c = conn.cursor()
                 
-                if buyer_email_notif and buyer_notify:
-                    send_email(buyer_email, 'Payment Confirmed - Marketplace', 
-                              f'Your payment of ${amount:.2f} for "{post_title}" has been confirmed. The seller will ship your order soon.')
-                if seller_email_notif and seller_notify:
-                    send_email(seller_email, 'New Order - Marketplace', 
-                              f'You have a new order for "{post_title}". Payment of ${amount:.2f} received. Please ship the item.')
-            conn.commit()
-            conn.close()
+                c.execute("""SELECT o.id, o.amount, o.shipping_cost, o.seller_id, u.stripe_account_id, o.quantity,
+                             p.title, buyer.email, seller.email,
+                             COALESCE(buyer.email_notifications, 1), COALESCE(buyer.notify_order, 1),
+                             COALESCE(seller.email_notifications, 1), COALESCE(seller.notify_order, 1)
+                             FROM orders o
+                             JOIN users u ON o.seller_id = u.id
+                             JOIN posts p ON o.post_id = p.id
+                             JOIN users buyer ON o.buyer_id = buyer.id
+                             JOIN users seller ON o.seller_id = seller.id
+                             WHERE o.id IN ({})""".format(','.join('?' * len(order_ids))), order_ids)
+                orders_with_sellers = c.fetchall()
+                
+                for order in orders_with_sellers:
+                    order_id, amount, shipping_cost, seller_id, stripe_account_id, quantity, post_title, buyer_email, seller_email, buyer_email_notif, buyer_notify, seller_email_notif, seller_notify = order
+                    
+                    if stripe_account_id and app.config.get('STRIPE_SECRET_KEY'):
+                        platform_fee = round(amount * 0.10, 2)
+                        transfer_amount = round(amount - platform_fee, 2)
+                        
+                        try:
+                            transfer = stripe.Transfer.create(
+                                amount=int(transfer_amount * 100),
+                                currency='usd',
+                                destination=stripe_account_id,
+                                metadata={'order_id': order_id}
+                            )
+                            c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                                         VALUES (?, ?, ?, ?, 'completed')""",
+                                      (order_id, seller_id, transfer_amount, transfer.id))
+                        except Exception as e:
+                            app.logger.error(f"Transfer failed for order {order_id}: {str(e)}")
+                            c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                                         VALUES (?, ?, ?, ?, 'failed')""",
+                                      (order_id, seller_id, transfer_amount, None))
+                    else:
+                        c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                                     VALUES (?, ?, ?, ?, 'no_stripe')""",
+                                  (order_id, seller_id, amount, None))
+                    
+                    c.execute("UPDATE orders SET status = 'paid', stripe_payment_id = ? WHERE id = ?", (payment_id, order_id))
+                    c.execute("UPDATE posts SET quantity = quantity - ? WHERE id = ?", (quantity, order[6] if False else None))
+                    c.execute("UPDATE posts SET quantity = quantity - (SELECT quantity FROM orders WHERE id = ?) WHERE id = (SELECT post_id FROM orders WHERE id = ?)", (order_id, order_id))
+                    
+                    if buyer_email_notif and buyer_notify:
+                        send_email(buyer_email, 'Payment Confirmed - Marketplace', 
+                                  f'Your payment for "{post_title}" has been confirmed. The seller will ship your order soon.')
+                    if seller_email_notif and seller_notify:
+                        send_email(seller_email, 'New Order - Marketplace', 
+                                  f'You have a new order for "{post_title}". Payment received. Please ship the item.')
+                
+                conn.commit()
+                conn.close()
+        else:
+            order_id = metadata.get('order_id')
+            if order_id:
+                conn = sqlite3.connect('database.db')
+                c = conn.cursor()
+                c.execute("SELECT seller_id, amount FROM orders WHERE id = ?", (order_id,))
+                order = c.fetchone()
+                
+                if order:
+                    seller_id, amount = order
+                    c.execute("SELECT stripe_account_id FROM users WHERE id = ?", (seller_id,))
+                    seller = c.fetchone()
+                    
+                    if seller and seller[0] and app.config.get('STRIPE_SECRET_KEY'):
+                        platform_fee = round(amount * 0.10, 2)
+                        transfer_amount = round(amount - platform_fee, 2)
+                        
+                        try:
+                            transfer = stripe.Transfer.create(
+                                amount=int(transfer_amount * 100),
+                                currency='usd',
+                                destination=seller[0],
+                                metadata={'order_id': order_id}
+                            )
+                            c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                                         VALUES (?, ?, ?, ?, 'completed')""",
+                                      (order_id, seller_id, transfer_amount, transfer.id))
+                        except Exception as e:
+                            app.logger.error(f"Transfer failed for order {order_id}: {str(e)}")
+                            c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                                         VALUES (?, ?, ?, ?, 'failed')""",
+                                      (order_id, seller_id, transfer_amount, None))
+                    else:
+                        c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                                     VALUES (?, ?, ?, ?, 'no_stripe')""",
+                                  (order_id, seller_id, amount, None))
+                
+                c.execute("UPDATE orders SET status = 'paid', stripe_payment_id = ? WHERE id = ?", (payment_id, order_id))
+                c.execute("UPDATE posts SET quantity = quantity - (SELECT quantity FROM orders WHERE id = ?) WHERE id = (SELECT post_id FROM orders WHERE id = ?)", (order_id, order_id))
+                
+                c.execute("""SELECT o.buyer_id, o.seller_id, o.amount, p.title, buyer.email, seller.email, 
+                             COALESCE(buyer.email_notifications, 1), COALESCE(buyer.notify_order, 1),
+                             COALESCE(seller.email_notifications, 1), COALESCE(seller.notify_order, 1),
+                             o.post_id, o.quantity
+                             FROM orders o
+                             JOIN posts p ON o.post_id = p.id
+                             JOIN users buyer ON o.buyer_id = buyer.id
+                             JOIN users seller ON o.seller_id = seller.id
+                             WHERE o.id = ?""", (order_id,))
+                order_info = c.fetchone()
+                if order_info:
+                    buyer_email = order_info[4]
+                    seller_email = order_info[5]
+                    buyer_email_notif = order_info[6]
+                    buyer_notify = order_info[7]
+                    seller_email_notif = order_info[8]
+                    seller_notify = order_info[9]
+                    post_title = order_info[3]
+                    amount = order_info[2]
+                    
+                    if buyer_email_notif and buyer_notify:
+                        send_email(buyer_email, 'Payment Confirmed - Marketplace', 
+                                  f'Your payment of ${amount:.2f} for "{post_title}" has been confirmed. The seller will ship your order soon.')
+                    if seller_email_notif and seller_notify:
+                        send_email(seller_email, 'New Order - Marketplace', 
+                                  f'You have a new order for "{post_title}". Payment of ${amount:.2f} received. Please ship the item.')
+                conn.commit()
+                conn.close()
     
     return '', 200
 
@@ -768,6 +860,10 @@ def init_db():
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, post_id INTEGER NOT NULL,
                   quantity INTEGER DEFAULT 1, added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                   UNIQUE(user_id, post_id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS seller_transfers
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, seller_id INTEGER NOT NULL,
+                  amount REAL NOT NULL, transfer_id TEXT, status TEXT DEFAULT 'pending',
+                  created_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
     # Add sample posts if none exist
     c.execute("SELECT COUNT(*) FROM posts")
     if c.fetchone()[0] == 0:
@@ -1465,8 +1561,45 @@ def cart_payment_success():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     
+    c.execute("""SELECT o.id, o.amount, o.shipping_cost, o.seller_id, u.stripe_account_id, o.quantity
+                 FROM orders o
+                 JOIN users u ON o.seller_id = u.id
+                 WHERE o.id IN ({})""".format(','.join('?' * len(order_ids))), order_ids)
+    orders_with_sellers = c.fetchall()
+    
+    platform_fee_total = 0
+    
+    for order in orders_with_sellers:
+        order_id, amount, shipping_cost, seller_id, stripe_account_id, quantity = order
+        if stripe_account_id and app.config.get('STRIPE_SECRET_KEY'):
+            seller_amount = amount
+            platform_fee = round(seller_amount * 0.10, 2)
+            transfer_amount = round(seller_amount - platform_fee, 2)
+            platform_fee_total += platform_fee
+            
+            try:
+                transfer = stripe.Transfer.create(
+                    amount=int(transfer_amount * 100),
+                    currency='usd',
+                    destination=stripe_account_id,
+                    metadata={'order_id': order_id}
+                )
+                c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                             VALUES (?, ?, ?, ?, 'completed')""",
+                          (order_id, seller_id, transfer_amount, transfer.id))
+            except Exception as e:
+                app.logger.error(f"Transfer failed for order {order_id}: {str(e)}")
+                c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                             VALUES (?, ?, ?, ?, 'failed')""",
+                          (order_id, seller_id, transfer_amount, None))
+        else:
+            c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                         VALUES (?, ?, ?, ?, 'no_stripe')""",
+                      (order_id, seller_id, amount, None))
+    
     for order_id in order_ids:
         c.execute("UPDATE orders SET status = 'paid' WHERE id = ? AND status = 'pending'", (order_id,))
+        c.execute("UPDATE orders SET transaction_fee = ? WHERE id = ?", (platform_fee_total, order_id))
         c.execute("""UPDATE posts SET quantity = quantity - o.quantity 
                      FROM (SELECT post_id, quantity FROM orders WHERE id = ?) o
                      WHERE posts.id = o.post_id""", (order_id,))
@@ -1476,11 +1609,6 @@ def cart_payment_success():
     
     flash(f'{len(order_ids)} order(s) paid successfully!', 'success')
     return redirect('/orders')
-    
-    conn.close()
-    return render_template('checkout_cart.html', items=items, subtotal=subtotal, total_shipping=total_shipping, total=total,
-                         unread_messages=get_unread_messages_count(session.get('user_id')),
-                         cart_count=get_cart_count(session.get('user_id')))
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 @limiter.limit("3 per hour")
