@@ -79,7 +79,8 @@ def stripe_webhook():
                      (payment_id, order_id))
             c.execute("""SELECT o.buyer_id, o.seller_id, o.amount, p.title, buyer.email, seller.email, 
                          COALESCE(buyer.email_notifications, 1), COALESCE(buyer.notify_order, 1),
-                         COALESCE(seller.email_notifications, 1), COALESCE(seller.notify_order, 1)
+                         COALESCE(seller.email_notifications, 1), COALESCE(seller.notify_order, 1),
+                         o.post_id, o.quantity
                          FROM orders o
                          JOIN posts p ON o.post_id = p.id
                          JOIN users buyer ON o.buyer_id = buyer.id
@@ -95,6 +96,10 @@ def stripe_webhook():
                 seller_notify = order_info[9]
                 post_title = order_info[3]
                 amount = order_info[2]
+                post_id = order_info[10]
+                order_qty = order_info[11] or 1
+                
+                c.execute("UPDATE posts SET quantity = quantity - ? WHERE id = ?", (order_qty, post_id))
                 
                 if buyer_email_notif and buyer_notify:
                     send_email(buyer_email, 'Payment Confirmed - Marketplace', 
@@ -1348,7 +1353,7 @@ def checkout_cart():
             order_id = c.lastrowid
             order_ids.append(order_id)
             
-            c.execute("UPDATE posts SET quantity = quantity - ? WHERE id = ?", (quantity, post_id))
+            # Remove from cart but don't decrement stock yet - do it when payment is confirmed
             c.execute("DELETE FROM cart WHERE id = ?", (cart_id,))
         
         conn.commit()
