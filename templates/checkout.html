@@ -1,98 +1,162 @@
 {% extends "base.html" %} {% block title %}Checkout - Marketplace{% endblock %}
 {% block content %}
 <div class="container mt-5">
-  <h2>{% if session.get('lang') == 'de' %}Kasse{% else %}Checkout{% endif %}</h2>
-  <form method="POST" action="/process_checkout/{{ post_id }}" class="mt-4">
+  <h2 class="mb-4">{% if session.get('lang') == 'de' %}Kasse{% else %}Checkout{% endif %}</h2>
+  
+  <form method="POST" action="/process_checkout/{{ post_id }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-    <div class="card mt-3">
-    <div class="card-body">
-      <h5 class="card-title">{{ post[0] }}</h5>
-      <p class="card-text">
-        <strong>{% if session.get('lang') == 'de' %}Preis pro Stück:{% else %}Price per item:{% endif %}</strong> ${{ existing_order[4] if existing_order else post[1] }}
-        {% if existing_order and existing_order[4] != post[1] %}
-        <br><small class="text-muted">({% if session.get('lang') == 'de' %}Angebot akzeptiert{% else %}Accepted offer{% endif %})</small>
-        {% endif %}
-        <br><strong>{% if session.get('lang') == 'de' %}Verfügbar:{% else %}Available:{% endif %}</strong> {{ post[6] }}
-      </p>
-      <div class="mb-3">
-        <label class="form-label"><strong>{% if session.get('lang') == 'de' %}Anzahl:{% else %}Quantity:{% endif %}</strong></label>
-        <input type="number" class="form-control" name="quantity" min="1" {% if not existing_order %}max="{{ post[6] }}"{% endif %} value="{{ existing_order[33] if existing_order else 1 }}" required onchange="updateTotal()" />
-      </div>
-      <p class="card-text">
-        <strong>{% if session.get('lang') == 'de' %}Gesamt:{% else %}Total:{% endif %}</strong> <span id="total_amount">${{ existing_order[4] if existing_order else post[1] }}</span>
-      </p>
-    </div>
-  </div>
     
-  <h4>{% if session.get('lang') == 'de' %}Lieferoption{% else %}Delivery Option{% endif %}</h4>
-    <div class="mb-3">
-      {% if post[3] and post[4] %}
-      <div class="form-check">
-        <input type="radio" class="form-check-input" name="delivery_method" id="local_pickup" value="local_pickup" onchange="toggleAddress()" {% if not existing_order or existing_order[12] == 'local_pickup' %}checked{% endif %} />
-        <label class="form-check-label" for="local_pickup">{% if session.get('lang') == 'de' %}Abholung vor Ort (kostenlos){% else %}Local Pickup (free){% endif %}</label>
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">{{ post[0] }}</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span>{% if session.get('lang') == 'de' %}Preis pro Stück{% else %}Price per item{% endif %}:</span>
+              <span class="fw-bold">${{ existing_order[4] if existing_order else post[1] }}</span>
+            </div>
+            {% if existing_order and existing_order[4] != post[1] %}
+            <div class="mb-2">
+              <small class="text-muted">({% if session.get('lang') == 'de' %}Angebot akzeptiert{% else %}Accepted offer{% endif %})</small>
+            </div>
+            {% endif %}
+            <div class="d-flex justify-content-between mb-2">
+              <span>{% if session.get('lang') == 'de' %}Verfügbar{% else %}Available{% endif %}:</span>
+              <span>{{ post[6] }}</span>
+            </div>
+            <div class="mb-3">
+              <label class="form-label"><strong>{% if session.get('lang') == 'de' %}Anzahl{% else %}Quantity{% endif %}:</strong></label>
+              <input type="number" class="form-control" name="quantity" min="1" {% if not existing_order %}max="{{ post[6] }}"{% endif %} value="{{ existing_order[33] if existing_order else 1 }}" required onchange="updateTotal()" style="max-width: 120px;" />
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between">
+              <span class="fw-bold">{% if session.get('lang') == 'de' %}Gesamt{% else %}Total{% endif %}:</span>
+              <span class="fw-bold fs-5" id="total_amount">${{ existing_order[4] if existing_order else post[1] }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">{% if session.get('lang') == 'de' %}Lieferoption{% else %}Delivery Option{% endif %}</h5>
+          </div>
+          <div class="card-body">
+            {% if post[3] and post[4] %}
+            <div class="form-check mb-3 p-3 border rounded">
+              <input class="form-check-input" type="radio" name="delivery_method" id="local_pickup" value="local_pickup" onchange="toggleAddress()" {% if not existing_order or existing_order[12] == 'local_pickup' %}checked{% endif %} />
+              <label class="form-check-label" for="local_pickup">
+                <strong>{% if session.get('lang') == 'de' %}Lokale Abholung{% else %}Local Pickup{% endif %}</strong>
+                <small class="text-muted d-block">{% if session.get('lang') == 'de' %}Artikel persönlich abholen - Kostenlos{% else %}Pick up items in person - Free{% endif %}</small>
+              </label>
+            </div>
+            <div class="form-check mb-3 p-3 border rounded">
+              <input class="form-check-input" type="radio" name="delivery_method" id="shipping" value="shipping" onchange="toggleAddress()" {% if existing_order and existing_order[12] == 'shipping' %}checked{% endif %} />
+              <label class="form-check-label" for="shipping">
+                <strong>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</strong>
+                <small class="text-muted d-block">${{ post[5] }}/{% if session.get('lang') == 'de' %}Stück{% else %}item{% endif %}</small>
+              </label>
+            </div>
+            {% elif post[3] %}
+            <input type="hidden" name="delivery_method" value="local_pickup" />
+            <p class="text-muted mb-0">{% if session.get('lang') == 'de' %}Nur Abholung vor Ort verfügbar{% else %}Local pickup only{% endif %}</p>
+            {% elif post[4] %}
+            <input type="hidden" name="delivery_method" value="shipping" />
+            <p class="text-muted mb-0">{% if session.get('lang') == 'de' %}Nur Versand verfügbar{% else %}Shipping only{% endif %}</p>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="card mb-4" id="address_fields">
+          <div class="card-header">
+            <h5 class="mb-0">{% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping Address{% endif %}</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Vollständiger Name{% else %}Full Name{% endif %} *</label>
+                <input type="text" class="form-control" name="full_name" value="{{ saved_address[3] if saved_address else '' }}" required />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Telefon{% else %}Phone{% endif %} *</label>
+                <input type="tel" class="form-control" name="phone" value="{{ saved_address[9] if saved_address else '' }}" required />
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Straße{% else %}Street Address{% endif %} *</label>
+              <input type="text" class="form-control" name="street" value="{{ saved_address[4] if saved_address else '' }}" required />
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Stadt{% else %}City{% endif %} *</label>
+                <input type="text" class="form-control" name="city" value="{{ saved_address[5] if saved_address else '' }}" required />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Bundesland{% else %}State/Province{% endif %}</label>
+                <input type="text" class="form-control" name="state" value="{{ saved_address[6] if saved_address else '' }}" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Postleitzahl{% else %}ZIP/Postal Code{% endif %} *</label>
+                <input type="text" class="form-control" name="zip_code" value="{{ saved_address[7] if saved_address else '' }}" required />
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Land{% else %}Country{% endif %} *</label>
+              <input type="text" class="form-control" name="country" value="{{ saved_address[8] if saved_address else '' }}" required />
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="save_address" id="save_address" checked />
+              <label class="form-check-label" for="save_address">
+                {% if session.get('lang') == 'de' %}Adresse für zukünftige Käufe speichern{% else %}Save address for future purchases{% endif %}
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <button type="submit" class="btn btn-success btn-lg">
+            {% if session.get('lang') == 'de' %}Weiter zur Zahlung{% else %}Proceed to Payment{% endif %}
+          </button>
+          <a href="/post/{{ post_id }}" class="btn btn-secondary btn-lg ms-2">
+            {% if session.get('lang') == 'de' %}Zurück{% else %}Back{% endif %}
+          </a>
+        </div>
       </div>
-      <div class="form-check">
-        <input type="radio" class="form-check-input" name="delivery_method" id="shipping" value="shipping" onchange="toggleAddress()" {% if existing_order and existing_order[12] == 'shipping' %}checked{% endif %} />
-        <label class="form-check-label" for="shipping">{% if session.get('lang') == 'de' %}Versand (${{ post[5] }}/Stück){% else %}Shipping (${{ post[5] }}/item){% endif %}</label>
+      
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellübersicht{% else %}Order Summary{% endif %}</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span>{{ post[0] }}</span>
+              <span>x{{ existing_order[33] if existing_order else 1 }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>{% if session.get('lang') == 'de' %}Zwischensumme{% else %}Subtotal{% endif %}</span>
+              <span>${{ (existing_order[4] if existing_order else post[1]) * (existing_order[33] if existing_order else 1) }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</span>
+              <span id="shipping_summary">-</span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between fw-bold">
+              <span>{% if session.get('lang') == 'de' %}Gesamt{% else %}Total{% endif %}</span>
+              <span id="total_summary">${{ existing_order[4] if existing_order else post[1] }}</span>
+            </div>
+          </div>
+        </div>
       </div>
-      {% elif post[3] %}
-      <input type="hidden" name="delivery_method" value="local_pickup" />
-      <p class="text-muted">{% if session.get('lang') == 'de' %}Nur Abholung vor Ort verfügbar{% else %}Local pickup only{% endif %}</p>
-      {% elif post[4] %}
-      <input type="hidden" name="delivery_method" value="shipping" />
-      <p class="text-muted">{% if session.get('lang') == 'de' %}Nur Versand verfügbar{% else %}Shipping only{% endif %}</p>
-      {% endif %}
     </div>
-    
-    <div id="address_fields">
-      <h4>{% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping Address{% endif %}</h4>
-      <div class="row mt-3">
-        <div class="col-md-6 mb-3">
-          <label class="form-label">{% if session.get('lang') == 'de' %}Vollständiger Name{% else %}Full Name{% endif %} *</label>
-          <input type="text" class="form-control" name="full_name" value="{{ saved_address[3] if saved_address else '' }}" required />
-        </div>
-        <div class="col-md-6 mb-3">
-          <label class="form-label">{% if session.get('lang') == 'de' %}Telefon{% else %}Phone{% endif %} *</label>
-          <input type="tel" class="form-control" name="phone" value="{{ saved_address[9] if saved_address else '' }}" required />
-        </div>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">{% if session.get('lang') == 'de' %}Straße{% else %}Street Address{% endif %} *</label>
-        <input type="text" class="form-control" name="street" value="{{ saved_address[4] if saved_address else '' }}" required />
-      </div>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <label class="form-label">{% if session.get('lang') == 'de' %}Stadt{% else %}City{% endif %} *</label>
-          <input type="text" class="form-control" name="city" value="{{ saved_address[5] if saved_address else '' }}" required />
-        </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">{% if session.get('lang') == 'de' %}Bundesland{% else %}State/Province{% endif %}</label>
-          <input type="text" class="form-control" name="state" value="{{ saved_address[6] if saved_address else '' }}" />
-        </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">{% if session.get('lang') == 'de' %}Postleitzahl{% else %}ZIP/Postal Code{% endif %} *</label>
-          <input type="text" class="form-control" name="zip_code" value="{{ saved_address[7] if saved_address else '' }}" required />
-        </div>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">{% if session.get('lang') == 'de' %}Land{% else %}Country{% endif %} *</label>
-        <input type="text" class="form-control" name="country" value="{{ saved_address[8] if saved_address else '' }}" required />
-      </div>
-    </div>
-    
-    <div class="mb-3 form-check">
-      <input type="checkbox" class="form-check-input" name="save_address" id="save_address" checked />
-      <label class="form-check-label" for="save_address">{% if session.get('lang') == 'de' %}Adresse für zukünftige Käufe speichern{% else %}Save address for future purchases{% endif %}</label>
-    </div>
-    
-    <button type="submit" class="btn btn-primary btn-lg">
-      {% if session.get('lang') == 'de' %}Weiter zur Zahlung{% else %}Proceed to Payment{% endif %}
-    </button>
-    <a href="/post/{{ post_id }}" class="btn btn-secondary btn-lg">{% if session.get('lang') == 'de' %}Zurück{% else %}Back{% endif %}</a>
   </form>
 </div>
+
 <script>
 var itemPrice = {{ existing_order[4] if existing_order else post[1] }};
+var shippingCost = {{ post[5] or 0 }};
 
 function toggleAddress() {
   var method = document.querySelector('input[name="delivery_method"]:checked').value;
@@ -110,14 +174,19 @@ function updateTotal() {
   var shipping = 0;
   var method = document.querySelector('input[name="delivery_method"]:checked');
   if (method && method.value === 'shipping') {
-    shipping = ({{ post[5] or 0 }}) * qty;
+    shipping = shippingCost * qty;
   }
-  var total = (qty * itemPrice) + shipping;
+  var subtotal = qty * itemPrice;
+  var total = subtotal + shipping;
+  
   document.getElementById('total_amount').textContent = '$' + total.toFixed(2);
+  document.getElementById('total_summary').textContent = '$' + total.toFixed(2);
+  document.getElementById('shipping_summary').textContent = shipping > 0 ? '$' + shipping.toFixed(2) : '$0.00';
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+  toggleAddress();
   updateTotal();
 });
 </script>
