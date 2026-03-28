@@ -1484,6 +1484,8 @@ def checkout_cart_pay():
     total_shipping = sum((item[9] * item[10] if item[8] else 0) * item[1] for item in items)
     total = subtotal + total_shipping
     
+    order_ids = []
+    
     for item in items:
         cart_id, quantity, post_id, title, price, image, user_id, stock, local_pickup, shipping_available, shipping_cost, seller_username, seller_stripe = item
         
@@ -1503,13 +1505,11 @@ def checkout_cart_pay():
                      VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)""",
                   (post_id, session['user_id'], user_id, price * quantity, shipping_method, shipping_cost_item, quantity))
         order_id = c.lastrowid
-        session[f'cart_order_{order_id}'] = order_id
+        order_ids.append(str(order_id))
         
         c.execute("DELETE FROM cart WHERE id = ?", (cart_id,))
     
     conn.commit()
-    
-    session['cart_order_ids'] = ','.join(str(session.get(f'cart_order_{i}', i)) for i in range(len(items)))
     
     if not app.config['STRIPE_SECRET_KEY']:
         conn.close()
@@ -1530,7 +1530,7 @@ def checkout_cart_pay():
             'quantity': 1,
         })
     
-    order_ids_str = session.get('cart_order_ids', '')
+    order_ids_str = ','.join(order_ids)
     
     try:
         session_stripe = stripe.checkout.Session.create(
