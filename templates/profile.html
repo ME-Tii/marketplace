@@ -1,5 +1,10 @@
-{% extends "base.html" %} {% block title %}Profile - {{ username }}{% endblock
-%} {% block content %}
+{% extends "base.html" %} 
+{% block title %}{{ username }}{% if session.get('lang') == 'de' %}'s Profil{% else %}'s Profile{% endif %} - Marketplace{% endblock %}
+{% block meta_description %}{{ username }}{% if session.get('lang') == 'de' %}'s Profil auf Marketplace{% else %}'s profile on Marketplace{% endif %}. View listings, reviews, and more.{% endblock %}
+{% block meta_keywords %}{{ username }}, seller, buyer, marketplace, profile{% endblock %}
+{% block og_title %}{{ username }}{% if session.get('lang') == 'de' %}'s Profil{% else %}'s Profile{% endif %}{% endblock %}
+{% block og_description %}View {{ username }}'s profile and listings on Marketplace.{% endblock %}
+{% block content %}
 <div class="container mt-5">
   <div class="row">
     <div class="col-md-12">

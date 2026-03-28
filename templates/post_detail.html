@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{{ post[1] }} - Marketplace{% endblock %}
+{% block meta_description %}{{ post[2][:160] if post[2]|length > 160 else post[2] }} - Buy from {{ post[13] }} on Marketplace{% endblock %}
+{% block meta_keywords %}{{ post[1] }}, {{ post[3] }}, buy, sell, trade, marketplace{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ post[1] }} - ${{ post[6] if post[6] else '0' }}{% endblock %}
+{% block og_description %}{{ post[2][:200] if post[2]|length > 200 else post[2] }}{% endblock %}
+{% block og_image %}{{ post[4] if post[4] else '' }}{% endblock %}
+{% block twitter_title %}{{ post[1] }} on Marketplace - ${{ post[6] if post[6] else '0' }}{% endblock %}
+{% block twitter_description %}{{ post[2][:160] if post[2]|length > 160 else post[2] }}{% endblock %}
 {% block content %}
 <div class="container mt-5">
   <div class="card">
