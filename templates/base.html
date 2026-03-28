@@ -12,7 +12,7 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:title" content="{% block og_title %}{% block title %}Marketplace{% endblock %}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Marketplace{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Buy, sell, and trade with people you trust. Secure, simple, and local marketplace.{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='pictures/og-image.png', _external=True) }}{% endblock %}">
     <meta property="og:site_name" content="Marketplace">
@@ -20,7 +20,7 @@
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{{ request.url }}">
-    <meta name="twitter:title" content="{% block twitter_title %}{% block title %}Marketplace{% endblock %}{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}Marketplace{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Buy, sell, and trade with people you trust.{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}{{ url_for('static', filename='pictures/og-image.png', _external=True) }}{% endblock %}">
     
