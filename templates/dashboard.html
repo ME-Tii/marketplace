@@ -411,6 +411,7 @@
       </div>
     </form>
 
+    <div id="products-section">
     <!-- Skeleton Loading -->
     <div id="skeleton-loader" class="row">
       {% for i in range(6) %}
@@ -494,6 +495,7 @@
       {% endif %}
       {% endfor %}
     </div>
+    </div>
 
     {% if not posts %}
     <div class="text-center py-5">
@@ -516,6 +518,12 @@
     setTimeout(function() {
       document.getElementById('skeleton-loader').style.display = 'none';
       document.getElementById('posts-container').style.display = 'flex';
+      
+      // Scroll to products section if there's a search query
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('q') || urlParams.has('location') || urlParams.has('category') || urlParams.has('type')) {
+        document.getElementById('products-section').scrollIntoView({ behavior: 'smooth' });
+      }
     }, 300);
   });
   
