@@ -45,14 +45,13 @@
             <h5 class="mb-0">{% if session.get('lang') == 'de' %}Lieferoption{% else %}Delivery Option{% endif %}</h5>
           </div>
           <div class="card-body">
-            {% set has_local = false %}
-            {% set has_shipping = false %}
+            {% set ns = namespace(has_local=false, has_shipping=false) %}
             {% for item in items %}
-              {% if item[8] %}{% set has_local = true %}{% endif %}
-              {% if item[9] %}{% set has_shipping = true %}{% endif %}
+              {% if item[8] %}{% set ns.has_local = true %}{% endif %}
+              {% if item[9] %}{% set ns.has_shipping = true %}{% endif %}
             {% endfor %}
             
-            {% if has_local %}
+            {% if ns.has_local %}
             <div class="form-check mb-3 p-3 border rounded">
               <input class="form-check-input" type="radio" name="shipping_method" id="local_pickup" value="local_pickup" checked onchange="toggleAddress()">
               <label class="form-check-label" for="local_pickup">
@@ -62,14 +61,19 @@
             </div>
             {% endif %}
             
-            {% if has_shipping %}
+            {% if ns.has_shipping %}
             <div class="form-check mb-3 p-3 border rounded">
-              <input class="form-check-input" type="radio" name="shipping_method" id="shipping" value="shipping" {% if not has_local %}checked{% endif %} onchange="toggleAddress()">
+              <input class="form-check-input" type="radio" name="shipping_method" id="shipping" value="shipping" {% if not ns.has_local %}checked{% endif %} onchange="toggleAddress()">
               <label class="form-check-label" for="shipping">
                 <strong>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</strong>
                 <small class="text-muted d-block">{% if session.get('lang') == 'de' %}Artikel werden zu Ihnen geliefert{% else %}Items shipped to your address{% endif %}</small>
               </label>
             </div>
+            {% endif %}
+            
+            {% if not ns.has_local and not ns.has_shipping %}
+            <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Lieferoption verfügbar{% else %}No delivery options available{% endif %}. {% if session.get('lang') == 'de' %}Bitte kontaktieren Sie den Verkäufer.{% else %}Please contact the seller.{% endif %}</p>
+            <input type="hidden" name="shipping_method" value="local_pickup">
             {% endif %}
           </div>
         </div>
