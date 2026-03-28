@@ -1304,7 +1304,7 @@ def checkout_cart():
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("""SELECT c.id, c.quantity, p.id, p.title, p.price, p.image, p.seller_id, p.quantity as stock,
+    c.execute("""SELECT c.id, c.quantity, p.id, p.title, p.price, p.image, p.user_id, p.quantity as stock,
                  p.local_pickup, p.shipping_available, p.shipping_cost, u.username
                  FROM cart c
                  JOIN posts p ON c.post_id = p.id
@@ -1327,7 +1327,7 @@ def checkout_cart():
         
         order_ids = []
         for item in items:
-            cart_id, quantity, post_id, title, price, image, seller_id, stock, local_pickup, shipping_available, shipping_cost, seller_username = item
+            cart_id, quantity, post_id, title, price, image, user_id, stock, local_pickup, shipping_available, shipping_cost, seller_username = item
             
             if quantity > stock:
                 conn.close()
@@ -1339,7 +1339,7 @@ def checkout_cart():
             
             c.execute("""INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, quantity)
                          VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)""",
-                      (post_id, session['user_id'], seller_id, price * quantity, shipping_method, shipping_cost_item, quantity))
+                      (post_id, session['user_id'], user_id, price * quantity, shipping_method, shipping_cost_item, quantity))
             order_id = c.lastrowid
             order_ids.append(order_id)
             
