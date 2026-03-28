@@ -4,52 +4,47 @@
 <div class="container mt-5">
   <h2 class="mb-4">{% if session.get('lang') == 'de' %}Warenkorb bezahlen{% else %}Checkout Cart{% endif %}</h2>
   
-  <div class="row">
-    <div class="col-lg-8">
-      {% for item in items %}
-      <div class="card mb-3">
-        <div class="row g-0">
-          <div class="col-md-2">
-            {% if item[5] %}
-            <img src="{{ item[5] }}" class="img-fluid rounded-start" alt="{{ item[3] }}" style="height: 80px; object-fit: cover;">
-            {% else %}
-            <img src="/static/pictures/placeholder.png" class="img-fluid rounded-start" alt="No image" style="height: 80px; object-fit: cover;">
-            {% endif %}
-          </div>
-          <div class="col-md-10">
-            <div class="card-body py-2">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h6 class="mb-0">{{ item[3] }}</h6>
-                  <small class="text-muted">{% if session.get('lang') == 'de' %}Verkäufer{% else %}Seller{% endif %}: {{ item[11] }}</small>
-                  <br>
-                  <small class="text-success">${{ "%.2f"|format(item[4]) }} {% if session.get('lang') == 'de' %}pro Stück{% else %}each{% endif %}</small>
-                </div>
-                <div class="text-end">
-                  <form action="/update_cart/{{ item[0] }}" method="POST" class="d-flex align-items-center mb-2">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <label class="me-2 small">{% if session.get('lang') == 'de' %}Menge{% else %}Qty{% endif %}:</label>
-                    <input type="number" name="quantity" value="{{ item[1] }}" min="1" max="{{ item[7] if item[7] > 0 else 1 }}" class="form-control form-control-sm" style="width: 70px;">
-                    <button type="submit" class="btn btn-sm btn-outline-primary ms-2">{% if session.get('lang') == 'de' %}Aktualisieren{% else %}Update{% endif %}</button>
-                  </form>
-                  <small class="text-muted">{% if session.get('lang') == 'de' %}Auf Lager{% else %}Stock{% endif %}: {{ item[7] }}</small>
-                  <p class="mb-0 fw-bold">${{ "%.2f"|format(item[4] * item[1]) }}</p>
+  <form method="POST" action="/checkout/cart/pay">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="order_ids" value="{{ order_ids_str }}">
+    
+    <div class="row">
+      <div class="col-lg-8">
+        {% for item in items %}
+        <div class="card mb-3">
+          <div class="row g-0">
+            <div class="col-md-2">
+              {% if item[5] %}
+              <img src="{{ item[5] }}" class="img-fluid rounded-start" alt="{{ item[3] }}" style="height: 80px; object-fit: cover;">
+              {% else %}
+              <img src="/static/pictures/placeholder.png" class="img-fluid rounded-start" alt="No image" style="height: 80px; object-fit: cover;">
+              {% endif %}
+            </div>
+            <div class="col-md-10">
+              <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="mb-0">{{ item[3] }}</h6>
+                    <small class="text-muted">{% if session.get('lang') == 'de' %}Verkäufer{% else %}Seller{% endif %}: {{ item[11] }}</small>
+                    <br>
+                    <small class="text-success">${{ "%.2f"|format(item[4]) }} {% if session.get('lang') == 'de' %}pro Stück{% else %}each{% endif %}</small>
+                  </div>
+                  <div class="text-end">
+                    <small class="text-muted">{% if session.get('lang') == 'de' %}Auf Lager{% else %}Stock{% endif %}: {{ item[7] }}</small>
+                    <p class="mb-0 fw-bold">${{ "%.2f"|format(item[4] * item[1]) }}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      {% endfor %}
-      
-      <div class="card mt-4">
-        <div class="card-header">
-          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Versandart{% else %}Shipping Method{% endif %}</h5>
-        </div>
-        <div class="card-body">
-          <form method="POST" action="/checkout/cart/pay" id="checkout-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
+        {% endfor %}
+        
+        <div class="card mt-4">
+          <div class="card-header">
+            <h5 class="mb-0">{% if session.get('lang') == 'de' %}Lieferoption{% else %}Delivery Option{% endif %}</h5>
+          </div>
+          <div class="card-body">
             {% set has_local = false %}
             {% set has_shipping = false %}
             {% for item in items %}
@@ -59,7 +54,7 @@
             
             {% if has_local %}
             <div class="form-check mb-3 p-3 border rounded">
-              <input class="form-check-input" type="radio" name="shipping_method" id="local_pickup" value="local_pickup" checked onchange="updateTotal()">
+              <input class="form-check-input" type="radio" name="shipping_method" id="local_pickup" value="local_pickup" checked onchange="toggleAddress()">
               <label class="form-check-label" for="local_pickup">
                 <strong>{% if session.get('lang') == 'de' %}Lokale Abholung{% else %}Local Pickup{% endif %}</strong>
                 <small class="text-muted d-block">{% if session.get('lang') == 'de' %}Artikel persönlich abholen - Kostenlos{% else %}Pick up items in person - Free{% endif %}</small>
@@ -69,62 +64,133 @@
             
             {% if has_shipping %}
             <div class="form-check mb-3 p-3 border rounded">
-              <input class="form-check-input" type="radio" name="shipping_method" id="shipping" value="shipping" {% if not has_local %}checked{% endif %} onchange="updateTotal()">
+              <input class="form-check-input" type="radio" name="shipping_method" id="shipping" value="shipping" {% if not has_local %}checked{% endif %} onchange="toggleAddress()">
               <label class="form-check-label" for="shipping">
                 <strong>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</strong>
                 <small class="text-muted d-block">{% if session.get('lang') == 'de' %}Artikel werden zu Ihnen geliefert{% else %}Items shipped to your address{% endif %}</small>
               </label>
             </div>
             {% endif %}
-            
-            <button type="submit" class="btn btn-success btn-lg w-100 mt-3">
-              🛒 {% if session.get('lang') == 'de' %}Warenkorb bezahlen{% else %}Pay Cart{% endif %}
-            </button>
-          </form>
+          </div>
         </div>
-      </div>
-    </div>
-    
-    <div class="col-lg-4">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellübersicht{% else %}Order Summary{% endif %}</h5>
+        
+        <div class="card mt-4" id="address_card">
+          <div class="card-header">
+            <h5 class="mb-0">{% if session.get('lang') == 'de' %}Lieferadresse{% else %}Shipping Address{% endif %}</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Vollständiger Name{% else %}Full Name{% endif %} *</label>
+                <input type="text" class="form-control" name="full_name" value="{{ saved_address[3] if saved_address else '' }}" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Telefon{% else %}Phone{% endif %} *</label>
+                <input type="tel" class="form-control" name="phone" value="{{ saved_address[9] if saved_address else '' }}" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Straße{% else %}Street Address{% endif %} *</label>
+              <input type="text" class="form-control" name="street" value="{{ saved_address[4] if saved_address else '' }}" required>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Stadt{% else %}City{% endif %} *</label>
+                <input type="text" class="form-control" name="city" value="{{ saved_address[5] if saved_address else '' }}" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Bundesland{% else %}State/Province{% endif %}</label>
+                <input type="text" class="form-control" name="state" value="{{ saved_address[6] if saved_address else '' }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">{% if session.get('lang') == 'de' %}Postleitzahl{% else %}ZIP/Postal Code{% endif %} *</label>
+                <input type="text" class="form-control" name="zip_code" value="{{ saved_address[7] if saved_address else '' }}" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Land{% else %}Country{% endif %} *</label>
+              <input type="text" class="form-control" name="country" value="{{ saved_address[8] if saved_address else '' }}" required>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="save_address" id="save_address" checked>
+              <label class="form-check-label" for="save_address">
+                {% if session.get('lang') == 'de' %}Adresse für zukünftige Käufe speichern{% else %}Save address for future purchases{% endif %}
+              </label>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <div class="d-flex justify-content-between mb-2">
-            <span>{% if session.get('lang') == 'de' %}Zwischensumme{% else %}Subtotal{% endif %}</span>
-            <span>${{ "%.2f"|format(subtotal) }}</span>
-          </div>
-          <div class="d-flex justify-content-between mb-2" id="shipping-row">
-            <span>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</span>
-            <span id="shipping-cost">${{ "%.2f"|format(total_shipping) }}</span>
-          </div>
-          <hr>
-          <div class="d-flex justify-content-between fw-bold fs-5">
-            <span>{% if session.get('lang') == 'de' %}Gesamt{% else %}Total{% endif %}</span>
-            <span id="total-cost">${{ "%.2f"|format(total) }}</span>
-          </div>
+        
+        <div class="mt-4">
+          <button type="submit" class="btn btn-success btn-lg">
+            🛒 {% if session.get('lang') == 'de' %}Weiter zur Zahlung{% else %}Proceed to Payment{% endif %}
+          </button>
+          <a href="/cart" class="btn btn-secondary btn-lg ms-2">
+            {% if session.get('lang') == 'de' %}Zurück zum Warenkorb{% else %}Back to Cart{% endif %}
+          </a>
         </div>
       </div>
       
-      <a href="/cart" class="btn btn-outline-secondary w-100 mt-3">
-        {% if session.get('lang') == 'de' %}Zurück zum Warenkorb{% else %}Back to Cart{% endif %}
-      </a>
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellübersicht{% else %}Order Summary{% endif %}</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span>{% if session.get('lang') == 'de' %}Zwischensumme{% else %}Subtotal{% endif %}</span>
+              <span>${{ "%.2f"|format(subtotal) }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2" id="shipping-row">
+              <span>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</span>
+              <span id="shipping-cost">${{ "%.2f"|format(total_shipping) }}</span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between fw-bold fs-5">
+              <span>{% if session.get('lang') == 'de' %}Gesamt{% else %}Total{% endif %}</span>
+              <span id="total-cost">${{ "%.2f"|format(total) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </form>
 </div>
 
 <script>
 const totalShipping = {{ total_shipping }};
+const subtotal = {{ subtotal }};
+
+function toggleAddress() {
+  const method = document.querySelector('input[name="shipping_method"]:checked').value;
+  const addressCard = document.getElementById('address_card');
+  const addressInputs = addressCard.querySelectorAll('input[required]');
+  
+  if (method === 'local_pickup') {
+    addressCard.style.display = 'none';
+    addressInputs.forEach(input => input.removeAttribute('required'));
+  } else {
+    addressCard.style.display = 'block';
+    addressInputs.forEach(input => input.setAttribute('required', ''));
+  }
+  
+  updateTotal();
+}
 
 function updateTotal() {
-  const isShipping = document.getElementById('shipping').checked;
-  const shippingCost = isShipping ? totalShipping : 0;
-  const subtotal = {{ subtotal }};
-  const total = subtotal + shippingCost;
+  const method = document.querySelector('input[name="shipping_method"]:checked');
+  let shippingCost = 0;
+  
+  if (method && method.value === 'shipping') {
+    shippingCost = totalShipping;
+  }
   
   document.getElementById('shipping-cost').textContent = '$' + shippingCost.toFixed(2);
-  document.getElementById('total-cost').textContent = '$' + total.toFixed(2);
+  document.getElementById('total-cost').textContent = '$' + (subtotal + shippingCost).toFixed(2);
 }
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  toggleAddress();
+});
 </script>
 {% endblock %}

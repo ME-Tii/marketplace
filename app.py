@@ -1458,7 +1458,17 @@ def checkout_cart():
         return redirect('/orders')
     
     conn.close()
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM addresses WHERE user_id = ? ORDER BY id DESC LIMIT 1", (session['user_id'],))
+    saved_address = c.fetchone()
+    conn.close()
+    
+    order_ids_str = ','.join([str(item[0]) for item in items])
+    
     return render_template('checkout_cart.html', items=items, subtotal=subtotal, total_shipping=total_shipping, total=total,
+                         saved_address=saved_address, order_ids_str=order_ids_str,
                          unread_messages=get_unread_messages_count(session.get('user_id')),
                          cart_count=get_cart_count(session.get('user_id')))
 
@@ -1468,6 +1478,20 @@ def checkout_cart_pay():
         return redirect('/login')
     
     shipping_method = request.form.get('shipping_method', 'local_pickup')
+    order_ids_str = request.form.get('order_ids', '')
+    
+    full_name = request.form.get('full_name', '').strip()
+    street = request.form.get('street', '').strip()
+    city = request.form.get('city', '').strip()
+    state = request.form.get('state', '').strip()
+    zip_code = request.form.get('zip_code', '').strip()
+    country = request.form.get('country', '').strip()
+    phone = request.form.get('phone', '').strip()
+    save_address = request.form.get('save_address') == 'on'
+    
+    if shipping_method == 'shipping' and not all([full_name, street, city, zip_code, country, phone]):
+        flash('Please fill in all required address fields for shipping.', 'warning')
+        return redirect('/checkout/cart')
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -1511,6 +1535,11 @@ def checkout_cart_pay():
                   (post_id, session['user_id'], user_id, price * quantity, shipping_method, shipping_cost_item, quantity))
         order_id = c.lastrowid
         order_ids.append(str(order_id))
+        
+        if save_address and shipping_method == 'shipping':
+            c.execute("""INSERT INTO addresses (user_id, order_id, full_name, street, city, state, zip_code, country, phone)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                      (session['user_id'], order_id, full_name, street, city, state, zip_code, country, phone))
         
         c.execute("DELETE FROM cart WHERE id = ?", (cart_id,))
     
