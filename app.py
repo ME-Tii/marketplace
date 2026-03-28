@@ -1253,6 +1253,7 @@ def login():
                 return redirect('/login?error=Email not verified. Please check your email for the verification link.')
             session['user_id'] = user[0]
             session['username'] = user[2]
+            session['stripe_reminder_shown'] = False
             app.logger.info(f"Login successful for {user[2]}")
             return redirect('/dashboard')
         else:
@@ -2094,6 +2095,12 @@ def profile(username):
     conn.close()
     success = request.args.get('success')
     return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, reports=reports, notification_prefs=notification_prefs, total_ratings=total_ratings, avg_rating=avg_rating, user_bids=user_bids, accepted_bids_count=accepted_bids_count)
+
+@app.route('/stripe-reminder-dismissed')
+def stripe_reminder_dismissed():
+    if 'user_id' in session:
+        session['stripe_reminder_shown'] = True
+    return '', 204
 
 @app.route('/seller/dashboard')
 def seller_dashboard():

@@ -244,7 +244,7 @@
 
 <div class="container mt-4">
   
-  {% if session.get('user_id') and not g.stripe_connected %}
+  {% if session.get('user_id') and not g.stripe_connected and not session.get('stripe_reminder_shown') %}
   <div id="stripe-modal" class="stripe-modal">
     <div class="stripe-modal-content">
       <h3>{% if session.get('lang') == 'de' %}Verkaufen Sie und erhalten Sie Zahlungen!{% else %}Start Selling & Receive Payments!{% endif %}</h3>
@@ -522,6 +522,8 @@
   // Stripe modal
   function closeStripeModal() {
     document.getElementById('stripe-modal').style.display = 'none';
+    // Mark as shown so it doesn't appear again this session
+    fetch('/stripe-reminder-dismissed');
   }
   
   // Load Google AdSense ads
