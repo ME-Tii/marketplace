@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}{% if session.get('lang') == 'de' %}Verkäufer-Dashboard{% else %}Seller Dashboard{% endif %} - Marketplace{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>📊 {% if session.get('lang') == 'de' %}Verkäufer-Dashboard{% else %}Seller Dashboard{% endif %}</h1>
+    <div class="btn-group">
+      <a href="/seller/dashboard?range=7" class="btn btn-outline-primary {% if date_range == 7 %}active{% endif %}">7 {% if session.get('lang') == 'de' %}Tage{% else %}Days{% endif %}</a>
+      <a href="/seller/dashboard?range=30" class="btn btn-outline-primary {% if date_range == 30 %}active{% endif %}">30 {% if session.get('lang') == 'de' %}Tage{% else %}Days{% endif %}</a>
+      <a href="/seller/dashboard?range=90" class="btn btn-outline-primary {% if date_range == 90 %}active{% endif %}">90 {% if session.get('lang') == 'de' %}Tage{% else %}Days{% endif %}</a>
+      <a href="/seller/dashboard?range=365" class="btn btn-outline-primary {% if date_range == 365 %}active{% endif %}">1 {% if session.get('lang') == 'de' %}Jahr{% else %}Year{% endif %}</a>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card bg-gradient-primary">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">{% if session.get('lang') == 'de' %}Gesamtumsatz{% else %}Total Revenue{% endif %}</h6>
+          <h2 class="card-title mb-0">${{ "%.2f"|format(total_revenue) }}</h2>
+          <small class="text-muted">{{ total_orders }} {% if session.get('lang') == 'de' %}Bestellungen{% else %}orders{% endif %}</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card bg-gradient-success">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">{% if session.get('lang') == 'de' %}Dieser Monat{% else %}This Month{% endif %}</h6>
+          <h2 class="card-title mb-0">${{ "%.2f"|format(monthly_revenue) }}</h2>
+          <small class="text-muted">{{ monthly_orders }} {% if session.get('lang') == 'de' %}Bestellungen{% else %}orders{% endif %}</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card bg-gradient-warning">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">{% if session.get('lang') == 'de' %}Ausstehend{% else %}Pending{% endif %}</h6>
+          <h2 class="card-title mb-0">{{ pending_orders }}</h2>
+          <small class="text-muted">${{ "%.2f"|format(pending_revenue) }}</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card bg-gradient-info">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">{% if session.get('lang') == 'de' %}Aktive Einträge{% else %}Active Listings{% endif %}</h6>
+          <h2 class="card-title mb-0">{{ active_listings }}</h2>
+          <small class="text-muted">${{ "%.2f"|format(avg_order_value) }} {% if session.get('lang') == 'de' %}Ø pro Bestellung{% else %}avg order{% endif %}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Umsatz über Zeit{% else %}Revenue Over Time{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="revenueChart" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Bestellungen nach Status{% else %}Orders by Status{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Top Produkte{% else %}Top Products{% endif %}</h5>
+        </div>
+        <div class="card-body">
+          {% if top_products %}
+          <canvas id="productsChart"></canvas>
+          {% else %}
+          <p class="text-muted text-center my-4">{% if session.get('lang') == 'de' %}Noch keine Verkäufe{% else %}No sales yet{% endif %}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{% if session.get('lang') == 'de' %}Neueste Bestellungen{% else %}Recent Orders{% endif %}</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>{% if session.get('lang') == 'de' %}ID{% else %}ID{% endif %}</th>
+                  <th>{% if session.get('lang') == 'de' %}Produkt{% else %}Product{% endif %}</th>
+                  <th>{% if session.get('lang') == 'de' %}Betrag{% else %}Amount{% endif %}</th>
+                  <th>{% if session.get('lang') == 'de' %}Status{% else %}Status{% endif %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                  <td>#{{ order[0] }}</td>
+                  <td><a href="/post/{{ order[1] if false else '' }}">{{ order[1][:30] }}{% if order[1]|length > 30 %}...{% endif %}</a></td>
+                  <td>${{ "%.2f"|format(order[2]) }}</td>
+                  <td>
+                    {% if order[3] == 'pending' %}
+                    <span class="badge bg-warning">{% if session.get('lang') == 'de' %}Ausstehend{% else %}Pending{% endif %}</span>
+                    {% elif order[3] == 'paid' %}
+                    <span class="badge bg-success">{% if session.get('lang') == 'de' %}Bezahlt{% else %}Paid{% endif %}</span>
+                    {% elif order[3] == 'shipped' %}
+                    <span class="badge bg-info">{% if session.get('lang') == 'de' %}Versendet{% else %}Shipped{% endif %}</span>
+                    {% elif order[3] == 'delivered' %}
+                    <span class="badge bg-success">{% if session.get('lang') == 'de' %}Zugestellt{% else %}Delivered{% endif %}</span>
+                    {% else %}
+                    <span class="badge bg-secondary">{{ order[3] }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-4">{% if session.get('lang') == 'de' %}Keine Bestellungen{% else %}No orders yet{% endif %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const chartLabels = {{ chart_labels|tojson }};
+const chartRevenue = {{ chart_revenue|tojson }};
+const chartOrders = {{ chart_orders|tojson }};
+
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revenueCtx, {
+  type: 'line',
+  data: {
+    labels: chartLabels,
+    datasets: [{
+      label: '{% if session.get("lang") == "de" %}Umsatz{% else %}Revenue{% endif %} ($)',
+      data: chartRevenue,
+      borderColor: '#0d6efd',
+      backgroundColor: 'rgba(13, 110, 253, 0.1)',
+      fill: true,
+      tension: 0.3
+    }, {
+      label: '{% if session.get("lang") == "de" %}Bestellungen{% else %}Orders{% endif %}',
+      data: chartOrders,
+      borderColor: '#198754',
+      backgroundColor: 'rgba(25, 135, 84, 0.1)',
+      fill: true,
+      tension: 0.3,
+      yAxisID: 'y1'
+    }]
+  },
+  options: {
+    responsive: true,
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    scales: {
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        title: {
+          display: true,
+          text: '{% if session.get("lang") == "de" %}Umsatz ($){% else %}Revenue ($){% endif %}'
+        }
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        title: {
+          display: true,
+          text: '{% if session.get("lang") == "de" %}Bestellungen{% else %}Orders{% endif %}'
+        },
+        grid: {
+          drawOnChartArea: false
+        }
+      }
+    }
+  }
+});
+
+const statusData = {{ orders_by_status|tojson }};
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusLabels = statusData.map(x => x[0]);
+const statusCounts = statusData.map(x => x[1]);
+const statusColors = {
+  'pending': '#ffc107',
+  'paid': '#198754',
+  'shipped': '#0dcaf0',
+  'delivered': '#20c997',
+  'cancelled': '#dc3545',
+  'refunded': '#6c757d'
+};
+
+new Chart(statusCtx, {
+  type: 'doughnut',
+  data: {
+    labels: statusLabels,
+    datasets: [{
+      data: statusCounts,
+      backgroundColor: statusLabels.map(l => statusColors[l] || '#6c757d')
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom'
+      }
+    }
+  }
+});
+
+{% if top_products %}
+const productLabels = {{ top_products|map(attribute=0)|list|tojson }};
+const productRevenue = {{ top_products|map(attribute=1)|list|tojson }};
+const productSales = {{ top_products|map(attribute=2)|list|tojson }};
+
+const productsCtx = document.getElementById('productsChart').getContext('2d');
+new Chart(productsCtx, {
+  type: 'bar',
+  data: {
+    labels: productLabels,
+    datasets: [{
+      label: '{% if session.get("lang") == "de" %}Umsatz ($){% else %}Revenue ($){% endif %}',
+      data: productRevenue,
+      backgroundColor: 'rgba(13, 110, 253, 0.7)'
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false
+      }
+    },
+    scales: {
+      x: {
+        beginAtZero: true
+      }
+    }
+  }
+});
+{% endif %}
+</script>
+
+<style>
+.stat-card {
+  color: white;
+  border: none;
+}
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+}
+.bg-gradient-success {
+  background: linear-gradient(135deg, #198754, #20c997);
+}
+.bg-gradient-warning {
+  background: linear-gradient(135deg, #ffc107, #fd7e14);
+}
+.bg-gradient-info {
+  background: linear-gradient(135deg, #0dcaf0, #6610f2);
+}
+.stat-card .card-title {
+  font-size: 2rem;
+  font-weight: 700;
+}
+.stat-card .card-subtitle {
+  color: rgba(255,255,255,0.8) !important;
+}
+.stat-card .text-muted {
+  color: rgba(255,255,255,0.7) !important;
+}
+</style>
+{% endblock %}

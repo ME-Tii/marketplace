@@ -2095,6 +2095,129 @@ def profile(username):
     success = request.args.get('success')
     return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, reports=reports, notification_prefs=notification_prefs, total_ratings=total_ratings, avg_rating=avg_rating, user_bids=user_bids, accepted_bids_count=accepted_bids_count)
 
+@app.route('/seller/dashboard')
+def seller_dashboard():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    date_range = request.args.get('range', '30')
+    try:
+        days = int(date_range)
+    except:
+        days = 30
+    
+    from datetime import datetime, timedelta
+    start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    c.execute("SELECT COUNT(*) FROM posts WHERE user_id = ? AND is_active = 1", (session['user_id'],))
+    active_listings = c.fetchone()[0]
+    
+    c.execute("""SELECT 
+                 COALESCE(SUM(amount), 0),
+                 COUNT(*)
+                 FROM orders 
+                 WHERE seller_id = ? AND status IN ('paid', 'shipped', 'delivered') 
+                 AND created_at >= ?""", (session['user_id'], start_date))
+    revenue_result = c.fetchone()
+    total_revenue = revenue_result[0] or 0
+    total_orders = revenue_result[1] or 0
+    
+    c.execute("""SELECT 
+                 COALESCE(SUM(amount), 0),
+                 COUNT(*)
+                 FROM orders 
+                 WHERE seller_id = ? AND status = 'pending'""", (session['user_id'],))
+    pending_result = c.fetchone()
+    pending_revenue = pending_result[0] or 0
+    pending_orders = pending_result[1] or 0
+    
+    c.execute("""SELECT 
+                 COALESCE(SUM(amount), 0),
+                 COUNT(*)
+                 FROM orders 
+                 WHERE seller_id = ? AND status IN ('paid', 'shipped', 'delivered')
+                 AND created_at >= datetime('now', '-30 days')""", (session['user_id'],))
+    monthly_result = c.fetchone()
+    monthly_revenue = monthly_result[0] or 0
+    monthly_orders = monthly_result[1] or 0
+    
+    c.execute("""SELECT 
+                 DATE(o.created_at) as date,
+                 COALESCE(SUM(o.amount), 0) as revenue,
+                 COUNT(*) as orders
+                 FROM orders o
+                 WHERE o.seller_id = ?
+                 AND o.status IN ('paid', 'shipped', 'delivered')
+                 AND o.created_at >= ?
+                 GROUP BY DATE(o.created_at)
+                 ORDER BY date""", (session['user_id'], start_date))
+    daily_stats = c.fetchall()
+    
+    c.execute("""SELECT 
+                 p.title,
+                 COALESCE(SUM(o.amount), 0) as revenue,
+                 COUNT(o.id) as sales
+                 FROM orders o
+                 JOIN posts p ON o.post_id = p.id
+                 WHERE o.seller_id = ?
+                 AND o.status IN ('paid', 'shipped', 'delivered')
+                 AND o.created_at >= ?
+                 GROUP BY p.id
+                 ORDER BY revenue DESC
+                 LIMIT 5""", (session['user_id'], start_date))
+    top_products = c.fetchall()
+    
+    c.execute("""SELECT 
+                 o.id,
+                 p.title,
+                 o.amount,
+                 o.status,
+                 o.created_at,
+                 buyer.username
+                 FROM orders o
+                 JOIN posts p ON o.post_id = p.id
+                 JOIN users buyer ON o.buyer_id = buyer.id
+                 WHERE o.seller_id = ?
+                 ORDER BY o.created_at DESC
+                 LIMIT 10""", (session['user_id'],))
+    recent_orders = c.fetchall()
+    
+    c.execute("""SELECT status, COUNT(*) as count
+                 FROM orders
+                 WHERE seller_id = ?
+                 GROUP BY status""", (session['user_id'],))
+    orders_by_status = c.fetchall()
+    
+    conn.close()
+    
+    avg_order_value = total_revenue / total_orders if total_orders > 0 else 0
+    
+    chart_labels = [str(row[0]) for row in daily_stats]
+    chart_revenue = [float(row[1]) for row in daily_stats]
+    chart_orders = [row[2] for row in daily_stats]
+    
+    return render_template('seller_dashboard.html',
+                         active_listings=active_listings,
+                         total_revenue=total_revenue,
+                         total_orders=total_orders,
+                         pending_orders=pending_orders,
+                         pending_revenue=pending_revenue,
+                         monthly_revenue=monthly_revenue,
+                         monthly_orders=monthly_orders,
+                         avg_order_value=avg_order_value,
+                         chart_labels=chart_labels,
+                         chart_revenue=chart_revenue,
+                         chart_orders=chart_orders,
+                         top_products=top_products,
+                         recent_orders=recent_orders,
+                         orders_by_status=orders_by_status,
+                         date_range=days,
+                         unread_messages=get_unread_messages_count(session.get('user_id')),
+                         cart_count=get_cart_count(session.get('user_id')))
+
 @app.route('/settings/notifications', methods=['POST'])
 def update_notifications():
     if 'user_id' not in session:

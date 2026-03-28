@@ -44,10 +44,16 @@
       {% if success %}
       <div class="alert alert-success">{{ success }}</div>
       {% endif %} {% if is_owner %}
-      <a href="/edit_profile" class="btn btn-secondary mb-3"
-        >{% if session.get('lang') == 'de' %}Profil bearbeiten{% else %}Edit
-        Profile{% endif %}</a
-      >
+      <div class="mb-3">
+        <a href="/edit_profile" class="btn btn-secondary"
+          >{% if session.get('lang') == 'de' %}Profil bearbeiten{% else %}Edit Profile{% endif %}</a
+        >
+        {% if posts|length > 0 %}
+        <a href="/seller/dashboard" class="btn btn-primary"
+          >📊 {% if session.get('lang') == 'de' %}Verkäufer-Dashboard{% else %}Seller Dashboard{% endif %}</a
+        >
+        {% endif %}
+      </div>
       
       {% if user_bids %}
       <div class="card mb-4 border-warning">
