@@ -522,7 +522,10 @@
       // Scroll to products section if there's a search query
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('q') || urlParams.has('location') || urlParams.has('category') || urlParams.has('type')) {
-        document.getElementById('products-section').scrollIntoView({ behavior: 'smooth' });
+        const navbarHeight = document.querySelector('.navbar')?.offsetHeight || 70;
+        const target = document.getElementById('products-section');
+        const top = target.getBoundingClientRect().top + window.pageYOffset - navbarHeight - 20;
+        window.scrollTo({ top: top, behavior: 'smooth' });
       }
     }, 300);
   });
