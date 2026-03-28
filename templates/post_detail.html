@@ -145,10 +145,32 @@
         {% if session.get('user_id') == post[14] %}
         <a href="/post/{{ post[0] }}/bids" class="btn btn-secondary">View Offers</a>
         {% endif %}
+        
+        <hr class="mt-4">
+        <h6>{% if session.get('lang') == 'de' %}Teilen{% else %}Share{% endif %}</h6>
+        <button class="btn btn-outline-secondary" onclick="copyLink()">
+          🔗 {% if session.get('lang') == 'de' %}Link kopieren{% else %}Copy Link{% endif %}
+        </button>
+        <span id="copyFeedback" class="ms-2 text-success" style="display: none;">
+          {% if session.get('lang') == 'de' %}Kopiert!{% else %}Copied!{% endif %}
+        </span>
       </div>
       {% endif %}
     </div>
   </div>
+  
+  <script>
+  function copyLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      const feedback = document.getElementById('copyFeedback');
+      feedback.style.display = 'inline';
+      setTimeout(() => {
+        feedback.style.display = 'none';
+      }, 2000);
+    });
+  }
+  </script>
   
   {% if related_products %}
   <div class="mt-5">
