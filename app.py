@@ -1354,10 +1354,8 @@ def checkout_cart():
         conn.commit()
         conn.close()
         
-        if len(order_ids) == 1:
-            return redirect(f'/checkout/{order_ids[0]}')
-        else:
-            return redirect('/orders')
+        flash('Order(s) created! Complete payment from the Orders page.', 'success')
+        return redirect('/orders')
     
     conn.close()
     return render_template('checkout_cart.html', items=items, subtotal=subtotal, total_shipping=total_shipping, total=total,
