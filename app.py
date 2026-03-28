@@ -1590,64 +1590,80 @@ def checkout_cart_pay():
 
 @app.route('/cart_payment_success')
 def cart_payment_success():
-    order_ids_str = request.args.get('order_ids', '')
-    
-    if not order_ids_str:
-        return redirect('/dashboard')
-    
-    order_ids = [int(oid.strip()) for oid in order_ids_str.split(',') if oid.strip()]
-    
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    
-    c.execute("""SELECT o.id, o.amount, o.shipping_cost, o.seller_id, u.stripe_account_id, o.quantity
-                 FROM orders o
-                 JOIN users u ON o.seller_id = u.id
-                 WHERE o.id IN ({})""".format(','.join('?' * len(order_ids))), order_ids)
-    orders_with_sellers = c.fetchall()
-    
-    platform_fee_total = 0
-    
-    for order in orders_with_sellers:
-        order_id, amount, shipping_cost, seller_id, stripe_account_id, quantity = order
-        if stripe_account_id and app.config.get('STRIPE_SECRET_KEY'):
-            seller_amount = amount
-            platform_fee = round(seller_amount * 0.10, 2)
-            transfer_amount = round(seller_amount - platform_fee, 2)
-            platform_fee_total += platform_fee
+    try:
+        order_ids_str = request.args.get('order_ids', '')
+        
+        if not order_ids_str:
+            return redirect('/dashboard')
+        
+        order_ids = [int(oid.strip()) for oid in order_ids_str.split(',') if oid.strip()]
+        
+        app.logger.info(f"Processing cart_payment_success for order_ids: {order_ids}")
+        
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        
+        c.execute("""SELECT o.id, o.amount, o.shipping_cost, o.seller_id, u.stripe_account_id, o.quantity
+                     FROM orders o
+                     JOIN users u ON o.seller_id = u.id
+                     WHERE o.id IN ({})""".format(','.join('?' * len(order_ids))), order_ids)
+        orders_with_sellers = c.fetchall()
+        
+        app.logger.info(f"Found {len(orders_with_sellers)} orders")
+        
+        if not orders_with_sellers:
+            conn.close()
+            flash('No orders found. They may have already been processed.', 'warning')
+            return redirect('/dashboard')
+        
+        platform_fee_total = 0
+        
+        for order in orders_with_sellers:
+            order_id, amount, shipping_cost, seller_id, stripe_account_id, quantity = order
+            app.logger.info(f"Processing order {order_id}: amount={amount}, seller={seller_id}, stripe={stripe_account_id}")
             
-            try:
-                transfer = stripe.Transfer.create(
-                    amount=int(transfer_amount * 100),
-                    currency='usd',
-                    destination=stripe_account_id,
-                    metadata={'order_id': order_id}
-                )
+            if stripe_account_id and app.config.get('STRIPE_SECRET_KEY'):
+                seller_amount = amount
+                platform_fee = round(seller_amount * 0.10, 2)
+                transfer_amount = round(seller_amount - platform_fee, 2)
+                platform_fee_total += platform_fee
+                
+                try:
+                    transfer = stripe.Transfer.create(
+                        amount=int(transfer_amount * 100),
+                        currency='usd',
+                        destination=stripe_account_id,
+                        metadata={'order_id': order_id}
+                    )
+                    c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                                 VALUES (?, ?, ?, ?, 'completed')""",
+                              (order_id, seller_id, transfer_amount, transfer.id))
+                    app.logger.info(f"Transfer created for order {order_id}: {transfer.id}")
+                except Exception as e:
+                    app.logger.error(f"Transfer failed for order {order_id}: {str(e)}")
+                    c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
+                                 VALUES (?, ?, ?, ?, 'failed')""",
+                              (order_id, seller_id, transfer_amount, None))
+            else:
+                app.logger.info(f"No Stripe for seller {seller_id}, recording as no_stripe")
                 c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
-                             VALUES (?, ?, ?, ?, 'completed')""",
-                          (order_id, seller_id, transfer_amount, transfer.id))
-            except Exception as e:
-                app.logger.error(f"Transfer failed for order {order_id}: {str(e)}")
-                c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
-                             VALUES (?, ?, ?, ?, 'failed')""",
-                          (order_id, seller_id, transfer_amount, None))
-        else:
-            c.execute("""INSERT INTO seller_transfers (order_id, seller_id, amount, transfer_id, status)
-                         VALUES (?, ?, ?, ?, 'no_stripe')""",
-                      (order_id, seller_id, amount, None))
-    
-    for order_id in order_ids:
-        c.execute("UPDATE orders SET status = 'paid' WHERE id = ? AND status = 'pending'", (order_id,))
-        c.execute("UPDATE orders SET transaction_fee = ? WHERE id = ?", (platform_fee_total, order_id))
-        c.execute("""UPDATE posts SET quantity = quantity - o.quantity 
-                     FROM (SELECT post_id, quantity FROM orders WHERE id = ?) o
-                     WHERE posts.id = o.post_id""", (order_id,))
-    
-    conn.commit()
-    conn.close()
-    
-    flash(f'{len(order_ids)} order(s) paid successfully!', 'success')
-    return redirect('/orders')
+                             VALUES (?, ?, ?, ?, 'no_stripe')""",
+                          (order_id, seller_id, amount, None))
+        
+        for order_id in order_ids:
+            c.execute("UPDATE orders SET status = 'paid' WHERE id = ? AND status = 'pending'", (order_id,))
+            c.execute("UPDATE orders SET transaction_fee = ? WHERE id = ?", (platform_fee_total / len(order_ids), order_id))
+            c.execute("UPDATE posts SET quantity = quantity - (SELECT quantity FROM orders WHERE id = ?) WHERE id = (SELECT post_id FROM orders WHERE id = ?)", (order_id, order_id))
+        
+        conn.commit()
+        conn.close()
+        
+        flash(f'{len(order_ids)} order(s) paid successfully!', 'success')
+        return redirect('/orders')
+    except Exception as e:
+        app.logger.error(f"cart_payment_success error: {str(e)}")
+        flash(f'Payment processing error: {str(e)}', 'danger')
+        return redirect('/dashboard')
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 @limiter.limit("3 per hour")
