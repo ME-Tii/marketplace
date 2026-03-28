@@ -22,9 +22,17 @@
                 <div>
                   <h6 class="mb-0">{{ item[3] }}</h6>
                   <small class="text-muted">{% if session.get('lang') == 'de' %}Verkäufer{% else %}Seller{% endif %}: {{ item[11] }}</small>
+                  <br>
+                  <small class="text-success">${{ "%.2f"|format(item[4]) }} {% if session.get('lang') == 'de' %}pro Stück{% else %}each{% endif %}</small>
                 </div>
                 <div class="text-end">
-                  <span class="badge bg-secondary mb-1">Qty: {{ item[1] }}</span>
+                  <form action="/update_cart/{{ item[0] }}" method="POST" class="d-flex align-items-center mb-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label class="me-2 small">{% if session.get('lang') == 'de' %}Menge{% else %}Qty{% endif %}:</label>
+                    <input type="number" name="quantity" value="{{ item[1] }}" min="1" max="{{ item[7] if item[7] > 0 else 1 }}" class="form-control form-control-sm" style="width: 70px;">
+                    <button type="submit" class="btn btn-sm btn-outline-primary ms-2">{% if session.get('lang') == 'de' %}Aktualisieren{% else %}Update{% endif %}</button>
+                  </form>
+                  <small class="text-muted">{% if session.get('lang') == 'de' %}Auf Lager{% else %}Stock{% endif %}: {{ item[7] }}</small>
                   <p class="mb-0 fw-bold">${{ "%.2f"|format(item[4] * item[1]) }}</p>
                 </div>
               </div>
@@ -39,7 +47,7 @@
           <h5 class="mb-0">{% if session.get('lang') == 'de' %}Versandart{% else %}Shipping Method{% endif %}</h5>
         </div>
         <div class="card-body">
-          <form method="POST">
+          <form method="POST" id="checkout-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             
             {% set has_local = false %}
@@ -50,18 +58,18 @@
             {% endfor %}
             
             {% if has_local %}
-            <div class="form-check mb-2">
-              <input class="form-check-input" type="radio" name="shipping_method" id="local_pickup" value="local_pickup" checked>
+            <div class="form-check mb-3 p-3 border rounded">
+              <input class="form-check-input" type="radio" name="shipping_method" id="local_pickup" value="local_pickup" checked onchange="updateTotal()">
               <label class="form-check-label" for="local_pickup">
                 <strong>{% if session.get('lang') == 'de' %}Lokale Abholung{% else %}Local Pickup{% endif %}</strong>
-                <small class="text-muted d-block">{% if session.get('lang') == 'de' %}Artikel persönlich abholen{% else %}Pick up items in person{% endif %}</small>
+                <small class="text-muted d-block">{% if session.get('lang') == 'de' %}Artikel persönlich abholen - Kostenlos{% else %}Pick up items in person - Free{% endif %}</small>
               </label>
             </div>
             {% endif %}
             
             {% if has_shipping %}
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="shipping_method" id="shipping" value="shipping" {% if not has_local %}checked{% endif %}>
+            <div class="form-check mb-3 p-3 border rounded">
+              <input class="form-check-input" type="radio" name="shipping_method" id="shipping" value="shipping" {% if not has_local %}checked{% endif %} onchange="updateTotal()">
               <label class="form-check-label" for="shipping">
                 <strong>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</strong>
                 <small class="text-muted d-block">{% if session.get('lang') == 'de' %}Artikel werden zu Ihnen geliefert{% else %}Items shipped to your address{% endif %}</small>
@@ -69,7 +77,7 @@
             </div>
             {% endif %}
             
-            <button type="submit" class="btn btn-success btn-lg w-100 mt-4">
+            <button type="submit" class="btn btn-success btn-lg w-100 mt-3">
               {% if session.get('lang') == 'de' %}Weiter zur Zahlung{% else %}Continue to Payment{% endif %}
             </button>
           </form>
@@ -87,14 +95,14 @@
             <span>{% if session.get('lang') == 'de' %}Zwischensumme{% else %}Subtotal{% endif %}</span>
             <span>${{ "%.2f"|format(subtotal) }}</span>
           </div>
-          <div class="d-flex justify-content-between mb-2">
+          <div class="d-flex justify-content-between mb-2" id="shipping-row">
             <span>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %}</span>
-            <span>${{ "%.2f"|format(total_shipping) }}</span>
+            <span id="shipping-cost">${{ "%.2f"|format(total_shipping) }}</span>
           </div>
           <hr>
           <div class="d-flex justify-content-between fw-bold fs-5">
             <span>{% if session.get('lang') == 'de' %}Gesamt{% else %}Total{% endif %}</span>
-            <span>${{ "%.2f"|format(total) }}</span>
+            <span id="total-cost">${{ "%.2f"|format(total) }}</span>
           </div>
         </div>
       </div>
@@ -105,4 +113,18 @@
     </div>
   </div>
 </div>
+
+<script>
+const totalShipping = {{ total_shipping }};
+
+function updateTotal() {
+  const isShipping = document.getElementById('shipping').checked;
+  const shippingCost = isShipping ? totalShipping : 0;
+  const subtotal = {{ subtotal }};
+  const total = subtotal + shippingCost;
+  
+  document.getElementById('shipping-cost').textContent = '$' + shippingCost.toFixed(2);
+  document.getElementById('total-cost').textContent = '$' + total.toFixed(2);
+}
+</script>
 {% endblock %}
