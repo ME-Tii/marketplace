@@ -125,7 +125,7 @@
         </div>
         
         <div class="mt-4">
-          <button type="submit" class="btn btn-success btn-lg">
+          <button type="submit" class="btn btn-success btn-lg" id="payBtn">
             🛒 {% if session.get('lang') == 'de' %}Weiter zur Zahlung{% else %}Proceed to Payment{% endif %}
           </button>
           <a href="/cart" class="btn btn-secondary btn-lg ms-2">
@@ -195,6 +195,13 @@ function updateTotal() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
   toggleAddress();
+  
+  // Disable button on submit to prevent double-submit
+  document.getElementById('payBtn').addEventListener('click', function() {
+    this.disabled = true;
+    this.innerHTML = '⏳ Processing...';
+    this.form.submit();
+  });
 });
 </script>
 {% endblock %}
