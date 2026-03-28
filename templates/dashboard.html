@@ -521,15 +521,7 @@
   
   // Stripe modal
   function closeStripeModal() {
-    localStorage.setItem('stripe_modal_dismissed', Date.now());
     document.getElementById('stripe-modal').style.display = 'none';
-  }
-  
-  // Check if modal was dismissed recently (within 24 hours)
-  const dismissed = localStorage.getItem('stripe_modal_dismissed');
-  if (dismissed && Date.now() - dismissed < 86400000) {
-    const modal = document.getElementById('stripe-modal');
-    if (modal) modal.style.display = 'none';
   }
   
   // Load Google AdSense ads
