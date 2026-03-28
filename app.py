@@ -1361,6 +1361,121 @@ def checkout_cart():
         
         flash('Order(s) created! Complete payment from the Orders page.', 'success')
         return redirect('/orders')
+
+@app.route('/checkout/cart/pay', methods=['POST'])
+def checkout_cart_pay():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    shipping_method = request.form.get('shipping_method', 'local_pickup')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""SELECT c.id, c.quantity, p.id, p.title, p.price, p.image, p.user_id, p.quantity as stock,
+                 p.local_pickup, p.shipping_available, p.shipping_cost, u.username, u.stripe_account_id
+                 FROM cart c
+                 JOIN posts p ON c.post_id = p.id
+                 JOIN users u ON p.user_id = u.id
+                 WHERE c.user_id = ? AND p.is_active = 1
+                 ORDER BY c.added_at DESC""", (session['user_id'],))
+    items = c.fetchall()
+    
+    if not items:
+        conn.close()
+        flash('Your cart is empty.', 'warning')
+        return redirect('/cart')
+    
+    subtotal = sum(item[4] * item[1] for item in items)
+    total_shipping = sum((item[9] * item[10] if item[8] else 0) * item[1] for item in items)
+    total = subtotal + total_shipping
+    
+    for item in items:
+        cart_id, quantity, post_id, title, price, image, user_id, stock, local_pickup, shipping_available, shipping_cost, seller_username, seller_stripe = item
+        
+        if stock is None or stock <= 0:
+            conn.close()
+            flash(f'"{title}" is out of stock.', 'warning')
+            return redirect('/cart')
+        
+        if quantity > stock:
+            conn.close()
+            flash(f'Not enough stock for "{title}". Only {stock} available.', 'warning')
+            return redirect('/cart')
+        
+        shipping_cost_item = shipping_cost if shipping_method == 'shipping' and shipping_available else 0
+        
+        c.execute("""INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, quantity)
+                     VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)""",
+                  (post_id, session['user_id'], user_id, price * quantity, shipping_method, shipping_cost_item, quantity))
+        order_id = c.lastrowid
+        session[f'cart_order_{order_id}'] = order_id
+        
+        c.execute("DELETE FROM cart WHERE id = ?", (cart_id,))
+    
+    conn.commit()
+    
+    session['cart_order_ids'] = ','.join(str(session.get(f'cart_order_{i}', i)) for i in range(len(items)))
+    
+    if not app.config['STRIPE_SECRET_KEY']:
+        conn.close()
+        flash('Stripe is not configured. Please contact the administrator.', 'danger')
+        return redirect('/orders')
+    
+    line_items = []
+    for item in items:
+        cart_id, quantity, post_id, title, price, image, user_id, stock, local_pickup, shipping_available, shipping_cost, seller_username, seller_stripe = item
+        shipping_cost_item = shipping_cost if shipping_method == 'shipping' and shipping_available else 0
+        item_total = (price * quantity) + shipping_cost_item
+        line_items.append({
+            'price_data': {
+                'currency': 'usd',
+                'product_data': {'name': f'{title} x {quantity}'},
+                'unit_amount': int(item_total * 100),
+            },
+            'quantity': 1,
+        })
+    
+    order_ids_str = session.get('cart_order_ids', '')
+    
+    try:
+        session_stripe = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=line_items,
+            mode='payment',
+            success_url=request.url_root + 'cart_payment_success?order_ids=' + order_ids_str,
+            cancel_url=request.url_root + 'cart',
+            metadata={'order_ids': order_ids_str, 'type': 'cart'}
+        )
+        conn.close()
+        return redirect(session_stripe.url, code=303)
+    except Exception as e:
+        conn.close()
+        flash(f'Payment error: {str(e)}', 'danger')
+        return redirect('/orders')
+
+@app.route('/cart_payment_success')
+def cart_payment_success():
+    order_ids_str = request.args.get('order_ids', '')
+    
+    if not order_ids_str:
+        return redirect('/dashboard')
+    
+    order_ids = [int(oid.strip()) for oid in order_ids_str.split(',') if oid.strip()]
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    for order_id in order_ids:
+        c.execute("UPDATE orders SET status = 'paid' WHERE id = ? AND status = 'pending'", (order_id,))
+        c.execute("""UPDATE posts SET quantity = quantity - o.quantity 
+                     FROM (SELECT post_id, quantity FROM orders WHERE id = ?) o
+                     WHERE posts.id = o.post_id""", (order_id,))
+    
+    conn.commit()
+    conn.close()
+    
+    flash(f'{len(order_ids)} order(s) paid successfully!', 'success')
+    return redirect('/orders')
     
     conn.close()
     return render_template('checkout_cart.html', items=items, subtotal=subtotal, total_shipping=total_shipping, total=total,

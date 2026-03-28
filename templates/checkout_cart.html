@@ -77,8 +77,8 @@
             </div>
             {% endif %}
             
-            <button type="submit" class="btn btn-success btn-lg w-100 mt-3">
-              {% if session.get('lang') == 'de' %}Weiter zur Zahlung{% else %}Continue to Payment{% endif %}
+            <button type="submit" formaction="/checkout/cart/pay" class="btn btn-success btn-lg w-100 mt-3">
+              🛒 {% if session.get('lang') == 'de' %}Warenkorb bezahlen{% else %}Pay Cart{% endif %}
             </button>
           </form>
         </div>
