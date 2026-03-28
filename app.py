@@ -1545,7 +1545,7 @@ def checkout_cart_pay():
     
     conn.commit()
     
-    if not app.config['STRIPE_SECRET_KEY']:
+    if not app.config.get('STRIPE_SECRET_KEY'):
         conn.close()
         flash('Stripe is not configured. Please contact the administrator.', 'danger')
         return redirect('/orders')
@@ -1565,19 +1565,25 @@ def checkout_cart_pay():
         })
     
     order_ids_str = ','.join(order_ids)
+    success_url = request.url_root.rstrip('/') + '/cart_payment_success?order_ids=' + order_ids_str
+    cancel_url = request.url_root.rstrip('/') + '/cart'
+    
+    app.logger.info(f"Creating Stripe session for cart checkout. Items: {len(line_items)}, order_ids: {order_ids_str}")
     
     try:
         session_stripe = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=line_items,
             mode='payment',
-            success_url=request.url_root + 'cart_payment_success?order_ids=' + order_ids_str,
-            cancel_url=request.url_root + 'cart',
+            success_url=success_url,
+            cancel_url=cancel_url,
             metadata={'order_ids': order_ids_str, 'type': 'cart'}
         )
+        app.logger.info(f"Stripe session created: {session_stripe.id}")
         conn.close()
         return redirect(session_stripe.url, code=303)
     except Exception as e:
+        app.logger.error(f"Stripe checkout error: {str(e)}")
         conn.close()
         flash(f'Payment error: {str(e)}', 'danger')
         return redirect('/orders')
