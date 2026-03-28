@@ -1456,6 +1456,11 @@ def checkout_cart():
         
         flash('Order(s) created! Complete payment from the Orders page.', 'success')
         return redirect('/orders')
+    
+    conn.close()
+    return render_template('checkout_cart.html', items=items, subtotal=subtotal, total_shipping=total_shipping, total=total,
+                         unread_messages=get_unread_messages_count(session.get('user_id')),
+                         cart_count=get_cart_count(session.get('user_id')))
 
 @app.route('/checkout/cart/pay', methods=['POST'])
 def checkout_cart_pay():
