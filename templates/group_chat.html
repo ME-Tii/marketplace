@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}{{ group[0] }} - Chat{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0">💬 {{ group[0] }} - {% if session.get('lang') == 'de' %}Gruppenchat{% else %}Group Chat{% endif %}</h5>
+          </div>
+          <a href="/group/{{ group_id }}" class="btn btn-light btn-sm">
+            {% if session.get('lang') == 'de' %}Zurück zur Gruppe{% else %}Back to Group{% endif %}
+          </a>
+        </div>
+        <div class="card-body p-0">
+          <div class="row g-0">
+            <div class="col-md-9 border-end">
+              <div class="chat-messages p-3" style="height: 500px; overflow-y: auto;" id="chatMessages">
+                {% if not messages %}
+                <div class="text-center text-muted p-4">
+                  <p>{% if session.get('lang') == 'de' %}Noch keine Nachrichten. Sei der Erste!{% else %}No messages yet. Be the first to say hello!{% endif %}</p>
+                </div>
+                {% else %}
+                {% for msg in messages %}
+                <div class="message mb-3 {% if msg[4] == session.get('user_id') %}text-end{% endif %}">
+                  <div class="d-inline-block {% if msg[4] == session.get('user_id') %}bg-primary text-white{% else %}bg-light{% endif %} rounded p-2 px-3" style="max-width: 80%;">
+                    <div class="small fw-bold {% if msg[4] == session.get('user_id') %}text-white-50{% endif %}">{{ msg[3] }}</div>
+                    {% if msg[5] and (msg[5].lower().endswith('.jpg') or msg[5].lower().endswith('.jpeg') or msg[5].lower().endswith('.png') or msg[5].lower().endswith('.gif') or msg[5].lower().endswith('.webp')) %}
+                    <img src="{{ msg[5] }}" class="img-fluid rounded mb-2" style="max-height: 200px;">
+                    {% elif msg[5] %}
+                    <div class="mt-1">
+                      <a href="{{ msg[5] }}" target="_blank" class="{% if msg[4] == session.get('user_id') %}text-white{% endif %}">📎 Attachment</a>
+                    </div>
+                    {% endif %}
+                    <div>{{ msg[1] }}</div>
+                    <div class="small {% if msg[4] == session.get('user_id') %}text-white-50{% endif %}">{{ msg[2] }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+              </div>
+              <div class="border-top p-3">
+                <div id="attachmentPreview" class="mb-2 text-muted small" style="display: none;">
+                  <img id="attachmentThumb" src="" style="max-height: 60px; max-width: 100px;" class="me-2 rounded">
+                  <span id="attachmentName"></span>
+                  <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" onclick="clearAttachment()">×</button>
+                </div>
+                <form method="POST" action="/group/{{ group_id }}/send" enctype="multipart/form-data" id="messageForm" onsubmit="return validateForm()">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <div class="input-group">
+                    <input type="text" name="message" id="messageInput" class="form-control" placeholder="{% if session.get('lang') == 'de' %}Nachricht eingeben...{% else %}Type a message...{% endif %}">
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('attachmentInput').click()">📎</button>
+                    <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Senden{% else %}Send{% endif %}</button>
+                  </div>
+                  <input type="file" name="attachment" id="attachmentInput" accept="image/*" onchange="showAttachment(this)" style="display: none;">
+                </form>
+                <div id="formError" class="text-danger small mt-1" style="display: none;"></div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3">
+                <h6>{% if session.get('lang') == 'de' %}Mitglieder{% else %}Members{% endif %} ({{ members|length }})</h6>
+                <ul class="list-unstyled">
+                  {% for member in members %}
+                  <li class="mb-2">
+                    <a href="/profile/{{ member }}" class="text-decoration-none">
+                      👤 {{ member }}
+                    </a>
+                    {% if member == group[2] %}
+                    <span class="badge bg-warning text-dark">👑</span>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showAttachment(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    document.getElementById('attachmentName').textContent = file.name;
+    
+    // Show thumbnail for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('attachmentThumb').src = e.target.result;
+        document.getElementById('attachmentThumb').style.display = 'inline-block';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      document.getElementById('attachmentThumb').style.display = 'none';
+    }
+    
+    document.getElementById('attachmentPreview').style.display = 'block';
+  }
+}
+
+function clearAttachment() {
+  document.getElementById('attachmentInput').value = '';
+  document.getElementById('attachmentPreview').style.display = 'none';
+  document.getElementById('attachmentThumb').src = '';
+}
+
+function validateForm() {
+  const message = document.getElementById('messageInput').value.trim();
+  const attachment = document.getElementById('attachmentInput').files[0];
+  const error = document.getElementById('formError');
+  
+  if (!message && !attachment) {
+    error.textContent = '{% if session.get("lang") == "de" %}Bitte eine Nachricht oder ein Bild eingeben{% else %}Please enter a message or select an image{% endif %}';
+    error.style.display = 'block';
+    return false;
+  }
+  
+  error.style.display = 'none';
+  return true;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const chatDiv = document.getElementById('chatMessages');
+  if (chatDiv) {
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+  }
+});
+
+setInterval(function() {
+  fetch(window.location.href)
+    .then(response => response.text())
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const newMessages = doc.querySelector('#chatMessages');
+      if (newMessages) {
+        const currentDiv = document.getElementById('chatMessages');
+        if (currentDiv && newMessages.innerHTML !== currentDiv.innerHTML) {
+          currentDiv.innerHTML = newMessages.innerHTML;
+          currentDiv.scrollTop = currentDiv.scrollHeight;
+        }
+      }
+    });
+}, 10000);
+</script>
+{% endblock %}

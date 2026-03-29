@@ -1,245 +1,278 @@
-{% extends "base.html" %} {% block title %}{{ group[0] }}{% endblock %} {% block
-content %}
+{% extends "base.html" %} {% block title %}{{ group[0] }}{% endblock %} {%
+block content %}
 <div class="container mt-5">
-  <div
-    class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4"
-  >
-    <div class="mb-3 mb-sm-0">
-      <h1 class="h4 h-sm-1">{{ group[0] }}</h1>
-      <p class="text-muted small">{{ group[1] or 'No description' }}</p>
-      <p class="small text-muted">
-        {% if session.get('lang') == 'de' %}Erstellt von{% else %}Created by{%
-        endif %} {{ group[3] }}
-      </p>
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">{{ group[0] }}</h4>
+        <a href="/groups" class="btn btn-light btn-sm">
+          {% if session.get('lang') == 'de' %}Zurück zu Gruppen{% else %}Back to Groups{% endif %}
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <p class="text-muted small mb-1">{{ group[1] or 'No description' }}</p>
+          <p class="small text-muted mb-0">
+            {% if session.get('lang') == 'de' %}Erstellt von{% else %}Created by{% endif %} {{ group[3] }}
+          </p>
+        </div>
+        {% if is_creator %}
+        <div class="d-flex flex-wrap gap-2">
+          <a href="/manage_group/{{ group_id }}" class="btn btn-outline-secondary btn-sm">
+            {% if session.get('lang') == 'de' %}Mitglieder verwalten{% else %}Manage Members{% endif %}
+          </a>
+          <form method="post" action="/toggle_group_privacy/{{ group_id }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-outline-warning btn-sm">
+              {% if group[4] %}{% if session.get('lang') == 'de' %}Öffentlich{% else %}Public{% endif %}{% else %}{% if session.get('lang') == 'de' %}Privat{% else %}Private{% endif %}{% endif %}
+            </button>
+          </form>
+          <form method="post" action="/delete_group/{{ group_id }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('{% if session.get('lang') == 'de' %}Gruppe wirklich löschen?{% else %}Are you sure you want to delete this group?{% endif %}');">
+              {% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
       {% if is_creator %}
-      <a
-        href="/edit_group/{{ group_id }}"
-        class="btn btn-outline-primary btn-sm"
-        >{% if session.get('lang') == 'de' %}Beschreibung bearbeiten{% else
-        %}Edit Description{% endif %}</a
-      >
+      <a href="/edit_group/{{ group_id }}" class="btn btn-outline-primary btn-sm">
+        {% if session.get('lang') == 'de' %}Beschreibung bearbeiten{% else %}Edit Description{% endif %}
+      </a>
+      {% endif %}
+      <a href="/group/{{ group_id }}/chat" class="btn btn-success btn-sm">
+        💬 {% if session.get('lang') == 'de' %}Gruppenchat{% else %}Group Chat{% endif %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Polls Section -->
+  <div class="card shadow mt-4">
+    <div class="card-header bg-warning text-dark">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">📊 {% if session.get('lang') == 'de' %}Umfragen{% else %}Polls{% endif %}</h5>
+        <button class="btn btn-sm btn-dark" type="button" data-bs-toggle="collapse" data-bs-target="#pollForm" aria-expanded="false" aria-controls="pollForm">
+          {% if session.get('lang') == 'de' %}Neue Umfrage erstellen{% else %}Create Poll{% endif %}
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="collapse mb-3" id="pollForm">
+        <div class="card card-body">
+          <form method="post" action="/group/{{ group_id }}/poll">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Frage{% else %}Question{% endif %}</label>
+              <input type="text" name="question" class="form-control" required maxlength="200" placeholder="{% if session.get('lang') == 'de' %}Was möchtest du wissen?{% else %}What would you like to ask?{% endif %}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{% if session.get('lang') == 'de' %}Optionen{% else %}Options{% endif %} ({% if session.get('lang') == 'de' %}mindestens 2{% else %}at least 2{% endif %})</label>
+              <input type="text" name="options" class="form-control mb-2" placeholder="{% if session.get('lang') == 'de' %}Option 1{% else %}Option 1{% endif %}">
+              <input type="text" name="options" class="form-control mb-2" placeholder="{% if session.get('lang') == 'de' %}Option 2{% else %}Option 2{% endif %}">
+              <input type="text" name="options" class="form-control mb-2" placeholder="{% if session.get('lang') == 'de' %}Option 3 (optional){% else %}Option 3 (optional){% endif %}">
+              <input type="text" name="options" class="form-control" placeholder="{% if session.get('lang') == 'de' %}Option 4 (optional){% else %}Option 4 (optional){% endif %}">
+            </div>
+            <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Umfrage erstellen{% else %}Create Poll{% endif %}</button>
+          </form>
+        </div>
+      </div>
+      
+      {% if polls %}
+      {% for poll in polls %}
+      <div class="card mb-3 {% if not poll.is_active %}opacity-50{% endif %}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ poll.question }}</strong>
+            <small class="text-muted d-block">{% if session.get('lang') == 'de' %}von{% else %}by{% endif %} {{ poll.creator }} • {{ poll.total_votes }} {% if session.get('lang') == 'de' %}Stimmen{% else %}votes{% endif %}</small>
+          </div>
+          <div class="d-flex gap-2 align-items-center">
+            {% if poll.is_active %}
+            <span class="badge bg-success">{% if session.get('lang') == 'de' %}Aktiv{% else %}Active{% endif %}</span>
+            {% else %}
+            <span class="badge bg-secondary">{% if session.get('lang') == 'de' %}Geschlossen{% else %}Closed{% endif %}</span>
+            {% endif %}
+            {% if poll.creator_id == session.get('user_id') or is_creator %}
+            <form method="post" action="/group/{{ group_id }}/poll/{{ poll.id }}/close" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-sm btn-outline-warning">{% if session.get('lang') == 'de' %}Schließen{% else %}Close{% endif %}</button>
+            </form>
+            <form method="post" action="/group/{{ group_id }}/poll/{{ poll.id }}/delete" class="d-inline" onsubmit="return confirm('{% if session.get('lang') == 'de' %}Umfrage wirklich löschen?{% else %}Delete this poll?{% endif %}');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-sm btn-outline-danger">🗑️</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          {% if poll.user_voted or not poll.is_active %}
+          <!-- Show results -->
+          {% for opt in poll.options %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between mb-1">
+              <span>{{ opt.text }}</span>
+              <span>{{ opt.percentage }}% ({{ opt.votes }})</span>
+            </div>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar {% if opt.is_user_vote %}bg-success{% endif %}" role="progressbar" style="width: {{ opt.percentage }}%">{{ opt.percentage }}%</div>
+            </div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <!-- Show voting form -->
+          <form method="post" action="/group/{{ group_id }}/poll/{{ poll.id }}/vote">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            {% for opt in poll.options %}
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="option" id="opt{{ opt.id }}" value="{{ opt.id }}" required>
+              <label class="form-check-label" for="opt{{ opt.id }}">{{ opt.text }}</label>
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-sm mt-2">{% if session.get('lang') == 'de' %}Abstimmen{% else %}Vote{% endif %}</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p class="text-muted text-center">{% if session.get('lang') == 'de' %}Noch keine Umfragen.{% else %}No polls yet.{% endif %}</p>
       {% endif %}
     </div>
-    {% if is_creator %}
-    <div class="d-flex flex-wrap gap-2">
-      <a href="/manage_group/{{ group_id }}" class="btn btn-outline-secondary"
-        >{% if session.get('lang') == 'de' %}Mitglieder verwalten{% else
-        %}Manage Members{% endif %}</a
-      >
-      <form
-        method="post"
-        action="/toggle_group_privacy/{{ group_id }}"
-        class="d-inline"
-      >
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <button type="submit" class="btn btn-outline-warning">
-          {% if group[4] %}{% if session.get('lang') == 'de' %}Öffentlich{% else
-          %}Public{% endif %}{% else %}{% if session.get('lang') == 'de'
-          %}Privat{% else %}Private{% endif %}{% endif %}
-        </button>
-      </form>
-      <form
-        method="post"
-        action="/delete_group/{{ group_id }}"
-        class="d-inline"
-        onsubmit="return confirm('{% if session.get('lang') == 'de' %}Gruppe wirklich löschen?{% else %}Are you sure you want to delete this group?{% endif %}');"
-      >
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <button type="submit" class="btn btn-outline-danger">
-          {% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}
-        </button>
-      </form>
+  </div>
+
+  <!-- Posts Section -->
+  <div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="mb-0">
+        {% if session.get('lang') == 'de' %}Beiträge{% else %}Posts{% endif %}
+      </h2>
+      <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#postForm" aria-expanded="false" aria-controls="postForm">
+        {% if session.get('lang') == 'de' %}Neuen Beitrag erstellen{% else %}Create New Post{% endif %}
+      </button>
+    </div>
+    
+    <!-- Search and Filter -->
+    <form method="get" class="mb-3">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <input type="search" name="q" class="form-control" placeholder="{% if session.get('lang') == 'de' %}Beiträge suchen...{% else %}Search posts...{% endif %}" value="{{ query or '' }}">
+        </div>
+        <div class="col-md-3">
+          <select name="type" class="form-select">
+            <option value="">{% if session.get('lang') == 'de' %}Alle Typen{% else %}All Types{% endif %}</option>
+            <option value="sell" {% if type_filter == 'sell' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}</option>
+            <option value="buy" {% if type_filter == 'buy' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
+            <option value="trade" {% if type_filter == 'trade' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}</option>
+            <option value="notification" {% if type_filter == 'notification' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}</option>
+            <option value="giveaway" {% if type_filter == 'giveaway' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-outline-primary w-100">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
+        </div>
+        {% if query or type_filter %}
+        <div class="col-md-2">
+          <a href="/group/{{ group_id }}" class="btn btn-outline-secondary w-100">{% if session.get('lang') == 'de' %}Zurücksetzen{% else %}Clear{% endif %}</a>
+        </div>
+        {% endif %}
+      </div>
+    </form>
+    
+    <div class="collapse mb-4" id="postForm">
+      <div class="card p-4 shadow">
+        <form method="post" action="/post_in_group/{{ group_id }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <div class="mb-3">
+            <label for="title" class="form-label">{% if session.get('lang') == 'de' %}Titel{% else %}Title{% endif %} <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="title" name="title" required maxlength="200" />
+          </div>
+          <div class="mb-3">
+            <label for="content" class="form-label">{% if session.get('lang') == 'de' %}Beschreibung{% else %}Description{% endif %} <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="type" class="form-label">{% if session.get('lang') == 'de' %}Typ{% else %}Type{% endif %}</label>
+            <select class="form-control" id="type" name="type" required>
+              <option value="sell">{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}</option>
+              <option value="buy">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
+              <option value="trade">{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}</option>
+              <option value="notification">{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}</option>
+              <option value="giveaway">{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="image" class="form-label">{% if session.get('lang') == 'de' %}Bild{% else %}Image{% endif %}</label>
+            <input type="file" class="form-control" id="image" name="image" accept="image/*" />
+          </div>
+          <div class="mb-3">
+            <label for="price" class="form-label">{% if session.get('lang') == 'de' %}Preis (optional){% else %}Price (optional){% endif %}</label>
+            <input type="number" step="0.01" class="form-control" id="price" name="price" placeholder="Enter price" />
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="local_pickup" name="local_pickup" value="1" checked />
+              <label class="form-check-label" for="local_pickup">{% if session.get('lang') == 'de' %}Abholung vor Ort möglich{% else %}Local pickup available{% endif %}</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="shipping_available" name="shipping_available" value="1" onchange="toggleShippingCost()" />
+              <label class="form-check-label" for="shipping_available">{% if session.get('lang') == 'de' %}Versand möglich{% else %}Shipping available{% endif %}</label>
+            </div>
+          </div>
+          <div class="mb-3" id="shipping_cost_div" style="display:none;">
+            <label for="shipping_cost" class="form-label">{% if session.get('lang') == 'de' %}Versandkosten{% else %}Shipping cost{% endif %}</label>
+            <input type="number" step="0.01" class="form-control" id="shipping_cost" name="shipping_cost" placeholder="0.00" />
+          </div>
+          <div class="mb-3">
+            <label for="links" class="form-label">{% if session.get('lang') == 'de' %}Links{% else %}Links{% endif %}</label>
+            <input type="url" class="form-control" id="links" name="links" />
+          </div>
+          <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Posten{% else %}Post{% endif %}</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="row">
+      {% for post in posts %}
+      <div class="col-12 col-md-6 col-lg-4 mb-3">
+        <div class="card h-100 shadow">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title text-truncate">{{ post[1] }}</h5>
+            <small class="text-muted mb-2">({% if post[3] == 'sell' %}{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}{% elif post[3] == 'buy' %}{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}{% elif post[3] == 'trade' %}{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}{% elif post[3] == 'notification' %}{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}{% elif post[3] == 'giveaway' %}{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}{% else %}{{ post[3] }}{% endif %})</small>
+            <p class="card-text">{{ post[2] }}</p>
+            {% if post[6] %}
+            <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong></p>
+            {% endif %}
+            {% if post[4] %}
+            <img src="{{ post[4] }}" class="img-fluid mb-2" alt="Post Image" />
+            {% endif %}
+            {% if post[5] %}
+            <p>Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
+            {% endif %}
+            <p class="card-text">
+              <small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} {{ post[8] }} {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small>
+            </p>
+            <a href="/group_post/{{ post[0] }}" class="btn btn-primary btn-sm mt-auto">
+              {% if session.get('lang') == 'de' %}Details{% else %}View Details{% endif %}
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if not posts %}
+    <div class="text-center mt-4">
+      <p class="text-muted">{% if query or type_filter %}{% if session.get('lang') == 'de' %}Keine Ergebnisse gefunden.{% else %}No results found.{% endif %}{% else %}{% if session.get('lang') == 'de' %}Noch keine Beiträge in dieser Gruppe.{% else %}No posts in this group yet.{% endif %}{% endif %}</p>
     </div>
     {% endif %}
   </div>
-  <a href="/groups" class="btn btn-secondary mb-4"
-    >{% if session.get('lang') == 'de' %}Zurück zu Gruppen{% else %}Back to
-    Groups{% endif %}</a
-  >
-  <h2 class="mb-4">
-    {% if session.get('lang') == 'de' %}Beiträge{% else %}Posts{% endif %}
-  </h2>
-  <button
-    class="btn btn-outline-primary mb-3"
-    type="button"
-    data-bs-toggle="collapse"
-    data-bs-target="#postForm"
-    aria-expanded="false"
-    aria-controls="postForm"
-  >
-    {% if session.get('lang') == 'de' %}Neuen Beitrag erstellen{% else %}Create
-    New Post{% endif %}
-  </button>
-  <div class="collapse mb-4" id="postForm">
-    <div class="card p-4 shadow">
-      <form
-        method="post"
-        action="/post_in_group/{{ group_id }}"
-        enctype="multipart/form-data"
-      >
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <div class="mb-3">
-          <label for="title" class="form-label"
-            >{% if session.get('lang') == 'de' %}Titel{% else %}Title{% endif %}
-            <span class="text-danger">*</span></label
-          >
-          <input
-            type="text"
-            class="form-control"
-            id="title"
-            name="title"
-            required
-            maxlength="200"
-          />
-        </div>
-        <div class="mb-3">
-          <label for="content" class="form-label"
-            >{% if session.get('lang') == 'de' %}Beschreibung{% else
-            %}Description{% endif %} <span class="text-danger">*</span></label
-          >
-          <textarea
-            class="form-control"
-            id="content"
-            name="content"
-            rows="3"
-            required
-          ></textarea>
-        </div>
-        <div class="mb-3">
-          <label for="type" class="form-label"
-            >{% if session.get('lang') == 'de' %}Typ{% else %}Type{% endif
-            %}</label
-          >
-          <select class="form-control" id="type" name="type" required>
-            <option value="sell">
-              {% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{%
-              endif %}
-            </option>
-            <option value="buy">
-              {% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}
-            </option>
-            <option value="trade">
-              {% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{%
-              endif %}
-            </option>
-            <option value="notification">
-              {% if session.get('lang') == 'de' %}Benachrichtigung{% else
-              %}Notification{% endif %}
-            </option>
-            <option value="giveaway">
-              {% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}
-            </option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label for="image" class="form-label"
-            >{% if session.get('lang') == 'de' %}Bild{% else %}Image{% endif
-            %}</label
-          >
-          <input
-            type="file"
-            class="form-control"
-            id="image"
-            name="image"
-            accept="image/*"
-          />
-        </div>
-        <div class="mb-3">
-          <label for="price" class="form-label"
-            >{% if session.get('lang') == 'de' %}Preis (optional){% else %}Price
-            (optional){% endif %}</label
-          >
-          <input
-            type="number"
-            step="0.01"
-            class="form-control"
-            id="price"
-            name="price"
-            placeholder="Enter price"
-          />
-        </div>
-        <div class="mb-3">
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="local_pickup" name="local_pickup" value="1" checked />
-            <label class="form-check-label" for="local_pickup">
-              {% if session.get('lang') == 'de' %}Abholung vor Ort möglich{% else %}Local pickup available{% endif %}
-            </label>
-          </div>
-        </div>
-        <div class="mb-3">
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="shipping_available" name="shipping_available" value="1" onchange="toggleShippingCost()" />
-            <label class="form-check-label" for="shipping_available">
-              {% if session.get('lang') == 'de' %}Versand möglich{% else %}Shipping available{% endif %}
-            </label>
-          </div>
-        </div>
-        <div class="mb-3" id="shipping_cost_div" style="display:none;">
-          <label for="shipping_cost" class="form-label">
-            {% if session.get('lang') == 'de' %}Versandkosten{% else %}Shipping cost{% endif %}
-          </label>
-          <input type="number" step="0.01" class="form-control" id="shipping_cost" name="shipping_cost" placeholder="0.00" />
-        </div>
-        <div class="mb-3">
-          <label for="links" class="form-label"
-            >{% if session.get('lang') == 'de' %}Links{% else %}Links{% endif
-            %}</label
-          >
-          <input type="url" class="form-control" id="links" name="links" />
-        </div>
-        <button type="submit" class="btn btn-primary">
-          {% if session.get('lang') == 'de' %}Posten{% else %}Post{% endif %}
-        </button>
-      </form>
-    </div>
-  </div>
-  <div class="row">
-    {% for post in posts %}
-    <div class="col-12 col-md-6 col-lg-4 mb-3">
-      <div class="card h-100 shadow">
-        <div class="card-body d-flex flex-column">
-          <h5 class="card-title">
-            <a href="#" class="text-decoration-none">{{ post[1] }}</a>
-            <small class="text-muted">({% if post[3] == 'sell' %}{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}{% elif post[3] == 'buy' %}{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}{% elif post[3] == 'trade' %}{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}{% elif post[3] == 'notification' %}{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}{% elif post[3] == 'giveaway' %}{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}{% else %}{{ post[3] }}{% endif %})</small>
-          </h5>
-          <p class="card-text">{{ post[2] }}</p>
-          {% if post[6] %}
-          <p>
-            <strong
-              >{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{%
-              endif %} ${{ post[6] }}</strong
-            >
-          </p>
-          {% endif %} {% if post[4] %}
-          <img src="{{ post[4] }}" class="img-fluid mb-2" alt="Post Image" />
-          {% endif %} {% if post[5] %}
-          <p>
-            Links: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a>
-          </p>
-          {% endif %}
-          <p class="card-text mt-auto">
-            <small class="text-muted"
-              >{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted
-              by{% endif %} {{ post[8] }} {% if session.get('lang') == 'de'
-              %}am{% else %}on{% endif %} {{ post[7] }}</small
-            >
-          </p>
-        </div>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% if not posts %}
-  <div class="text-center mt-5">
-    <p class="text-muted">
-      {% if session.get('lang') == 'de' %}Noch keine Beiträge in dieser
-      Gruppe.{% else %}No posts in this group yet.{% endif %}
-    </p>
-  </div>
-  {% endif %}
-  <h2 class="mt-5">
-    {% if session.get('lang') == 'de' %}Mitglieder{% else %}Members{% endif %}
-    ({{ members|length }})
+
+  <h2 class="mt-5 mb-3">
+    {% if session.get('lang') == 'de' %}Mitglieder{% else %}Members{% endif %} ({{ members|length }})
   </h2>
   {% if members %}
   <div class="row">
@@ -247,21 +280,17 @@ content %}
     <div class="col-6 col-md-4 col-lg-3 mb-2">
       <div class="card text-center">
         <div class="card-body">
-          <a href="/profile/{{ member }}" class="text-decoration-none"
-            >{{ member }}</a
-          >
+          <a href="/profile/{{ member }}" class="text-decoration-none">{{ member }}</a>
         </div>
       </div>
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <p class="text-muted">
-    {% if session.get('lang') == 'de' %}Keine Mitglieder.{% else %}No members.{%
-    endif %}
-  </p>
+  <p class="text-muted">{% if session.get('lang') == 'de' %}Keine Mitglieder.{% else %}No members.{% endif %}</p>
   {% endif %}
 </div>
+
 <script>
 function toggleShippingCost() {
   var checkbox = document.getElementById('shipping_available');

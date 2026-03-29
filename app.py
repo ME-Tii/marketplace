@@ -1,6 +1,7 @@
 from flask import Flask, request, redirect, url_for, render_template, session, flash, send_from_directory, Response, g
 import sqlite3
 import os
+import time
 import logging
 import mimetypes
 import secrets
@@ -677,6 +678,14 @@ def init_db():
                     (id INTEGER PRIMARY KEY, group_id INTEGER NOT NULL, user_id INTEGER NOT NULL, status TEXT DEFAULT 'pending', joined_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (group_id) REFERENCES groups(id), FOREIGN KEY (user_id) REFERENCES users(id), UNIQUE(group_id, user_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS group_posts
                     (id INTEGER PRIMARY KEY, group_id INTEGER NOT NULL, user_id INTEGER NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL, type TEXT, image TEXT, links TEXT, price REAL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (group_id) REFERENCES groups(id), FOREIGN KEY (user_id) REFERENCES users(id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS group_messages
+                    (id INTEGER PRIMARY KEY, group_id INTEGER NOT NULL, sender_id INTEGER NOT NULL, message TEXT, attachment TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (group_id) REFERENCES groups(id), FOREIGN KEY (sender_id) REFERENCES users(id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS group_polls
+                    (id INTEGER PRIMARY KEY, group_id INTEGER NOT NULL, creator_id INTEGER NOT NULL, question TEXT NOT NULL, is_active INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (group_id) REFERENCES groups(id), FOREIGN KEY (creator_id) REFERENCES users(id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS group_poll_options
+                    (id INTEGER PRIMARY KEY, poll_id INTEGER NOT NULL, option_text TEXT NOT NULL, FOREIGN KEY (poll_id) REFERENCES group_polls(id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS group_poll_votes
+                    (id INTEGER PRIMARY KEY, poll_id INTEGER NOT NULL, option_id INTEGER NOT NULL, user_id INTEGER NOT NULL, voted_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(poll_id, user_id), FOREIGN KEY (poll_id) REFERENCES group_polls(id), FOREIGN KEY (user_id) REFERENCES users(id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS categories
                     (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, name_de TEXT, icon TEXT, sort_order INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS posts_categories
@@ -732,6 +741,14 @@ def init_db():
         pass
     try:
         c.execute("ALTER TABLE group_posts ADD COLUMN shipping_cost REAL DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE group_posts ADD COLUMN quantity INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE group_posts ADD COLUMN is_active INTEGER DEFAULT 1")
     except sqlite3.OperationalError:
         pass
     # Orders table
@@ -815,6 +832,10 @@ def init_db():
     except sqlite3.OperationalError:
         pass
     try:
+        c.execute("ALTER TABLE orders ADD COLUMN is_group_post INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
         c.execute("ALTER TABLE orders ADD COLUMN shipping_cost REAL DEFAULT 0")
     except sqlite3.OperationalError:
         pass
@@ -856,9 +877,17 @@ def init_db():
                  (id INTEGER PRIMARY KEY, user_id INTEGER, order_id INTEGER,
                   full_name TEXT, street TEXT, city TEXT, state TEXT, zip_code TEXT, country TEXT, phone TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS cart
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, post_id INTEGER NOT NULL,
-                  quantity INTEGER DEFAULT 1, added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                  UNIQUE(user_id, post_id))''')
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, post_id INTEGER,
+                  group_post_id INTEGER, quantity INTEGER DEFAULT 1, added_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute("PRAGMA table_info(cart)")
+    columns = [col[1] for col in c.fetchall()]
+    if 'group_post_id' not in columns:
+        c.execute("ALTER TABLE cart ADD COLUMN group_post_id INTEGER")
+    if 'post_id' in columns and c.execute("PRAGMA table_info(cart)").fetchall()[1][5] == 'NOT NULL':
+        c.execute("CREATE TABLE IF NOT EXISTS cart_new (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, post_id INTEGER, group_post_id INTEGER, quantity INTEGER DEFAULT 1, added_at DATETIME DEFAULT CURRENT_TIMESTAMP)")
+        c.execute("INSERT INTO cart_new SELECT id, user_id, post_id, group_post_id, quantity, added_at FROM cart")
+        c.execute("DROP TABLE cart")
+        c.execute("ALTER TABLE cart_new RENAME TO cart")
     c.execute('''CREATE TABLE IF NOT EXISTS seller_transfers
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, seller_id INTEGER NOT NULL,
                   amount REAL NOT NULL, transfer_id TEXT, status TEXT DEFAULT 'pending',
@@ -1335,6 +1364,54 @@ def add_to_cart(post_id):
     conn.close()
     
     return redirect(request.referrer or f'/post/{post_id}')
+
+@app.route('/add_to_cart/group/<int:post_id>', methods=['POST'])
+def add_to_cart_group(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    quantity = int(request.form.get('quantity', 1))
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    c.execute("SELECT id, quantity, price, title FROM group_posts WHERE id = ? AND (is_active = 1 OR is_active IS NULL)", (post_id,))
+    post = c.fetchone()
+    
+    if not post:
+        conn.close()
+        flash('Item not found or unavailable.', 'danger')
+        return redirect(request.referrer or '/dashboard')
+    
+    if post[1] < quantity:
+        conn.close()
+        flash(f'Not enough stock. Only {post[1]} available.', 'warning')
+        return redirect(request.referrer or f'/group_post/{post_id}')
+    
+    if session['user_id'] == post[0]:
+        conn.close()
+        flash('You cannot add your own item to cart.', 'warning')
+        return redirect(request.referrer or f'/group_post/{post_id}')
+    
+    c.execute("SELECT quantity FROM cart WHERE user_id = ? AND group_post_id = ?", (session['user_id'], post_id))
+    existing = c.fetchone()
+    
+    if existing:
+        new_qty = existing[0] + quantity
+        if new_qty > post[1]:
+            conn.close()
+            flash(f'Cart already has {existing[0]}. Only {post[1]} available.', 'warning')
+            return redirect(request.referrer or f'/group_post/{post_id}')
+        c.execute("UPDATE cart SET quantity = ? WHERE user_id = ? AND group_post_id = ?", (new_qty, session['user_id'], post_id))
+        flash(f'Updated quantity for "{post[3]}"', 'success')
+    else:
+        c.execute("INSERT INTO cart (user_id, group_post_id, quantity) VALUES (?, ?, ?)", (session['user_id'], post_id, quantity))
+        flash(f'Added "{post[3]}" to cart', 'success')
+    
+    conn.commit()
+    conn.close()
+    
+    return redirect(request.referrer or f'/group_post/{post_id}')
 
 @app.route('/update_cart/<int:cart_id>', methods=['POST'])
 def update_cart(cart_id):
@@ -2763,8 +2840,13 @@ def leave_group(group_id):
 def view_group(group_id):
     if 'user_id' not in session:
         return redirect('/login')
+    
+    query = request.args.get('q', '').strip()
+    type_filter = request.args.get('type', '')
+    
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
+    
     # Check membership
     c.execute("SELECT status FROM group_members WHERE group_id = ? AND user_id = ?", (group_id, session['user_id']))
     membership = c.fetchone()
@@ -2772,6 +2854,7 @@ def view_group(group_id):
         conn.close()
         flash('Access denied. You are not a member of this group.', 'danger')
         return redirect('/groups')
+    
     # Get group info
     c.execute("SELECT g.name, g.description, g.creator_id, u.username, g.is_private FROM groups g JOIN users u ON g.creator_id = u.id WHERE g.id = ?", (group_id,))
     group = c.fetchone()
@@ -2779,21 +2862,377 @@ def view_group(group_id):
         conn.close()
         flash('Group not found.', 'danger')
         return redirect('/groups')
-    # Get posts
-    c.execute("""
+    
+    # Build posts query with search
+    posts_query = """
         SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, gp.created_at, u.username
         FROM group_posts gp
         JOIN users u ON gp.user_id = u.id
         WHERE gp.group_id = ?
-        ORDER BY gp.created_at DESC
-    """, (group_id,))
+    """
+    params = [group_id]
+    
+    if query:
+        posts_query += " AND (gp.title LIKE ? OR gp.content LIKE ?)"
+        params.extend([f'%{query}%', f'%{query}%'])
+    
+    if type_filter:
+        posts_query += " AND gp.type = ?"
+        params.append(type_filter)
+    
+    posts_query += " ORDER BY gp.created_at DESC"
+    
+    c.execute(posts_query, params)
     posts = c.fetchall()
+    
     # Get members
     c.execute("SELECT u.username FROM group_members gm JOIN users u ON gm.user_id = u.id WHERE gm.group_id = ? AND gm.status = 'accepted' ORDER BY u.username", (group_id,))
     members = [row[0] for row in c.fetchall()]
+    
+    # Get polls with results
+    c.execute("""
+        SELECT gp.id, gp.question, gp.is_active, gp.created_at, u.username, gp.creator_id
+        FROM group_polls gp
+        JOIN users u ON gp.creator_id = u.id
+        WHERE gp.group_id = ?
+        ORDER BY gp.created_at DESC
+        LIMIT 10
+    """, (group_id,))
+    polls = c.fetchall()
+    
+    # Get poll options and votes for each poll
+    polls_data = []
+    for poll in polls:
+        c.execute("SELECT id, option_text FROM group_poll_options WHERE poll_id = ?", (poll[0],))
+        options = c.fetchall()
+        
+        total_votes = 0
+        options_with_votes = []
+        for opt in options:
+            c.execute("SELECT COUNT(*) FROM group_poll_votes WHERE poll_id = ? AND option_id = ?", (poll[0], opt[0]))
+            vote_count = c.fetchone()[0]
+            total_votes += vote_count
+            
+            # Check if current user voted
+            c.execute("SELECT option_id FROM group_poll_votes WHERE poll_id = ? AND user_id = ?", (poll[0], session['user_id']))
+            user_vote = c.fetchone()
+            
+            options_with_votes.append({
+                'id': opt[0],
+                'text': opt[1],
+                'votes': vote_count,
+                'percentage': 0,
+                'is_user_vote': user_vote and user_vote[0] == opt[0]
+            })
+        
+        # Calculate percentages
+        for opt in options_with_votes:
+            if total_votes > 0:
+                opt['percentage'] = round((opt['votes'] / total_votes) * 100, 1)
+        
+        polls_data.append({
+            'id': poll[0],
+            'question': poll[1],
+            'is_active': poll[2],
+            'created_at': poll[3],
+            'creator': poll[4],
+            'creator_id': poll[5],
+            'options': options_with_votes,
+            'total_votes': total_votes,
+            'user_voted': user_vote is not None
+        })
+    
     conn.close()
     is_creator = group[2] == session['user_id']
-    return render_template('group_detail.html', group=group, posts=posts, members=members, group_id=group_id, is_creator=is_creator, unread_messages=get_unread_messages_count(session.get('user_id')))
+    
+    return render_template('group_detail.html', group=group, posts=posts, members=members, group_id=group_id, 
+                         is_creator=is_creator, polls=polls_data, query=query, type_filter=type_filter,
+                         unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/group/<int:group_id>/chat')
+def group_chat(group_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    # Check membership
+    c.execute("SELECT status FROM group_members WHERE group_id = ? AND user_id = ?", (group_id, session['user_id']))
+    membership = c.fetchone()
+    if not membership or membership[0] != 'accepted':
+        conn.close()
+        flash('Access denied. You are not a member of this group.', 'danger')
+        return redirect('/groups')
+    
+    # Get group info
+    c.execute("SELECT name, description, creator_id, is_private FROM groups WHERE id = ?", (group_id,))
+    group = c.fetchone()
+    if not group:
+        conn.close()
+        flash('Group not found.', 'danger')
+        return redirect('/groups')
+    
+    # Get messages
+    c.execute("""
+        SELECT gm.id, gm.message, gm.timestamp, u.username, gm.sender_id, gm.attachment
+        FROM group_messages gm
+        JOIN users u ON gm.sender_id = u.id
+        WHERE gm.group_id = ?
+        ORDER BY gm.timestamp ASC
+    """, (group_id,))
+    messages = c.fetchall()
+    
+    # Get members for sidebar
+    c.execute("SELECT u.username FROM group_members gm JOIN users u ON gm.user_id = u.id WHERE gm.group_id = ? AND gm.status = 'accepted' ORDER BY u.username", (group_id,))
+    members = [row[0] for row in c.fetchall()]
+    
+    conn.close()
+    
+    return render_template('group_chat.html', group=group, messages=messages, group_id=group_id, 
+                         members=members, is_creator=group[2] == session['user_id'],
+                         unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/group/<int:group_id>/send', methods=['POST'])
+def send_group_message(group_id):
+    try:
+        if 'user_id' not in session:
+            return redirect('/login')
+        
+        message = request.form.get('message', '').strip()
+        
+        # Handle attachment first
+        attachment = None
+        if 'attachment' in request.files:
+            file = request.files['attachment']
+            app.logger.info(f"File in request: {file}, filename: {file.filename if file else None}")
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                app.logger.info(f"Secure filename: {filename}")
+                if filename:
+                    upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'attachments')
+                    os.makedirs(upload_folder, exist_ok=True)
+                    saved_filename = f"{session['user_id']}_{int(time.time())}_{filename}"
+                    filepath = os.path.join(upload_folder, saved_filename)
+                    app.logger.info(f"Saving to: {filepath}")
+                    try:
+                        file.save(filepath)
+                        attachment = '/static/uploads/attachments/' + saved_filename
+                        app.logger.info(f"Attachment saved: {attachment}")
+                    except Exception as e:
+                        app.logger.error(f"Error saving attachment: {e}")
+        
+        # Must have either message or attachment
+        if not message and not attachment:
+            flash('Please enter a message or select an image.', 'warning')
+            return redirect(f'/group/{group_id}/chat')
+        
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        
+        # Check membership
+        c.execute("SELECT status FROM group_members WHERE group_id = ? AND user_id = ?", (group_id, session['user_id']))
+        membership = c.fetchone()
+        if not membership or membership[0] != 'accepted':
+            conn.close()
+            flash('Access denied.', 'danger')
+            return redirect('/groups')
+        
+        c.execute("INSERT INTO group_messages (group_id, sender_id, message, attachment) VALUES (?, ?, ?, ?)",
+                  (group_id, session['user_id'], message, attachment))
+        conn.commit()
+        conn.close()
+        
+        return redirect(f'/group/{group_id}/chat')
+    except Exception as e:
+        app.logger.error(f"Error in send_group_message: {e}")
+        import traceback
+        app.logger.error(traceback.format_exc())
+        flash(f'Error: {str(e)}', 'danger')
+        return redirect(f'/group/{group_id}/chat')
+
+@app.route('/group/<int:group_id>/poll', methods=['POST'])
+def create_poll(group_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    question = request.form.get('question', '').strip()
+    options = request.form.getlist('options')
+    
+    if not question or len(options) < 2:
+        flash('Please enter a question and at least 2 options.', 'warning')
+        return redirect(f'/group/{group_id}')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    # Check membership
+    c.execute("SELECT status FROM group_members WHERE group_id = ? AND user_id = ?", (group_id, session['user_id']))
+    membership = c.fetchone()
+    if not membership or membership[0] != 'accepted':
+        conn.close()
+        flash('Access denied.', 'danger')
+        return redirect('/groups')
+    
+    # Create poll
+    c.execute("INSERT INTO group_polls (group_id, creator_id, question) VALUES (?, ?, ?)",
+              (group_id, session['user_id'], question))
+    poll_id = c.lastrowid
+    
+    # Add options
+    for opt in options:
+        if opt.strip():
+            c.execute("INSERT INTO group_poll_options (poll_id, option_text) VALUES (?, ?)",
+                      (poll_id, opt.strip()))
+    
+    conn.commit()
+    conn.close()
+    
+    flash('Poll created successfully!', 'success')
+    return redirect(f'/group/{group_id}')
+
+@app.route('/group/<int:group_id>/poll/<int:poll_id>/vote', methods=['POST'])
+def vote_poll(group_id, poll_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    option_id = request.form.get('option')
+    if not option_id:
+        flash('Please select an option.', 'warning')
+        return redirect(f'/group/{group_id}')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    # Check membership
+    c.execute("SELECT status FROM group_members WHERE group_id = ? AND user_id = ?", (group_id, session['user_id']))
+    membership = c.fetchone()
+    if not membership or membership[0] != 'accepted':
+        conn.close()
+        flash('Access denied.', 'danger')
+        return redirect('/groups')
+    
+    # Check if already voted
+    c.execute("SELECT id FROM group_poll_votes WHERE poll_id = ? AND user_id = ?", (poll_id, session['user_id']))
+    if c.fetchone():
+        conn.close()
+        flash('You have already voted on this poll.', 'warning')
+        return redirect(f'/group/{group_id}')
+    
+    # Check if poll is active
+    c.execute("SELECT is_active FROM group_polls WHERE id = ? AND group_id = ?", (poll_id, group_id))
+    poll = c.fetchone()
+    if not poll or not poll[0]:
+        conn.close()
+        flash('This poll is no longer active.', 'warning')
+        return redirect(f'/group/{group_id}')
+    
+    # Record vote
+    c.execute("INSERT INTO group_poll_votes (poll_id, option_id, user_id) VALUES (?, ?, ?)",
+              (poll_id, option_id, session['user_id']))
+    conn.commit()
+    conn.close()
+    
+    flash('Vote recorded!', 'success')
+    return redirect(f'/group/{group_id}')
+
+@app.route('/group/<int:group_id>/poll/<int:poll_id>/close', methods=['POST'])
+def close_poll(group_id, poll_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    # Check if user is poll creator or group creator
+    c.execute("SELECT creator_id FROM group_polls WHERE id = ?", (poll_id,))
+    poll = c.fetchone()
+    c.execute("SELECT creator_id FROM groups WHERE id = ?", (group_id,))
+    group = c.fetchone()
+    
+    if not poll or not group:
+        conn.close()
+        flash('Poll or group not found.', 'danger')
+        return redirect('/groups')
+    
+    if poll[0] != session['user_id'] and group[0] != session['user_id']:
+        conn.close()
+        flash('Only the poll creator or group admin can close this poll.', 'danger')
+        return redirect(f'/group/{group_id}')
+    
+    c.execute("UPDATE group_polls SET is_active = 0 WHERE id = ?", (poll_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Poll closed.', 'success')
+    return redirect(f'/group/{group_id}')
+
+@app.route('/group/<int:group_id>/poll/<int:poll_id>/delete', methods=['POST'])
+def delete_poll(group_id, poll_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    # Check if user is poll creator or group creator
+    c.execute("SELECT creator_id FROM group_polls WHERE id = ?", (poll_id,))
+    poll = c.fetchone()
+    c.execute("SELECT creator_id FROM groups WHERE id = ?", (group_id,))
+    group = c.fetchone()
+    
+    if not poll or not group:
+        conn.close()
+        flash('Poll or group not found.', 'danger')
+        return redirect('/groups')
+    
+    if poll[0] != session['user_id'] and group[0] != session['user_id']:
+        conn.close()
+        flash('Only the poll creator or group admin can delete this poll.', 'danger')
+        return redirect(f'/group/{group_id}')
+    
+    # Delete votes first
+    c.execute("DELETE FROM group_poll_votes WHERE poll_id = ?", (poll_id,))
+    # Delete options
+    c.execute("DELETE FROM group_poll_options WHERE poll_id = ?", (poll_id,))
+    # Delete poll
+    c.execute("DELETE FROM group_polls WHERE id = ?", (poll_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Poll deleted.', 'success')
+    return redirect(f'/group/{group_id}')
+
+@app.route('/group/<int:group_id>/pin/<int:message_id>', methods=['POST'])
+def pin_group_message(group_id, message_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    # Only creator can pin
+    c.execute("SELECT creator_id FROM groups WHERE id = ?", (group_id,))
+    group = c.fetchone()
+    if not group or group[0] != session['user_id']:
+        conn.close()
+        flash('Only the group creator can pin messages.', 'danger')
+        return redirect(f'/group/{group_id}/chat')
+    
+    # Check message exists
+    c.execute("SELECT id FROM group_messages WHERE id = ? AND group_id = ?", (message_id, group_id))
+    if not c.fetchone():
+        conn.close()
+        flash('Message not found.', 'danger')
+        return redirect(f'/group/{group_id}/chat')
+    
+    # Toggle pin - for simplicity, just delete (unpin)
+    c.execute("DELETE FROM group_messages WHERE id = ?", (message_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Message deleted.', 'success')
+    return redirect(f'/group/{group_id}/chat')
 
 @app.route('/manage_group/<int:group_id>')
 def manage_group(group_id):
@@ -2999,6 +3438,40 @@ def delete_group_post(post_id):
     conn.close()
     flash('Group deleted successfully.', 'success')
     return redirect('/groups')
+
+@app.route('/group_post/<int:post_id>')
+def group_post_detail(post_id):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("""SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, 
+                 gp.created_at, u.username, gp.user_id, gp.group_id, gp.local_pickup, 
+                 gp.shipping_available, gp.shipping_cost, gp.quantity, gp.is_active,
+                 g.name
+                 FROM group_posts gp 
+                 JOIN users u ON gp.user_id = u.id 
+                 JOIN groups g ON gp.group_id = g.id
+                 WHERE gp.id = ?""", (post_id,))
+    post = c.fetchone()
+    
+    if not post:
+        conn.close()
+        flash('Post not found.', 'danger')
+        return redirect('/groups')
+    
+    c.execute("SELECT image_url FROM post_images WHERE post_id = ? ORDER BY sort_order", (post_id,))
+    additional_images = [row[0] for row in c.fetchall()]
+    
+    c.execute("""SELECT p.id, p.title, p.description, p.image, p.price, u.username, p.user_id 
+                 FROM posts p JOIN users u ON p.user_id = u.id
+                 WHERE (p.title LIKE ? OR p.description LIKE ?) AND p.id != ? AND p.is_active = 1 
+                 ORDER BY p.timestamp DESC LIMIT 4""", 
+              (f'%{post[1][:30]}%', f'%{post[2][:30]}%', post_id))
+    related_products = c.fetchall()
+    
+    conn.close()
+    
+    return render_template('group_post_detail.html', post=post, additional_images=additional_images, 
+                         related_products=related_products, unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/post_in_group/<int:group_id>', methods=['POST'])
 def post_in_group(group_id):
@@ -3819,8 +4292,78 @@ def buy_now(post_id):
     conn.close()
     return redirect(f'/checkout/{post_id}')
 
-@app.route('/checkout/<int:post_id>')
-def checkout(post_id):
+@app.route('/buy_now/group/<int:post_id>')
+def buy_now_group(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT id, user_id, title, price, local_pickup, shipping_available, shipping_cost, quantity, is_active FROM group_posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post:
+        conn.close()
+        return 'Post not found', 404
+    
+    if not post[1] or not post[3]:
+        conn.close()
+        return 'Post not available', 400
+    
+    if post[7] == 0 or (post[8] is not None and post[8] <= 0):
+        conn.close()
+        flash('This item is no longer available.', 'danger')
+        return redirect(f'/group_post/{post_id}')
+    
+    if post[1] == session['user_id']:
+        conn.close()
+        flash('You cannot buy your own item.', 'warning')
+        return redirect(f'/group_post/{post_id}')
+    
+    # Only local pickup available - skip checkout form
+    if post[4] == 1 and (post[5] == 0 or post[5] is None):
+        total_amount = post[3]
+        transaction_fee = total_amount * 0.10
+        
+        c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity, is_group_post) VALUES (?, ?, ?, ?, 'pending', 'local_pickup', 0, ?, 1, 1)",
+                  (post_id, session['user_id'], post[1], total_amount, transaction_fee))
+        order_id = c.lastrowid
+        
+        # Reduce post quantity by 1
+        new_qty = post[7] - 1
+        c.execute("UPDATE group_posts SET quantity = ? WHERE id = ?", (new_qty, post_id))
+        
+        conn.commit()
+        conn.close()
+        
+        session['current_order_id'] = order_id
+        return redirect(f'/create_checkout_session/group/{post_id}')
+    
+    conn.close()
+    return redirect(f'/checkout/group/{post_id}')
+
+@app.route('/checkout/group/<int:post_id>')
+def checkout_group(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    order_id = request.args.get('order_id')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost, quantity, is_active FROM group_posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post:
+        conn.close()
+        return 'Post not found', 404
+    
+    c.execute("SELECT username, email FROM users WHERE id = ?", (session['user_id'],))
+    user = c.fetchone()
+    conn.close()
+    
+    return render_template('checkout.html', post=post, post_id=post_id, order_id=order_id, 
+                         user=user, is_group_post=True, unread_messages=get_unread_messages_count(session.get('user_id')))
     if 'user_id' not in session:
         return redirect('/login')
     
@@ -4051,6 +4594,81 @@ def create_checkout_session(post_id):
         flash(f'Payment error: {str(e)}', 'danger')
         return redirect(f'/post/{post_id}')
 
+@app.route('/create_checkout_session/group/<int:post_id>')
+def create_checkout_session_group(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    if not app.config['STRIPE_SECRET_KEY']:
+        flash('Stripe is not configured.', 'danger')
+        return redirect(f'/group_post/{post_id}')
+    
+    order_id = session.get('current_order_id')
+    
+    if not order_id:
+        flash('Please complete checkout form first.', 'warning')
+        return redirect(f'/checkout/group/{post_id}')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT amount, shipping_method FROM orders WHERE id = ?", (int(order_id),))
+    order = c.fetchone()
+    c.execute("SELECT title, price, user_id FROM group_posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    conn.close()
+    
+    if not post or not post[1] or not order:
+        return 'Post or order not found', 404
+    
+    total_amount = order[0]
+    shipping_method = order[1]
+    
+    session.pop('current_order_id', None)
+    
+    seller_id = post[2]
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT u.username, u.stripe_account_id FROM users u JOIN group_posts gp ON gp.user_id = u.id WHERE gp.id = ?", (post_id,))
+    seller_info = c.fetchone()
+    conn.close()
+    
+    seller_username = seller_info[0] if seller_info else None
+    seller_stripe = seller_info[1] if seller_info else None
+    
+    if not seller_stripe:
+        flash('Seller has not set up online payments. Please contact seller to arrange payment.', 'info')
+        return redirect(f'/messages?chat={seller_username}&post_id={post_id}')
+    
+    try:
+        session_params = {
+            'payment_method_types': ['card'],
+            'line_items': [{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': post[0]
+                    },
+                    'unit_amount': int(total_amount * 100),
+                },
+                'quantity': 1,
+            }],
+            'mode': 'payment',
+            'success_url': request.url_root + f'payment_success/group?post_id={post_id}&order_id={order_id}',
+            'cancel_url': request.url_root + f'group_post/{post_id}',
+            'metadata': {'order_id': order_id, 'post_id': post_id, 'is_group_post': '1'}
+        }
+        
+        if seller_stripe:
+            session_params['payment_intent_data'] = {
+                'transfer_data': {'destination': seller_stripe},
+                'application_fee_amount': int(total_amount * 100 * 0.10)
+            }
+        
+        session_stripe = stripe.checkout.Session.create(**session_params)
+        return redirect(session_stripe.url, code=303)
+    except Exception as e:
+        flash(f'Payment error: {str(e)}', 'danger')
+        return redirect(f'/group_post/{post_id}')
+
 @app.route('/payment_success')
 def payment_success():
     post_id = request.args.get('post_id')
@@ -4109,6 +4727,40 @@ def payment_success():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("SELECT title, price FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    order_amount = None
+    if order_id:
+        c.execute("SELECT amount FROM orders WHERE id = ?", (order_id,))
+        order = c.fetchone()
+        if order:
+            order_amount = order[0]
+    
+    conn.close()
+    return render_template('payment_success.html', post=post, order_id=order_id, order_amount=order_amount, unread_messages=get_unread_messages_count(session.get('user_id')))
+
+@app.route('/payment_success/group')
+def payment_success_group():
+    post_id = request.args.get('post_id')
+    order_id = request.args.get('order_id')
+    
+    if not post_id:
+        return redirect('/dashboard')
+    
+    if order_id:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("UPDATE orders SET status = 'paid' WHERE id = ?", (order_id,))
+        
+        # Decrement quantity after payment
+        c.execute("UPDATE group_posts SET quantity = quantity - 1 WHERE id = ?", (post_id,))
+        
+        conn.commit()
+        conn.close()
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT title, price FROM group_posts WHERE id = ?", (post_id,))
     post = c.fetchone()
     
     order_amount = None

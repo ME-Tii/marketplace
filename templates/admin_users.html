@@ -25,7 +25,7 @@
         <td>{{ u[0] }}</td>
         <td><a href="/profile/{{ u[1] }}">{{ u[1] }}</a></td>
         <td>{{ u[2] }}</td>
-        <td>{{ (u[3] or '')[:10] if u[3] else '-' }}</td>
+                <td>{{ u[3][:10] if u[3] else '-' }}</td>
         <td>
           {% if u[1] != 'admin' %}
           <form method="post" action="/delete_user/{{ u[1] }}" style="display: inline" onsubmit="return confirm('{% if session.get('lang') == 'de' %}Möchten Sie {{ u[1] }} wirklich löschen?{% else %}Are you sure you want to delete {{ u[1] }}?{% endif %}');">

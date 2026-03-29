@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}{{ post[1] }} - Marketplace{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ post[1] }} - ${{ post[6] if post[6] else '0' }}{% endblock %}
+{% block og_description %}{{ post[2][:200] if post[2]|length > 200 else post[2] }}{% endblock %}
+{% block og_image %}{{ post[4] if post[4] else '' }}{% endblock %}
+{% block twitter_title %}{{ post[1] }} on Marketplace - ${{ post[6] if post[6] else '0' }}{% endblock %}
+{% block twitter_description %}{{ post[2][:160] if post[2]|length > 160 else post[2] }}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">
+        {{ post[1] }}
+        <small class="text-muted">
+          ({% if post[3] == 'sell' %}{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}
+          {% elif post[3] == 'buy' %}{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}
+          {% elif post[3] == 'trade' %}{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}
+          {% elif post[3] == 'notification' %}{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}
+          {% elif post[3] == 'giveaway' %}{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}
+          {% else %}{{ post[3] }}{% endif %})
+        </small>
+      </h5>
+      <span class="badge bg-secondary">{{ post[17] }}</span>
+      
+      <p class="card-text mt-3">{{ post[2] }}</p>
+      
+      {% if post[6] %}
+      <p><strong>{% if session.get('lang') == 'de' %}Preis{% else %}Price{% endif %}:</strong> ${{ post[6] }}</p>
+      {% endif %}
+      
+      {% if post[11] or post[12] %}
+      <div class="mb-3">
+        <strong>{% if session.get('lang') == 'de' %}Lieferoptionen{% else %}Delivery Options{% endif %}:</strong>
+        <ul>
+          {% if post[11] %}
+          <li>{% if session.get('lang') == 'de' %}Abholung vor Ort (kostenlos){% else %}Local Pickup (free){% endif %}</li>
+          {% endif %}
+          {% if post[12] and post[13] %}
+          <li>{% if session.get('lang') == 'de' %}Versand{% else %}Shipping{% endif %} (${{ post[13] }})</li>
+          {% endif %}
+        </ul>
+      </div>
+      {% endif %}
+      
+      {% if post[4] or additional_images %}
+      <div id="imageCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          {% if post[4] %}
+          <div class="carousel-item active">
+            <img src="{{ post[4] }}" class="d-block w-100" style="max-height: 400px; object-fit: contain; background: #000;" alt="Post Image">
+          </div>
+          {% endif %}
+          {% for img in additional_images %}
+          <div class="carousel-item {% if not post[4] and loop.first %}active{% endif %}">
+            <img src="{{ img }}" class="d-block w-100" style="max-height: 400px; object-fit: contain; background: #000;" alt="Post Image {{ loop.index + 1 }}">
+          </div>
+          {% endfor %}
+        </div>
+        {% if (post[4] and additional_images) or (additional_images|length > 1) %}
+        <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon bg-dark rounded" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon bg-dark rounded" aria-hidden="true"></span>
+        </button>
+        {% endif %}
+      </div>
+      {% else %}
+      <img src="/static/pictures/placeholder.png" class="img-fluid mb-3" alt="Post Image" />
+      {% endif %}
+      
+      {% if post[5] %}
+      <p>{% if session.get('lang') == 'de' %}Links{% else %}Links{% endif %}: <a href="{{ post[5] }}" target="_blank">{{ post[5] }}</a></p>
+      {% endif %}
+      
+      <p class="card-text">
+        <small class="text-muted">{% if session.get('lang') == 'de' %}Gepostet von{% else %}Posted by{% endif %} <a href="/profile/{{ post[8] }}">{{ post[8] }}</a> {% if session.get('lang') == 'de' %}am{% else %}on{% endif %} {{ post[7] }}</small>
+      </p>
+      
+      {% set qty = post[14]|default('1')|int %}
+      {% set active = post[15]|default('1')|int %}
+      {% set local_pickup = post[11]|default(1)|int %}
+      {% set shipping_available = post[12]|default(0)|int %}
+      
+      {% if active == 0 or qty <= 0 %}
+      <div class="alert alert-danger mt-3">
+        <h5>{% if session.get('lang') == 'de' %}Ausverkauft{% else %}Sold Out{% endif %}</h5>
+        <p>{% if session.get('lang') == 'de' %}Dieser Artikel ist nicht mehr verfügbar.{% else %}This item is no longer available.{% endif %}</p>
+      </div>
+      {% else %}
+      <div class="mt-3">
+        {% if session.get('user_id') and session.get('user_id') != post[9] and post[6] %}
+          {% if local_pickup and not shipping_available %}
+          <a href="/buy_now/group/{{ post[0] }}" class="btn btn-success">{% if session.get('lang') == 'de' %}Jetzt kaufen{% else %}Buy Now{% endif %}</a>
+          {% else %}
+          <a href="/checkout/group/{{ post[0] }}" class="btn btn-success">{% if session.get('lang') == 'de' %}Jetzt kaufen{% else %}Buy Now{% endif %}</a>
+          {% endif %}
+          
+          {% if post[3] == 'sell' %}
+          <form action="/add_to_cart/group/{{ post[0] }}" method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" class="btn btn-outline-primary">
+              🛒 {% if session.get('lang') == 'de' %}In den Warenkorb{% else %}Add to Cart{% endif %}
+            </button>
+          </form>
+          {% endif %}
+        {% endif %}
+        
+        {% if not (local_pickup or shipping_available) and post[6] %}
+        <p class="text-muted">{% if session.get('lang') == 'de' %}Verkäufer für Lieferoptionen kontaktieren.{% else %}Contact seller for delivery options.{% endif %}</p>
+        {% endif %}
+        
+        {% if session.get('user_id') %}
+        <a href="/messages?chat={{ post[8] }}&post_id={{ post[0] }}" class="btn btn-primary">{% if session.get('lang') == 'de' %}Nachricht senden{% else %}Send Message{% endif %}</a>
+        {% endif %}
+        
+        {% if session.get('user_id') != post[9] %}
+        <a href="/add_notice/{{ post[0] }}" class="btn btn-info">{% if session.get('lang') == 'de' %}Merken{% else %}Notice{% endif %}</a>
+        <a href="/report_post/{{ post[0] }}" class="btn btn-danger">{% if session.get('lang') == 'de' %}Melden{% else %}Report{% endif %}</a>
+        
+          {% if post[6] and post[14] and post[14] > 0 %}
+          <hr>
+          <h6>{% if session.get('lang') == 'de' %}Angebot machen{% else %}Make an Offer{% endif %}</h6>
+          <form method="POST" action="/bid/{{ post[0] }}" class="row g-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="col-auto">
+              <input type="number" step="0.01" class="form-control" name="amount" placeholder="{% if session.get('lang') == 'de' %}Ihr Angebot{% else %}Your offer{% endif %}" required>
+            </div>
+            <div class="col-auto">
+              <input type="text" class="form-control" name="message" placeholder="{% if session.get('lang') == 'de' %}Nachricht (optional){% else %}Message (optional){% endif %}">
+            </div>
+            <div class="col-auto">
+              <button type="submit" class="btn btn-warning">{% if session.get('lang') == 'de' %}Angebot senden{% else %}Submit Offer{% endif %}</button>
+            </div>
+          </form>
+          {% endif %}
+        {% endif %}
+        
+        {% if session.get('user_id') == post[9] %}
+        <a href="/post/{{ post[0] }}/bids" class="btn btn-secondary">{% if session.get('lang') == 'de' %}Angebote anzeigen{% else %}View Offers{% endif %}</a>
+        {% endif %}
+        
+        <hr class="mt-4">
+        <h6>{% if session.get('lang') == 'de' %}Teilen{% else %}Share{% endif %}</h6>
+        <button class="btn btn-outline-secondary" onclick="copyLink()">
+          🔗 {% if session.get('lang') == 'de' %}Link kopieren{% else %}Copy Link{% endif %}
+        </button>
+        <span id="copyFeedback" class="ms-2 text-success" style="display: none;">
+          {% if session.get('lang') == 'de' %}Kopiert!{% else %}Copied!{% endif %}
+        </span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  
+  <script>
+  function copyLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      const feedback = document.getElementById('copyFeedback');
+      feedback.style.display = 'inline';
+      setTimeout(() => {
+        feedback.style.display = 'none';
+      }, 2000);
+    });
+  }
+  </script>
+  
+  {% if related_products %}
+  <div class="mt-5">
+    <h4 class="mb-4">{% if session.get('lang') == 'de' %}Ähnliche Artikel{% else %}Related Products{% endif %}</h4>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+      {% for product in related_products %}
+      <div class="col">
+        <div class="card h-100">
+          {% if product[3] %}
+          <img src="{{ product[3] }}" class="card-img-top" alt="{{ product[1] }}" style="height: 150px; object-fit: cover;">
+          {% else %}
+          <img src="/static/pictures/placeholder.png" class="card-img-top" alt="No image" style="height: 150px; object-fit: cover;">
+          {% endif %}
+          <div class="card-body">
+            <h6 class="card-title text-truncate">{{ product[1] }}</h6>
+            <p class="text-success fw-bold mb-1">${{ "%.2f"|format(product[4]) if product[4] else '0.00' }}</p>
+            <small class="text-muted">by {{ product[5] }}</small>
+          </div>
+          <div class="card-footer bg-transparent border-top-0">
+            <a href="/post/{{ product[0] }}" class="btn btn-sm btn-outline-primary w-100">View</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
