@@ -636,6 +636,10 @@ def init_db():
         c.execute("ALTER TABLE posts ADD COLUMN featured_payment_id TEXT")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE posts ADD COLUMN location TEXT")
+    except sqlite3.OperationalError:
+        pass
     # Set default values for existing posts
     try:
         c.execute("UPDATE posts SET quantity = 1 WHERE quantity IS NULL")
