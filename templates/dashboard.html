@@ -380,7 +380,7 @@
       <h2 class="mb-0">{% if session.get('lang') == 'de' %}Aktuelle Angebote{% else %}Latest Listings{% endif %}</h2>
       <div class="d-flex align-items-center gap-2">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="grid-toggle" onclick="toggleGrid()">
-          <i class="bi bi-grid-3x3-gap" id="grid-icon"></i> <span id="grid-text">{% if session.get('lang') == 'de' %}4x4{% else %}4x4{% endif %}</span>
+          <i class="bi bi-grid-3x3-gap" id="grid-icon"></i> <span id="grid-text">{% if session.get('lang') == 'de' %}3x3{% else %}3x3{% endif %}</span>
         </button>
         {% if session.get('user_id') %}
         <a href="/create_post_page" class="btn btn-primary">
@@ -524,8 +524,14 @@
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
 <script>
-  // Grid toggle
-  let isGrid4x4 = localStorage.getItem('grid4x4') === 'true';
+  // Grid toggle - default to 4x4
+  let isGrid4x4 = localStorage.getItem('grid4x4');
+  if (isGrid4x4 === null) {
+    isGrid4x4 = true;
+    localStorage.setItem('grid4x4', 'true');
+  } else {
+    isGrid4x4 = isGrid4x4 === 'true';
+  }
   
   function toggleGrid() {
     isGrid4x4 = !isGrid4x4;
