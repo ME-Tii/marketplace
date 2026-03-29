@@ -3817,7 +3817,7 @@ def notices():
     folders = c.fetchall()
     
     if folder_id:
-        c.execute("""SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, n.folder_id, f.name
+        c.execute("""SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, n.folder_id, f.name, f.color
                      FROM notices n 
                      JOIN posts ON n.post_id = posts.id 
                      JOIN users ON posts.user_id = users.id 
@@ -3825,7 +3825,7 @@ def notices():
                      WHERE n.user_id = ? AND n.folder_id = ?
                      ORDER BY n.post_id""", (session['user_id'], folder_id))
     else:
-        c.execute("""SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, n.folder_id, f.name
+        c.execute("""SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, n.folder_id, f.name, f.color
                      FROM notices n 
                      JOIN posts ON n.post_id = posts.id 
                      JOIN users ON posts.user_id = users.id 

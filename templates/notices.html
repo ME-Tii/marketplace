@@ -97,6 +97,11 @@
         {% for post in posts %}
         <div class="col-md-6 mb-3">
           <div class="card h-100">
+            {% if post[9] and post[10] %}
+            <div class="card-header bg-light">
+              <i class="bi bi-folder-fill" style="color: {{ post[11] }}"></i> {{ post[10] }}
+            </div>
+            {% endif %}
             <div class="card-body d-flex flex-column">
               <h5 class="card-title">
                 {{ post[1] }} <small class="text-muted">({% if post[3] == 'sell' %}{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}{% elif post[3] == 'buy' %}{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}{% elif post[3] == 'trade' %}{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}{% elif post[3] == 'notification' %}{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}{% elif post[3] == 'giveaway' %}{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}{% else %}{{ post[3] }}{% endif %})</small>
@@ -134,9 +139,6 @@
                 </div>
                 <a href="/remove_notice/{{ post[0] }}" class="btn btn-danger btn-sm">×</a>
               </div>
-              {% if post[9] and post[10] %}
-              <small class="text-muted"><i class="bi bi-folder-fill" style="color: {{ post[9] }}"></i> {{ post[10] }}</small>
-              {% endif %}
             </div>
           </div>
         </div>
