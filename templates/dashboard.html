@@ -269,9 +269,15 @@
         <a href="#posts" class="btn btn-light btn-lg">
           {% if session.get('lang') == 'de' %}Angebote durchsuchen{% else %}Browse Listings{% endif %}
         </a>
+        {% if session.get('user_id') %}
+        <a href="/create_post_page" class="btn btn-outline-light btn-lg">
+          {% if session.get('lang') == 'de' %}Verkaufen{% else %}Start Selling{% endif %}
+        </a>
+        {% else %}
         <a href="/register" class="btn btn-outline-light btn-lg">
           {% if session.get('lang') == 'de' %}Verkaufen{% else %}Start Selling{% endif %}
         </a>
+        {% endif %}
       </div>
     </div>
   </div>

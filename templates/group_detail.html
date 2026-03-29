@@ -86,7 +86,9 @@ block content %}
         <div class="card-header d-flex justify-content-between align-items-center">
           <div>
             <strong>{{ poll.question }}</strong>
-            <small class="text-muted d-block">{% if session.get('lang') == 'de' %}von{% else %}by{% endif %} {{ poll.creator }} • {{ poll.total_votes }} {% if session.get('lang') == 'de' %}Stimmen{% else %}votes{% endif %}</small>
+            <small class="text-muted d-block">
+              {% if session.get('lang') == 'de' %}von{% else %}by{% endif %} {{ poll.creator }} • {{ poll.total_votes }} {% if session.get('lang') == 'de' %}Stimmen{% else %}votes{% endif %} • {{ poll.created_at }}
+            </small>
           </div>
           <div class="d-flex gap-2 align-items-center">
             {% if poll.is_active %}
@@ -156,10 +158,13 @@ block content %}
     <!-- Search and Filter -->
     <form method="get" class="mb-3">
       <div class="row g-2">
-        <div class="col-md-4">
+        <div class="col-md-2">
           <input type="search" name="q" class="form-control" placeholder="{% if session.get('lang') == 'de' %}Beiträge suchen...{% else %}Search posts...{% endif %}" value="{{ query or '' }}">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+          <input type="search" name="location" class="form-control" placeholder="{% if session.get('lang') == 'de' %}Ort...{% else %}Location...{% endif %}" value="{{ location_filter or '' }}">
+        </div>
+        <div class="col-md-2">
           <select name="type" class="form-select">
             <option value="">{% if session.get('lang') == 'de' %}Alle Typen{% else %}All Types{% endif %}</option>
             <option value="sell" {% if type_filter == 'sell' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}</option>
@@ -170,9 +175,17 @@ block content %}
           </select>
         </div>
         <div class="col-md-2">
+          <select name="category" class="form-select">
+            <option value="">{% if session.get('lang') == 'de' %}Alle Kategorien{% else %}All Categories{% endif %}</option>
+            {% for cat in categories %}
+            <option value="{{ cat[0] }}" {% if category_filter == cat[0]|string %}selected{% endif %}>{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
           <button type="submit" class="btn btn-outline-primary w-100">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
         </div>
-        {% if query or type_filter %}
+        {% if query or type_filter or location_filter or category_filter %}
         <div class="col-md-2">
           <a href="/group/{{ group_id }}" class="btn btn-outline-secondary w-100">{% if session.get('lang') == 'de' %}Zurücksetzen{% else %}Clear{% endif %}</a>
         </div>
@@ -192,23 +205,55 @@ block content %}
             <label for="content" class="form-label">{% if session.get('lang') == 'de' %}Beschreibung{% else %}Description{% endif %} <span class="text-danger">*</span></label>
             <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
           </div>
-          <div class="mb-3">
-            <label for="type" class="form-label">{% if session.get('lang') == 'de' %}Typ{% else %}Type{% endif %}</label>
-            <select class="form-control" id="type" name="type" required>
-              <option value="sell">{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}</option>
-              <option value="buy">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
-              <option value="trade">{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}</option>
-              <option value="notification">{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}</option>
-              <option value="giveaway">{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}</option>
-            </select>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="type" class="form-label">{% if session.get('lang') == 'de' %}Typ{% else %}Type{% endif %}</label>
+                <select class="form-control" id="type" name="type" required>
+                  <option value="sell">{% if session.get('lang') == 'de' %}Verkaufen{% else %}Sell{% endif %}</option>
+                  <option value="buy">{% if session.get('lang') == 'de' %}Kaufen{% else %}Buy{% endif %}</option>
+                  <option value="trade">{% if session.get('lang') == 'de' %}Tauschen{% else %}Trade{% endif %}</option>
+                  <option value="notification">{% if session.get('lang') == 'de' %}Benachrichtigung{% else %}Notification{% endif %}</option>
+                  <option value="giveaway">{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="category" class="form-label">{% if session.get('lang') == 'de' %}Kategorie{% else %}Category{% endif %}</label>
+                <select class="form-control" id="category" name="category">
+                  <option value="">{% if session.get('lang') == 'de' %}Keine Kategorie{% else %}No Category{% endif %}</option>
+                  {% for cat in categories %}
+                  <option value="{{ cat[0] }}">{{ cat[3] }} {{ cat[1] if session.get('lang') != 'de' else cat[2] }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="price" class="form-label">{% if session.get('lang') == 'de' %}Preis (optional){% else %}Price (optional){% endif %}</label>
+                <input type="number" step="0.01" class="form-control" id="price" name="price" placeholder="0.00" />
+              </div>
+            </div>
           </div>
           <div class="mb-3">
-            <label for="image" class="form-label">{% if session.get('lang') == 'de' %}Bild{% else %}Image{% endif %}</label>
-            <input type="file" class="form-control" id="image" name="image" accept="image/*" />
+            <label for="location" class="form-label">{% if session.get('lang') == 'de' %}Standort{% else %}Location{% endif %}</label>
+            <input type="text" class="form-control" id="location" name="location" placeholder="{% if session.get('lang') == 'de' %}z.B. München{% else %}e.g. Munich{% endif %}">
           </div>
-          <div class="mb-3">
-            <label for="price" class="form-label">{% if session.get('lang') == 'de' %}Preis (optional){% else %}Price (optional){% endif %}</label>
-            <input type="number" step="0.01" class="form-control" id="price" name="price" placeholder="Enter price" />
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="image" class="form-label">{% if session.get('lang') == 'de' %}Hauptbild{% else %}Main Image{% endif %}</label>
+                <input type="file" class="form-control" id="image" name="image" accept="image/*" />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="images" class="form-label">{% if session.get('lang') == 'de' %}Zusätzliche Bilder{% else %}Additional Images{% endif %}</label>
+                <input type="file" class="form-control" id="images" name="images" accept="image/*" multiple />
+                <small class="text-muted">{% if session.get('lang') == 'de' %}Strg/Cmd für mehrere{% else %}Ctrl/Cmd for multiple{% endif %}</small>
+              </div>
+            </div>
           </div>
           <div class="mb-3">
             <div class="form-check">
@@ -230,11 +275,12 @@ block content %}
             <label for="links" class="form-label">{% if session.get('lang') == 'de' %}Links{% else %}Links{% endif %}</label>
             <input type="url" class="form-control" id="links" name="links" />
           </div>
-          <button type="submit" class="btn btn-primary">{% if session.get('lang') == 'de' %}Posten{% else %}Post{% endif %}</button>
+          <button type="submit" class="btn btn-primary w-100">{% if session.get('lang') == 'de' %}Posten{% else %}Post{% endif %}</button>
         </form>
       </div>
     </div>
 
+    <div id="posts-section">
     <div class="row">
       {% for post in posts %}
       <div class="col-12 col-md-6 col-lg-4 mb-3">
@@ -245,6 +291,9 @@ block content %}
             <p class="card-text">{{ post[2] }}</p>
             {% if post[6] %}
             <p><strong>{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %} ${{ post[6] }}</strong></p>
+            {% endif %}
+            {% if post[9] %}
+            <p class="text-muted small"><span>📍</span> {{ post[9] }}</p>
             {% endif %}
             {% if post[4] %}
             <img src="{{ post[4] }}" class="img-fluid mb-2" alt="Post Image" />
@@ -266,10 +315,10 @@ block content %}
 
     {% if not posts %}
     <div class="text-center mt-4">
-      <p class="text-muted">{% if query or type_filter %}{% if session.get('lang') == 'de' %}Keine Ergebnisse gefunden.{% else %}No results found.{% endif %}{% else %}{% if session.get('lang') == 'de' %}Noch keine Beiträge in dieser Gruppe.{% else %}No posts in this group yet.{% endif %}{% endif %}</p>
+      <p class="text-muted">{% if query or type_filter or location_filter %}{% if session.get('lang') == 'de' %}Keine Ergebnisse gefunden.{% else %}No results found.{% endif %}{% else %}{% if session.get('lang') == 'de' %}Noch keine Beiträge in dieser Gruppe.{% else %}No posts in this group yet.{% endif %}{% endif %}</p>
     </div>
     {% endif %}
-  </div>
+    </div>
 
   <h2 class="mt-5 mb-3">
     {% if session.get('lang') == 'de' %}Mitglieder{% else %}Members{% endif %} ({{ members|length }})
@@ -301,5 +350,14 @@ function toggleShippingCost() {
     costDiv.style.display = 'none';
   }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('q') || urlParams.has('type') || urlParams.has('location')) {
+    setTimeout(function() {
+      document.getElementById('posts-section').scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }
+});
 </script>
 {% endblock %}

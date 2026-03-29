@@ -574,6 +574,10 @@ def init_db():
     except sqlite3.OperationalError:
         pass
     try:
+        c.execute("ALTER TABLE users ADD COLUMN preferred_language TEXT DEFAULT 'en'")
+    except sqlite3.OperationalError:
+        pass
+    try:
         c.execute("ALTER TABLE users ADD COLUMN reset_token TEXT")
     except sqlite3.OperationalError:
         pass
@@ -751,6 +755,16 @@ def init_db():
         c.execute("ALTER TABLE group_posts ADD COLUMN is_active INTEGER DEFAULT 1")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE group_posts ADD COLUMN location TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE group_posts ADD COLUMN category_id INTEGER")
+    except sqlite3.OperationalError:
+        pass
+    c.execute('''CREATE TABLE IF NOT EXISTS group_posts_categories
+                    (group_post_id INTEGER, category_id INTEGER, PRIMARY KEY(group_post_id, category_id))''')
     # Orders table
     c.execute('''CREATE TABLE IF NOT EXISTS orders
                  (id INTEGER PRIMARY KEY, post_id INTEGER, buyer_id INTEGER, seller_id INTEGER,
@@ -1270,9 +1284,9 @@ def login():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     if '@' in identifier:
-        c.execute("SELECT id, password, username, email_verified FROM users WHERE email = ?", (identifier,))
+        c.execute("SELECT id, password, username, email_verified, preferred_language FROM users WHERE email = ?", (identifier,))
     else:
-        c.execute("SELECT id, password, username, email_verified FROM users WHERE username = ?", (identifier,))
+        c.execute("SELECT id, password, username, email_verified, preferred_language FROM users WHERE username = ?", (identifier,))
     user = c.fetchone()
     conn.close()
     if user:
@@ -1283,6 +1297,7 @@ def login():
             session['user_id'] = user[0]
             session['username'] = user[2]
             session['stripe_reminder_shown'] = False
+            session['lang'] = user[4] if user[4] else 'en'
             app.logger.info(f"Login successful for {user[2]}")
             return redirect('/dashboard')
         else:
@@ -2355,6 +2370,12 @@ def switch_lang():
     lang = request.args.get('lang', 'en')
     if lang in ['en', 'de']:
         session['lang'] = lang
+        if 'user_id' in session:
+            conn = sqlite3.connect('database.db')
+            c = conn.cursor()
+            c.execute("UPDATE users SET preferred_language = ? WHERE id = ?", (lang, session['user_id']))
+            conn.commit()
+            conn.close()
     return redirect(request.referrer or '/dashboard')
 
 @app.route('/export_data')
@@ -2843,6 +2864,8 @@ def view_group(group_id):
     
     query = request.args.get('q', '').strip()
     type_filter = request.args.get('type', '')
+    location_filter = request.args.get('location', '').strip()
+    category_filter = request.args.get('category', '')
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -2863,9 +2886,13 @@ def view_group(group_id):
         flash('Group not found.', 'danger')
         return redirect('/groups')
     
+    # Get categories
+    c.execute("SELECT id, name, name_de, icon FROM categories ORDER BY sort_order")
+    categories = c.fetchall()
+    
     # Build posts query with search
     posts_query = """
-        SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, gp.created_at, u.username
+        SELECT gp.id, gp.title, gp.content, gp.type, gp.image, gp.links, gp.price, gp.created_at, u.username, gp.location, gp.category_id
         FROM group_posts gp
         JOIN users u ON gp.user_id = u.id
         WHERE gp.group_id = ?
@@ -2879,6 +2906,14 @@ def view_group(group_id):
     if type_filter:
         posts_query += " AND gp.type = ?"
         params.append(type_filter)
+    
+    if location_filter:
+        posts_query += " AND gp.location LIKE ?"
+        params.append(f'%{location_filter}%')
+    
+    if category_filter:
+        posts_query += " AND gp.category_id = ?"
+        params.append(category_filter)
     
     posts_query += " ORDER BY gp.created_at DESC"
     
@@ -2947,6 +2982,7 @@ def view_group(group_id):
     
     return render_template('group_detail.html', group=group, posts=posts, members=members, group_id=group_id, 
                          is_creator=is_creator, polls=polls_data, query=query, type_filter=type_filter,
+                         location_filter=location_filter, category_filter=category_filter, categories=categories,
                          unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/group/<int:group_id>/chat')
@@ -3491,6 +3527,8 @@ def post_in_group(group_id):
     post_type = request.form.get('type')
     links = request.form.get('links')
     price = request.form.get('price')
+    location = request.form.get('location', '').strip()
+    category_id = request.form.get('category') or None
     local_pickup = 1 if request.form.get('local_pickup') else 0
     shipping_available = 1 if request.form.get('shipping_available') else 0
     shipping_cost = request.form.get('shipping_cost') or 0
@@ -3506,8 +3544,23 @@ def post_in_group(group_id):
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             file.save(file_path)
             image_path = f'/static/pictures/{filename}'
-    c.execute("INSERT INTO group_posts (group_id, user_id, title, content, type, image, links, price, local_pickup, shipping_available, shipping_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-              (group_id, session['user_id'], title, content, post_type, image_path, links, price, local_pickup, shipping_available, shipping_cost))
+    c.execute("INSERT INTO group_posts (group_id, user_id, title, content, type, image, links, price, location, category_id, local_pickup, shipping_available, shipping_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              (group_id, session['user_id'], title, content, post_type, image_path, links, price, location, category_id, local_pickup, shipping_available, shipping_cost))
+    post_id = c.lastrowid
+    
+    # Handle additional images
+    if 'images' in request.files:
+        files = request.files.getlist('images')
+        for i, file in enumerate(files):
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(app.root_path, 'static', 'pictures', f'group_post_{post_id}_{i}_{filename}')
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                file.save(file_path)
+                image_url = f'/static/pictures/group_post_{post_id}_{i}_{filename}'
+                c.execute("INSERT INTO post_images (post_id, image_url, sort_order) VALUES (?, ?, ?)",
+                          (post_id, image_url, i + 1))
+    
     conn.commit()
     conn.close()
     flash('Post created!', 'success')
