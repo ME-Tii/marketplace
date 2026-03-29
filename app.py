@@ -4415,17 +4415,29 @@ def checkout(post_id):
         conn.close()
         return 'Post not found', 404
     
+    if post[2] == session['user_id']:
+        conn.close()
+        flash('You cannot buy your own item.', 'warning')
+        return redirect(f'/post/{post_id}')
+    
     c.execute("SELECT username, email FROM users WHERE id = ?", (session['user_id'],))
     user = c.fetchone()
     
     # Check if there's already a pending order
-    c.execute("SELECT id, amount, quantity FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
+    c.execute("SELECT * FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
     existing_order = c.fetchone()
+    
+    if not existing_order and order_id:
+        c.execute("SELECT * FROM orders WHERE id = ? AND buyer_id = ?", (order_id, session['user_id']))
+        existing_order = c.fetchone()
+    
+    c.execute("SELECT * FROM addresses WHERE user_id = ? ORDER BY id DESC LIMIT 1", (session['user_id'],))
+    saved_address = c.fetchone()
     
     conn.close()
     
     return render_template('checkout.html', post=post, post_id=post_id, order_id=order_id, 
-                         user=user, existing_order=existing_order, 
+                         user=user, existing_order=existing_order, saved_address=saved_address,
                          unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/checkout/group/<int:post_id>')
@@ -4446,33 +4458,6 @@ def checkout_group(post_id):
     
     c.execute("SELECT username, email FROM users WHERE id = ?", (session['user_id'],))
     user = c.fetchone()
-    conn.close()
-    
-    return render_template('checkout.html', post=post, post_id=post_id, order_id=order_id, 
-                         user=user, is_group_post=True, unread_messages=get_unread_messages_count(session.get('user_id')))
-    if 'user_id' not in session:
-        return redirect('/login')
-    
-    order_id = request.args.get('order_id')
-    
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost, quantity, is_active FROM posts WHERE id = ?", (post_id,))
-    post = c.fetchone()
-    
-    if not post or not post[1]:
-        conn.close()
-        return 'Post not found or has no price', 404
-    
-    if post[7] == 0 or (post[6] is not None and post[6] <= 0):
-        conn.close()
-        flash('This item is no longer available.', 'danger')
-        return redirect(f'/post/{post_id}')
-    
-    if post[2] == session['user_id']:
-        conn.close()
-        flash('You cannot buy your own item.', 'warning')
-        return redirect(f'/post/{post_id}')
     
     c.execute("SELECT * FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
     existing_order = c.fetchone()
@@ -4480,13 +4465,15 @@ def checkout_group(post_id):
     if not existing_order and order_id:
         c.execute("SELECT * FROM orders WHERE id = ? AND buyer_id = ?", (order_id, session['user_id']))
         existing_order = c.fetchone()
-        app.logger.info(f"checkout: order lookup by id={order_id}, found={existing_order is not None}")
     
     c.execute("SELECT * FROM addresses WHERE user_id = ? ORDER BY id DESC LIMIT 1", (session['user_id'],))
     saved_address = c.fetchone()
+    
     conn.close()
     
-    return render_template('checkout.html', post=post, post_id=post_id, existing_order=existing_order, saved_address=saved_address, unread_messages=get_unread_messages_count(session.get('user_id')))
+    return render_template('checkout.html', post=post, post_id=post_id, order_id=order_id, 
+                          user=user, existing_order=existing_order, saved_address=saved_address,
+                          is_group_post=True, unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/process_checkout/<int:post_id>', methods=['POST'])
 def process_checkout(post_id):
@@ -4513,19 +4500,18 @@ def process_checkout(post_id):
         flash('You cannot buy your own item.', 'warning')
         return redirect(f'/post/{post_id}')
     
-    # Get quantity from form
     quantity = int(request.form.get('quantity', 1))
-    app.logger.info(f"process_checkout: quantity={quantity}, post_id={post_id}")
     if quantity < 1 or quantity > post[6]:
         conn.close()
         flash(f'Invalid quantity. Available: {post[6]}', 'danger')
         return redirect(f'/checkout/{post_id}')
     
-    # Validate delivery method matches available options
     if delivery_method == 'local_pickup' and not post[3]:
+        conn.close()
         flash('Local pickup is not available for this item.', 'danger')
         return redirect(f'/checkout/{post_id}')
     if delivery_method == 'shipping' and not post[4]:
+        conn.close()
         flash('Shipping is not available for this item.', 'danger')
         return redirect(f'/checkout/{post_id}')
     
@@ -4540,8 +4526,6 @@ def process_checkout(post_id):
     if delivery_method == 'shipping' and post[4]:
         shipping_cost = (post[5] or 0) * quantity
     total_amount = item_total + shipping_cost
-    app.logger.info(f"process_checkout: item_total={item_total}, shipping={shipping_cost}, total_amount={total_amount}")
-    
     transaction_fee = item_total * 0.10
     
     if delivery_method == 'local_pickup':
@@ -4565,20 +4549,17 @@ def process_checkout(post_id):
     
     if existing_for_calc:
         order_id = existing_for_calc[0]
-        c.execute("""UPDATE orders SET amount = ?, shipping_method = ?, shipping_cost = ?, transaction_fee = ?, quantity = ? WHERE id = ?""",
+        c.execute("UPDATE orders SET amount = ?, shipping_method = ?, shipping_cost = ?, transaction_fee = ?, quantity = ? WHERE id = ?",
                   (total_amount, delivery_method, shipping_cost, transaction_fee, quantity, order_id))
     else:
         c.execute("INSERT INTO orders (post_id, buyer_id, seller_id, amount, status, shipping_method, shipping_cost, transaction_fee, quantity) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)",
                   (post_id, session['user_id'], post[2], total_amount, delivery_method, shipping_cost, transaction_fee, quantity))
         order_id = c.lastrowid
-        
         new_qty = post[6] - quantity
         c.execute("UPDATE posts SET quantity = ?, is_active = CASE WHEN ? <= 0 THEN 0 ELSE 1 END WHERE id = ?", (new_qty, new_qty, post_id))
     
-    # Only save address for shipping orders, not local pickup
     if save_address and full_name and delivery_method == 'shipping':
-        c.execute("""INSERT INTO addresses (user_id, order_id, full_name, street, city, state, zip_code, country, phone)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        c.execute("INSERT INTO addresses (user_id, order_id, full_name, street, city, state, zip_code, country, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                   (session['user_id'], order_id, full_name, street, city, state, zip_code, country, phone))
     
     conn.commit()
@@ -4596,7 +4577,6 @@ def create_checkout_session(post_id):
         return redirect(f'/post/{post_id}')
     
     order_id = session.get('current_order_id')
-    
     bid_order_id = request.args.get('bid_order_id')
     if bid_order_id:
         order_id = bid_order_id
@@ -4617,7 +4597,6 @@ def create_checkout_session(post_id):
         return 'Post or order not found', 404
     
     total_amount = order[0]
-    shipping_method = order[1]
     
     session.pop('current_order_id', None)
     
@@ -4631,25 +4610,11 @@ def create_checkout_session(post_id):
     seller_username = seller_info[0] if seller_info else None
     seller_stripe = seller_info[1] if seller_info else None
     
-    app.logger.info(f"DEBUG: seller_info={seller_info}, seller_username={seller_username}, seller_stripe={seller_stripe}")
-    
-    # Check if seller has Stripe connected for automatic payouts
-    use_seller_payout = seller_stripe
-    
-    if not use_seller_payout:
-        # Seller not connected - redirect to contact page for manual payment
+    if not seller_stripe:
         flash('Seller has not set up online payments. Please contact seller to arrange payment.', 'info')
         return redirect(f'/messages?chat={seller_username}&post_id={post_id}')
     
-    transfer_data = {'destination': seller_stripe}
-    
-    app.logger.info(f"Creating checkout session for order {order_id}, amount: {total_amount}, seller: {seller_username}")
-    
     try:
-        if not app.config['STRIPE_SECRET_KEY']:
-            flash('Stripe is not configured. Please contact the administrator.', 'danger')
-            return redirect(f'/post/{post_id}')
-        
         session_params = {
             'payment_method_types': ['card'],
             'line_items': [{
@@ -4668,7 +4633,7 @@ def create_checkout_session(post_id):
             'metadata': {'order_id': order_id, 'post_id': post_id}
         }
         
-        if use_seller_payout:
+        if seller_stripe:
             session_params['payment_intent_data'] = {
                 'transfer_data': {'destination': seller_stripe},
                 'application_fee_amount': int(total_amount * 100 * 0.10)
