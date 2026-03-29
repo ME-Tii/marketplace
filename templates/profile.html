@@ -70,7 +70,7 @@
             {% if accepted_count.count > 0 %}
             <span class="badge bg-danger me-2">{{ accepted_count.count }} {% if session.get('lang') == 'de' %}akzeptiert!{% else %}accepted!{% endif %}</span>
             {% endif %}
-            <a href="/my-offers" class="btn btn-sm btn-dark">{% if session.get('lang') == 'de' %}Alle anzeigen{% else %}View All{% endif %}</a>
+            <a href="/my-bids" class="btn btn-sm btn-dark">{% if session.get('lang') == 'de' %}Alle anzeigen{% else %}View All{% endif %}</a>
           </div>
         </div>
         <div class="card-body">

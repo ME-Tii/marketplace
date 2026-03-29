@@ -2196,8 +2196,8 @@ def profile(username):
     success = request.args.get('success')
     return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, reports=reports, notification_prefs=notification_prefs, total_ratings=total_ratings, avg_rating=avg_rating, user_bids=user_bids, accepted_bids_count=accepted_bids_count)
 
-@app.route('/my-offers')
-def my_offers():
+@app.route('/my-bids')
+def my_bids():
     if 'user_id' not in session:
         return redirect('/login')
     
