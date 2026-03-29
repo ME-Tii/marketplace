@@ -32,9 +32,12 @@
                 </a>
               </li>
               <li>
-                <a class="dropdown-item text-danger" href="/folder/{{ folder[0] }}/delete" onclick="return confirm('{% if session.get('lang') == 'de' %}Ordner löschen?{% else %}Delete folder?{% endif %}')">
-                  <i class="bi bi-trash"></i> {% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}
-                </a>
+                <form action="/folder/{{ folder[0] }}/delete" method="POST" style="display: inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="dropdown-item text-danger" onclick="return confirm('{% if session.get('lang') == 'de' %}Ordner löschen?{% else %}Delete folder?{% endif %}')">
+                    <i class="bi bi-trash"></i> {% if session.get('lang') == 'de' %}Löschen{% else %}Delete{% endif %}
+                  </button>
+                </form>
               </li>
             </ul>
           </div>

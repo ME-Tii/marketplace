@@ -3876,7 +3876,7 @@ def create_folder():
         conn.close()
     return redirect('/notices')
 
-@app.route('/folder/<int:folder_id>/delete')
+@app.route('/folder/<int:folder_id>/delete', methods=['POST'])
 def delete_folder(folder_id):
     if 'user_id' not in session:
         return redirect('/login')
