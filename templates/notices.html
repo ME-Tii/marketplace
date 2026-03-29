@@ -48,6 +48,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
               <form action="/folder/{{ folder[0] }}/rename" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                   <div class="mb-3">
                     <label class="form-label">{% if session.get('lang') == 'de' %}Name{% else %}Name{% endif %}</label>
@@ -153,6 +154,7 @@
 </div>
 
 <form id="moveToFolderForm" method="POST" style="display: none;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="hidden" name="folder_id" id="moveFolderId">
 </form>
 
@@ -164,6 +166,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form action="/folder/create" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">{% if session.get('lang') == 'de' %}Name{% else %}Name{% endif %}</label>
