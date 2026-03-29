@@ -3913,7 +3913,7 @@ def move_notice_to_folder(post_id):
     c.execute("UPDATE notices SET folder_id = ? WHERE user_id = ? AND post_id = ?", (folder_id, session['user_id'], post_id))
     conn.commit()
     conn.close()
-    return redirect('/notices' + (f'?folder={folder_id}' if folder_id else ''))
+    return redirect(request.referrer or '/notices')
 
 @app.route('/add_notice_user/<username>')
 def add_notice_user(username):
