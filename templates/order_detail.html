@@ -54,9 +54,9 @@
     <p>{% if session.get('lang') == 'de' %}Bitte senden Sie den Artikel an die folgende Adresse des Verkäufers zurück:{% else %}Please ship the item back to the seller's return address below:{% endif %}</p>
     
     {% if order[19] %}
-    <div class="bg-light p-3 rounded mb-3">
-      <strong>{% if session.get('lang') == 'de' %}Rücksendeadresse:{% else %}Return Address:{% endif %}</strong><br/>
-      {{ order[19] }}
+    <div class="alert alert-warning p-3 mb-3" style="border: 2px solid #856404; background-color: #fff3cd;">
+      <strong class="text-dark">{% if session.get('lang') == 'de' %}Rücksendeadresse:{% else %}Return Address:{% endif %}</strong><br/>
+      <span class="text-dark">{{ order[19] }}</span>
     </div>
     {% else %}
     <p class="text-danger">{% if session.get('lang') == 'de' %}Der Verkäufer hat keine Rücksendeadresse hinterlegt.{% else %}Seller has not provided a return address.{% endif %}</p>
