@@ -1,61 +1,154 @@
 {% extends "base.html" %}
-{% block title %}{% if session.get('lang') == 'de' %}Meine Angebote{% else %}My Offers{% endif %} - Marketplace{% endblock %}
+{% block title %}{% if session.get('lang') == 'de' %}Meine Angebote{% else %}My Offers{% endif %}{% endblock %}
 {% block content %}
 <div class="container mt-5">
-  <h2>{% if session.get('lang') == 'de' %}Alle Angebote{% else %}All Offers{% endif %}</h2>
-  <p class="text-muted">{% if session.get('lang') == 'de' %}Hier sehen Sie alle Angebote für Ihre Artikel{% else %}View all offers for your items{% endif %}</p>
-  
-  {% if bids %}
-  <div class="table-responsive mt-4">
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>{% if session.get('lang') == 'de' %}Artikel{% else %}Item{% endif %}</th>
-          <th>{% if session.get('lang') == 'de' %}Käufer{% else %}Buyer{% endif %}</th>
-          <th>{% if session.get('lang') == 'de' %}Angebot{% else %}Offer{% endif %}</th>
-          <th>{% if session.get('lang') == 'de' %}Nachricht{% else %}Message{% endif %}</th>
-          <th>{% if session.get('lang') == 'de' %}Status{% else %}Status{% endif %}</th>
-          <th>{% if session.get('lang') == 'de' %}Datum{% else %}Date{% endif %}</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for bid in bids %}
-        <tr>
-          <td>
-            {% if bid[8] %}
-            <img src="{{ bid[8] }}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" class="me-2">
-            {% endif %}
-            <a href="/post/{{ bid[7] }}">{{ bid[6] }}</a>
-          </td>
-          <td><a href="/profile/{{ bid[5] }}">{{ bid[5] }}</a></td>
-          <td>
-            <strong>${{ bid[1] }}</strong>
-            {% if bid[9] %}
-            <br><small class="text-muted">{% if session.get('lang') == 'de' %}Original: ${{ bid[9] }}{% else %}Original: ${{ bid[9] }}{% endif %}</small>
-            {% endif %}
-          </td>
-          <td>{{ bid[2] or '-' }}</td>
-          <td>
-            {% if bid[3] == 'pending' %}<span class="badge bg-warning">{% if session.get('lang') == 'de' %}Ausstehend{% else %}Pending{% endif %}</span>
-            {% elif bid[3] == 'accepted' %}<span class="badge bg-success">{% if session.get('lang') == 'de' %}Akzeptiert{% else %}Accepted{% endif %}</span>
-            {% elif bid[3] == 'rejected' %}<span class="badge bg-danger">{% if session.get('lang') == 'de' %}Abgelehnt{% else %}Rejected{% endif %}</span>
-            {% endif %}
-          </td>
-          <td>{{ bid[4][:10] }}</td>
-          <td>
-            {% if bid[3] == 'pending' %}
-            <a href="/bid/{{ bid[0] }}/accept" class="btn btn-sm btn-success">{% if session.get('lang') == 'de' %}Akzeptieren{% else %}Accept{% endif %}</a>
-            <a href="/bid/{{ bid[0] }}/reject" class="btn btn-sm btn-danger">{% if session.get('lang') == 'de' %}Ablehnen{% else %}Reject{% endif %}</a>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{% if session.get('lang') == 'de' %}Meine Angebote{% else %}My Offers{% endif %}</h1>
+    <a href="/profile/{{ session.get('username') }}" class="btn btn-outline-secondary">
+      {% if session.get('lang') == 'de' %}Zurück zum Profil{% else %}Back to Profile{% endif %}
+    </a>
   </div>
+
+  {% if bids or group_bids %}
+  
+  <ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#marketplace" type="button">
+        {% if session.get('lang') == 'de' %}Marktplatz{% else %}Marketplace{% endif %}
+        {% if bids %}<span class="badge bg-primary ms-2">{{ bids|length }}</span>{% endif %}
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#groups">
+        {% if session.get('lang') == 'de' %}Gruppen{% else %}Groups{% endif %}
+        {% if group_bids %}<span class="badge bg-primary ms-2">{{ group_bids|length }}</span>{% endif %}
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="marketplace">
+      {% if bids %}
+      <div class="row">
+        {% for bid in bids %}
+        <div class="col-md-6 mb-3">
+          <div class="card {% if bid[2] == 'accepted' %}border-success{% elif bid[2] == 'rejected' %}border-danger{% else %}border-warning{% endif %}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="card-title mb-0">
+                  <a href="/post/{{ bid[6] }}">{{ bid[7] }}</a>
+                </h5>
+                <span class="badge {% if bid[2] == 'accepted' %}bg-success{% elif bid[2] == 'rejected' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                  {{ bid[2]|upper }}
+                </span>
+              </div>
+              
+              <div class="row mb-2">
+                <div class="col-6">
+                  <small class="text-muted">{% if session.get('lang') == 'de' %}Mein Angebot:{% else %}My Offer:{% endif %}</small>
+                  <strong class="d-block text-primary">${{ bid[1] }}</strong>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">{% if session.get('lang') == 'de' %}Listenpreis:{% else %}Listed Price:{% endif %}</small>
+                  <strong class="d-block">${{ bid[8] if bid[8] else 'N/A' }}</strong>
+                </div>
+              </div>
+              
+              {% if bid[3] %}
+              <p class="small text-muted mb-2">"{{ bid[3] }}"</p>
+              {% endif %}
+              
+              <small class="text-muted d-block mb-2">{{ bid[4] }}</small>
+              
+              <small class="text-muted">{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %} <a href="/profile/{{ bid[11] }}">{{ bid[11] }}</a></small>
+              
+              {% if bid[2] == 'accepted' %}
+              <div class="mt-3">
+                {% if bid[10] %}
+                <a href="/order/{{ bid[10] }}" class="btn btn-success btn-sm">{% if session.get('lang') == 'de' %}Bestellung anzeigen{% else %}View Order{% endif %}</a>
+                {% else %}
+                <a href="/buy_now/{{ bid[6] }}?bid_id={{ bid[0] }}" class="btn btn-success btn-sm">{% if session.get('lang') == 'de' %}Jetzt kaufen{% else %}Buy Now{% endif %}</a>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="alert alert-info">
+        {% if session.get('lang') == 'de' %}Du hast noch keine Angebote im Marktplatz gemacht.{% else %}You haven't made any offers on the marketplace yet.{% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="tab-pane fade" id="groups">
+      {% if group_bids %}
+      <div class="row">
+        {% for bid in group_bids %}
+        <div class="col-md-6 mb-3">
+          <div class="card {% if bid[2] == 'accepted' %}border-success{% elif bid[2] == 'rejected' %}border-danger{% else %}border-warning{% endif %}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h5 class="card-title mb-0">
+                    <a href="/group_post/{{ bid[6] }}">{{ bid[7] }}</a>
+                  </h5>
+                  <small class="text-muted">{{ bid[12] }}</small>
+                </div>
+                <span class="badge {% if bid[2] == 'accepted' %}bg-success{% elif bid[2] == 'rejected' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                  {{ bid[2]|upper }}
+                </span>
+              </div>
+              
+              <div class="row mb-2">
+                <div class="col-6">
+                  <small class="text-muted">{% if session.get('lang') == 'de' %}Mein Angebot:{% else %}My Offer:{% endif %}</small>
+                  <strong class="d-block text-primary">${{ bid[1] }}</strong>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">{% if session.get('lang') == 'de' %}Preis:{% else %}Price:{% endif %}</small>
+                  <strong class="d-block">${{ bid[8] if bid[8] else 'N/A' }}</strong>
+                </div>
+              </div>
+              
+              {% if bid[3] %}
+              <p class="small text-muted mb-2">"{{ bid[3] }}"</p>
+              {% endif %}
+              
+              <small class="text-muted d-block mb-2">{{ bid[4] }}</small>
+              
+              <small class="text-muted">{% if session.get('lang') == 'de' %}Verkäufer:{% else %}Seller:{% endif %} <a href="/profile/{{ bid[11] }}">{{ bid[11] }}</a></small>
+              
+              {% if bid[2] == 'accepted' %}
+              <div class="mt-3">
+                {% if bid[10] %}
+                <a href="/order/{{ bid[10] }}" class="btn btn-success btn-sm">{% if session.get('lang') == 'de' %}Bestellung anzeigen{% else %}View Order{% endif %}</a>
+                {% else %}
+                <a href="/buy_now/group/{{ bid[6] }}?bid_id={{ bid[0] }}" class="btn btn-success btn-sm">{% if session.get('lang') == 'de' %}Jetzt kaufen{% else %}Buy Now{% endif %}</a>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="alert alert-info">
+        {% if session.get('lang') == 'de' %}Du hast noch keine Angebote in Gruppen gemacht.{% else %}You haven't made any offers in groups yet.{% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
   {% else %}
-  <p class="text-muted mt-4">{% if session.get('lang') == 'de' %}Noch keine Angebote.{% else %}No offers yet.{% endif %}</p>
+  <div class="alert alert-info text-center">
+    <h4>{% if session.get('lang') == 'de' %}Keine Angebote{% else %}No Offers Yet{% endif %}</h4>
+    <p>{% if session.get('lang') == 'de' %}Du hast noch keine Angebote gemacht.{% else %}You haven't made any offers yet.{% endif %}</p>
+    <a href="/dashboard" class="btn btn-primary">{% if session.get('lang') == 'de' %}Marktplatz durchsuchen{% else %}Browse Marketplace{% endif %}</a>
+  </div>
   {% endif %}
 </div>
 {% endblock %}

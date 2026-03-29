@@ -708,6 +708,10 @@ def init_db():
         c.execute("ALTER TABLE bids ADD COLUMN seen INTEGER DEFAULT 0")
     except sqlite3.OperationalError:
         pass
+    try:
+        c.execute("ALTER TABLE bids ADD COLUMN group_post_id INTEGER")
+    except sqlite3.OperationalError:
+        pass
     # Insert default categories if not exist
     default_categories = [
         ('Electronics', 'Elektronik', '📱', 1),
@@ -2191,6 +2195,42 @@ def profile(username):
     conn.close()
     success = request.args.get('success')
     return render_template('profile.html', username=username, posts=posts, group_posts=group_posts, description=description, profile_picture=profile_picture, stripe_account_id=stripe_account_id, is_owner=is_owner, is_noticed=is_noticed, unread_messages=get_unread_messages_count(session.get('user_id')), success=success, reports=reports, notification_prefs=notification_prefs, total_ratings=total_ratings, avg_rating=avg_rating, user_bids=user_bids, accepted_bids_count=accepted_bids_count)
+
+@app.route('/my-offers')
+def my_offers():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    # Get all user's bids/offers
+    c.execute("""SELECT b.id, b.amount, b.status, b.message, b.created_at, b.order_id,
+                         p.id as post_id, p.title, p.price, p.image, p.user_id as seller_id,
+                         u.username as seller_name
+                  FROM bids b 
+                  JOIN posts p ON b.post_id = p.id 
+                  JOIN users u ON p.user_id = u.id
+                  WHERE b.buyer_id = ? 
+                  ORDER BY b.created_at DESC""", (session['user_id'],))
+    bids = c.fetchall()
+    
+    # Also get group post bids
+    c.execute("""SELECT b.id, b.amount, b.status, b.message, b.created_at, b.order_id,
+                         gp.id as post_id, gp.title, gp.price, gp.image, gp.user_id as seller_id,
+                         u.username as seller_name, g.name as group_name
+                  FROM bids b 
+                  JOIN group_posts gp ON b.post_id = gp.id 
+                  JOIN users u ON gp.user_id = u.id
+                  JOIN groups g ON gp.group_id = g.id
+                  WHERE b.buyer_id = ? AND b.group_post_id IS NOT NULL
+                  ORDER BY b.created_at DESC""", (session['user_id'],))
+    group_bids = c.fetchall()
+    
+    conn.close()
+    
+    return render_template('my_offers.html', bids=bids, group_bids=group_bids, 
+                         unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/stripe-reminder-dismissed')
 def stripe_reminder_dismissed():

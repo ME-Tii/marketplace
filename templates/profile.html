@@ -64,11 +64,14 @@
       <div class="card mb-4 border-warning">
         <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
           <h5 class="mb-0">{% if session.get('lang') == 'de' %}Meine Angebote{% else %}My Offers{% endif %}</h5>
-          {% set accepted_count = namespace(count=0) %}
-          {% for b in user_bids if b[2] == 'accepted' %}{% set accepted_count.count = accepted_count.count + 1 %}{% endfor %}
-          {% if accepted_count.count > 0 %}
-          <span class="badge bg-danger">{{ accepted_count.count }} {% if session.get('lang') == 'de' %}akzeptiert - Checkout!{% else %}accepted - Checkout!{% endif %}</span>
-          {% endif %}
+          <div>
+            {% set accepted_count = namespace(count=0) %}
+            {% for b in user_bids if b[2] == 'accepted' %}{% set accepted_count.count = accepted_count.count + 1 %}{% endfor %}
+            {% if accepted_count.count > 0 %}
+            <span class="badge bg-danger me-2">{{ accepted_count.count }} {% if session.get('lang') == 'de' %}akzeptiert!{% else %}accepted!{% endif %}</span>
+            {% endif %}
+            <a href="/my-offers" class="btn btn-sm btn-dark">{% if session.get('lang') == 'de' %}Alle anzeigen{% else %}View All{% endif %}</a>
+          </div>
         </div>
         <div class="card-body">
           {% for bid in user_bids %}
