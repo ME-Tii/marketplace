@@ -3939,22 +3939,27 @@ def my_offers():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     
-    # Get all bids across all user's posts
-    c.execute("""SELECT b.id, b.amount, b.message, b.status, b.created_at, u.username, p.title, p.id, p.image, p.price
+    # Bids received on my posts (as seller)
+    c.execute("""SELECT b.id, b.amount, b.message, b.status, b.created_at, u.username, p.title, p.id, p.image, p.price, 'received'
                  FROM bids b 
                  JOIN users u ON b.buyer_id = u.id 
                  JOIN posts p ON b.post_id = p.id 
                  WHERE p.user_id = ? 
                  ORDER BY b.created_at DESC""", (session['user_id'],))
-    bids = c.fetchall()
+    received_bids = c.fetchall()
     
-    # Get posts for display
-    c.execute("SELECT id, title, image FROM posts WHERE user_id = ?", (session['user_id'],))
-    posts = {p[0]: (p[1], p[2]) for p in c.fetchall()}
+    # Bids I placed (as buyer)
+    c.execute("""SELECT b.id, b.amount, b.message, b.status, b.created_at, u.username, p.title, p.id, p.image, p.price, 'placed'
+                 FROM bids b 
+                 JOIN users u ON p.user_id = u.id 
+                 JOIN posts p ON b.post_id = p.id 
+                 WHERE b.buyer_id = ? 
+                 ORDER BY b.created_at DESC""", (session['user_id'],))
+    placed_bids = c.fetchall()
     
     conn.close()
     
-    return render_template('my_offers.html', bids=bids, posts=posts, unread_messages=get_unread_messages_count(session.get('user_id')))
+    return render_template('my_offers.html', received_bids=received_bids, placed_bids=placed_bids, unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/bid/<int:bid_id>/accept')
 def accept_bid(bid_id):
