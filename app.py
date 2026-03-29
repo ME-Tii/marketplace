@@ -1998,7 +1998,7 @@ def dashboard():
                         JOIN users ON posts.user_id = users.id
                         LEFT JOIN posts_categories ON posts.id = posts_categories.post_id
                         LEFT JOIN categories ON posts_categories.category_id = categories.id
-                        WHERE (posts.is_active = 1 OR posts.is_active IS NULL)"""
+                        WHERE (posts.is_active = 1 OR posts.is_active IS NULL) AND (posts.quantity IS NULL OR posts.quantity > 0)"""
         conditions = []
         params = []
         if query:
@@ -4394,6 +4394,38 @@ def buy_now_group(post_id):
     
     conn.close()
     return redirect(f'/checkout/group/{post_id}')
+
+@app.route('/checkout/<int:post_id>')
+def checkout(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    order_id = request.args.get('order_id')
+    
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("SELECT title, price, user_id, local_pickup, shipping_available, shipping_cost, quantity, is_active, location FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    
+    if not post:
+        conn.close()
+        return 'Post not found', 404
+    
+    c.execute("SELECT username, email FROM users WHERE id = ?", (session['user_id'],))
+    user = c.fetchone()
+    
+    c.execute("SELECT id, address, city, postal_code, country FROM addresses WHERE user_id = ? LIMIT 1", (session['user_id'],))
+    saved_address = c.fetchone()
+    
+    # Check if there's already a pending order
+    c.execute("SELECT id, amount, quantity FROM orders WHERE post_id = ? AND buyer_id = ? AND status = 'pending'", (post_id, session['user_id']))
+    existing_order = c.fetchone()
+    
+    conn.close()
+    
+    return render_template('checkout.html', post=post, post_id=post_id, order_id=order_id, 
+                         user=user, existing_order=existing_order, saved_address=saved_address, 
+                         unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/checkout/group/<int:post_id>')
 def checkout_group(post_id):
