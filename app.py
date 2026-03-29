@@ -51,6 +51,21 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
+def get_text_color(bg_color):
+    if not bg_color or not bg_color.startswith('#'):
+        return 'white'
+    hex_color = bg_color.lstrip('#')
+    if len(hex_color) != 6:
+        return 'white'
+    try:
+        r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+        luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        return '#1a1a1a' if luminance > 0.5 else 'white'
+    except:
+        return 'white'
+
+app.jinja_env.globals['get_text_color'] = get_text_color
+
 @app.route('/webhook/stripe', methods=['POST'])
 def stripe_webhook():
     payload = request.data
