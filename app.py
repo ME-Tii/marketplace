@@ -2202,6 +2202,7 @@ def my_bids():
         return redirect('/login')
     
     conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
     # Get all user's bids/offers
@@ -2213,7 +2214,7 @@ def my_bids():
                   JOIN users u ON p.user_id = u.id
                   WHERE b.buyer_id = ? 
                   ORDER BY b.created_at DESC""", (session['user_id'],))
-    bids = c.fetchall()
+    bids = [tuple(row) for row in c.fetchall()]
     
     # Also get group post bids
     c.execute("""SELECT b.id, b.amount, b.status, b.message, b.created_at, b.order_id,
@@ -2225,7 +2226,7 @@ def my_bids():
                   JOIN groups g ON gp.group_id = g.id
                   WHERE b.buyer_id = ? AND b.group_post_id IS NOT NULL
                   ORDER BY b.created_at DESC""", (session['user_id'],))
-    group_bids = c.fetchall()
+    group_bids = [tuple(row) for row in c.fetchall()]
     
     conn.close()
     
