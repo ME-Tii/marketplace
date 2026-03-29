@@ -663,7 +663,13 @@ def init_db():
         pass
     conn.commit()
     c.execute('''CREATE TABLE IF NOT EXISTS notices
-                   (user_id INTEGER, post_id INTEGER, PRIMARY KEY (user_id, post_id))''')
+                   (user_id INTEGER, post_id INTEGER, folder_id INTEGER, PRIMARY KEY (user_id, post_id))''')
+    try:
+        c.execute("ALTER TABLE notices ADD COLUMN folder_id INTEGER")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+    c.execute('''CREATE TABLE IF NOT EXISTS notice_folders
+                   (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, name TEXT NOT NULL, color TEXT DEFAULT '#6c757d', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS noticed_users
                    (user_id INTEGER, noticed_user_id INTEGER, PRIMARY KEY (user_id, noticed_user_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS messages
@@ -3801,22 +3807,46 @@ def crypto_analytics():
 def notices():
     if 'user_id' not in session:
         return redirect('/login')
+    
+    folder_id = request.args.get('folder', type=int)
+    
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username FROM notices JOIN posts ON notices.post_id = posts.id JOIN users ON posts.user_id = users.id WHERE notices.user_id = ? ORDER BY notices.post_id", (session['user_id'],))
+    
+    c.execute("SELECT id, name, color FROM notice_folders WHERE user_id = ? ORDER BY name", (session['user_id'],))
+    folders = c.fetchall()
+    
+    if folder_id:
+        c.execute("""SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, n.folder_id, f.name
+                     FROM notices n 
+                     JOIN posts ON n.post_id = posts.id 
+                     JOIN users ON posts.user_id = users.id 
+                     LEFT JOIN notice_folders f ON n.folder_id = f.id
+                     WHERE n.user_id = ? AND n.folder_id = ?
+                     ORDER BY n.post_id""", (session['user_id'], folder_id))
+    else:
+        c.execute("""SELECT posts.id, posts.title, posts.description, posts.type, posts.image, posts.links, posts.price, posts.timestamp, users.username, n.folder_id, f.name
+                     FROM notices n 
+                     JOIN posts ON n.post_id = posts.id 
+                     JOIN users ON posts.user_id = users.id 
+                     LEFT JOIN notice_folders f ON n.folder_id = f.id
+                     WHERE n.user_id = ?
+                     ORDER BY n.folder_id NULLS FIRST, n.post_id""", (session['user_id'],))
+    
     posts = c.fetchall()
     c.execute("SELECT users.username FROM noticed_users JOIN users ON noticed_users.noticed_user_id = users.id WHERE noticed_users.user_id = ? ORDER BY users.username", (session['user_id'],))
     noticed_users = [row[0] for row in c.fetchall()]
     conn.close()
-    return render_template('notices.html', posts=posts, noticed_users=noticed_users, unread_messages=get_unread_messages_count(session['user_id']))
+    return render_template('notices.html', posts=posts, noticed_users=noticed_users, folders=folders, current_folder=folder_id, unread_messages=get_unread_messages_count(session['user_id']))
 
 @app.route('/add_notice/<int:post_id>')
 def add_notice(post_id):
     if 'user_id' not in session:
         return redirect('/login')
+    folder_id = request.args.get('folder', type=int)
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO notices (user_id, post_id) VALUES (?, ?)", (session['user_id'], post_id))
+    c.execute("INSERT OR REPLACE INTO notices (user_id, post_id, folder_id) VALUES (?, ?, ?)", (session['user_id'], post_id, folder_id))
     conn.commit()
     conn.close()
     return redirect(request.referrer or '/dashboard')
@@ -3831,6 +3861,59 @@ def remove_notice(post_id):
     conn.commit()
     conn.close()
     return redirect('/notices')
+
+@app.route('/folder/create', methods=['POST'])
+def create_folder():
+    if 'user_id' not in session:
+        return redirect('/login')
+    name = request.form.get('name', '').strip()
+    color = request.form.get('color', '#6c757d')
+    if name:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO notice_folders (user_id, name, color) VALUES (?, ?, ?)", (session['user_id'], name, color))
+        conn.commit()
+        conn.close()
+    return redirect('/notices')
+
+@app.route('/folder/<int:folder_id>/delete')
+def delete_folder(folder_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM notice_folders WHERE id = ? AND user_id = ?", (folder_id, session['user_id']))
+    c.execute("UPDATE notices SET folder_id = NULL WHERE user_id = ? AND folder_id = ?", (session['user_id'], folder_id))
+    conn.commit()
+    conn.close()
+    return redirect('/notices')
+
+@app.route('/folder/<int:folder_id>/rename', methods=['POST'])
+def rename_folder(folder_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    name = request.form.get('name', '').strip()
+    color = request.form.get('color', '#6c757d')
+    if name:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("UPDATE notice_folders SET name = ?, color = ? WHERE id = ? AND user_id = ?", (name, color, folder_id, session['user_id']))
+        conn.commit()
+        conn.close()
+    return redirect('/notices')
+
+@app.route('/notice/<int:post_id>/move_to_folder', methods=['POST'])
+def move_notice_to_folder(post_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    folder_id = request.form.get('folder_id')
+    folder_id = int(folder_id) if folder_id and folder_id.isdigit() else None
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("UPDATE notices SET folder_id = ? WHERE user_id = ? AND post_id = ?", (folder_id, session['user_id'], post_id))
+    conn.commit()
+    conn.close()
+    return redirect('/notices' + (f'?folder={folder_id}' if folder_id else ''))
 
 @app.route('/add_notice_user/<username>')
 def add_notice_user(username):
