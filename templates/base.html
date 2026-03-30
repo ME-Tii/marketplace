@@ -850,6 +850,55 @@
         document.getElementById('goldBuyPrice').value = manualAveragePrice.toFixed(2);
       }
       
+      function calculateFees() {
+        const salePrice = parseFloat(document.getElementById('feeSalePrice').value);
+        
+        if (isNaN(salePrice) || salePrice <= 0) {
+          document.getElementById('feeResult').innerHTML = '<span class="text-warning">{% if session.get("lang") == "de" %}Bitte einen Verkaufspreis eingeben{% else %}Please enter a sale price{% endif %}</span>';
+          return;
+        }
+        
+        const ourFeePercent = 8;
+        const ebayFeePercent = 13;
+        
+        const ourFee = salePrice * (ourFeePercent / 100);
+        const ourNet = salePrice - ourFee;
+        
+        const ebayFee = salePrice * (ebayFeePercent / 100);
+        const ebayNet = salePrice - ebayFee;
+        
+        const savings = ebayFee - ourFee;
+        
+        document.getElementById('feeResult').innerHTML = 
+          '<div class="row">' +
+            '<div class="col-md-6">' +
+              '<div class="card bg-light">' +
+                '<div class="card-body">' +
+                  '<h6 class="card-title">{% if session.get("lang") == "de" %}Diese Plattform{% else %}This Marketplace{% endif %}</h6>' +
+                  '<p class="mb-1"><strong>€' + salePrice.toFixed(2) + '</strong> {% if session.get("lang") == "de" %}Verkaufspreis{% else %}sale price{% endif %}</p>' +
+                  '<p class="mb-1 text-muted">-' + ourFeePercent + '% {% if session.get("lang") == "de" %}Gebühr{% else %}fee{% endif %}: <strong>€' + ourFee.toFixed(2) + '</strong></p>' +
+                  '<hr>' +
+                  '<p class="mb-0"><strong>€' + ourNet.toFixed(2) + '</strong> {% if session.get("lang") == "de" %}Netto{% else %}net{% endif %}</p>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="col-md-6">' +
+              '<div class="card bg-light">' +
+                '<div class="card-body">' +
+                  '<h6 class="card-title">eBay</h6>' +
+                  '<p class="mb-1"><strong>€' + salePrice.toFixed(2) + '</strong> {% if session.get("lang") == "de" %}Verkaufspreis{% else %}sale price{% endif %}</p>' +
+                  '<p class="mb-1 text-muted">-' + ebayFeePercent + '% {% if session.get("lang") == "de" %}Gebühr{% else %}fee{% endif %}: <strong>€' + ebayFee.toFixed(2) + '</strong></p>' +
+                  '<hr>' +
+                  '<p class="mb-0"><strong>€' + ebayNet.toFixed(2) + '</strong> {% if session.get("lang") == "de" %}Netto{% else %}net{% endif %}</p>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mt-3 p-3 bg-success text-white rounded">' +
+            '<strong>{% if session.get("lang") == "de" %}Du sparst:{% else %}You save:{% endif %}</strong> €' + savings.toFixed(2) + ' (' + savings.toFixed(0) + '%)' +
+          '</div>';
+      }
+      
       function calculateGoldBuy() {
         const capital = parseFloat(document.getElementById('goldCapital').value);
         const buyPrice = parseFloat(document.getElementById('goldBuyPrice').value);
