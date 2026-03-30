@@ -585,12 +585,16 @@
     <script>
       let currentPrices = null;
       let selectedMetal = 'gold';
+      let lastPriceUpdate = null;
+      let priceSources = null;
       
       async function loadGoldPrice() {
         try {
           const res = await fetch('/api/gold-price');
           const data = await res.json();
           currentPrices = data;
+          priceSources = data;
+          lastPriceUpdate = new Date().toLocaleTimeString();
           updatePriceDisplay();
         } catch(e) {
           currentPrices = {
@@ -602,11 +606,56 @@
       }
       
       function updatePriceDisplay() {
-        const priceDisplay = document.getElementById('goldPriceDisplay');
-        const metal = selectedMetal;
-        const price = currentPrices ? currentPrices[metal] : null;
-        if (!priceDisplay || !price) return;
-        priceDisplay.innerHTML = '€' + price.price_per_gram.toFixed(2) + '/g • €' + price.price_per_oz.toFixed(2) + '/oz';
+        try {
+          const priceDisplay = document.getElementById('goldPriceDisplay');
+          if (!priceDisplay) return;
+          
+          if (!currentPrices) return;
+          
+          const metal = selectedMetal;
+          const price = currentPrices[metal];
+          if (!price) {
+            priceDisplay.innerText = 'No price';
+            return;
+          }
+          
+          let html = '€' + price.price_per_gram.toFixed(2) + '/g';
+          
+          if (priceSources) {
+            const status = priceSources.source_status;
+            const failed = priceSources.failed_sources || [];
+            
+            if (failed.includes('all') || (failed.length === 2)) {
+              html += ' <span class="badge bg-danger">All sources down</span>';
+            } else {
+              let parts = [];
+              if (status && status.goldpreis) {
+                parts.push('goldpreis.de ✓');
+              }
+              if (status && status.goldapi) {
+                parts.push('goldapi.io ✓');
+              }
+              if (failed.includes('goldpreis')) {
+                parts.push('goldpreis.de ✗');
+              }
+              if (failed.includes('goldapi')) {
+                parts.push('goldapi.io ✗');
+              }
+              
+              if (parts.length > 0) {
+                html += ' <span class="badge bg-warning text-dark">' + parts.join(', ') + '</span>';
+              }
+            }
+          }
+          
+          if (lastPriceUpdate) {
+            html += ' <small class="text-muted">' + lastPriceUpdate + '</small>';
+          }
+          
+          priceDisplay.innerHTML = html;
+        } catch(e) {
+          console.error('updatePriceDisplay error:', e);
+        }
       }
       
       function selectMetal(metal) {
@@ -735,6 +784,70 @@
         const newPrice = marketPrice * (1 + percentChange / 100);
         
         document.getElementById('goldBuyPrice').value = newPrice.toFixed(2);
+      }
+      
+      let manualPriceCount = 2;
+      
+      function addManualPriceField() {
+        manualPriceCount++;
+        const container = document.getElementById('manualPriceInputs');
+        const row = document.createElement('div');
+        row.className = 'row';
+        const labelText = 'Price ' + manualPriceCount + ' (€)';
+        row.innerHTML = `
+          <div class="col-md-3 mb-3">
+            <label class="form-label">${labelText}</label>
+            <input type="number" class="form-control manual-price-input" step="0.01" placeholder="0.00">
+          </div>
+        `;
+        const percentRow = container.querySelector('.row:has(#manualPercentChange)');
+        container.insertBefore(row, percentRow);
+      }
+      
+      let manualAveragePrice = null;
+      
+      function calculateManualAverage() {
+        const inputs = document.querySelectorAll('.manual-price-input');
+        const prices = [];
+        inputs.forEach(input => {
+          const val = parseFloat(input.value);
+          if (!isNaN(val)) prices.push(val);
+        });
+        
+        const percentChange = parseFloat(document.getElementById('manualPercentChange').value);
+        
+        if (prices.length === 0) {
+          document.getElementById('manualPriceResult').innerHTML = '<span class="text-warning">{% if session.get("lang") == "de" %}Bitte mindestens einen Preis eingeben{% else %}Please enter at least one price{% endif %}</span>';
+          return;
+        }
+        
+        const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+        
+        let html = '<strong>{% if session.get("lang") == "de" %}Durchschnitt:{% else %}Average:{% endif %}</strong> €' + avgPrice.toFixed(2) + '/g';
+        
+        if (!isNaN(percentChange) && percentChange !== 0) {
+          const newPrice = avgPrice * (1 + percentChange / 100);
+          const change = newPrice - avgPrice;
+          const colorClass = percentChange >= 0 ? 'text-success' : 'text-danger';
+          const sign = percentChange >= 0 ? '+' : '';
+          
+          html += '<br><span class="' + colorClass + '">' + sign + percentChange + '%</span> = <strong>€' + newPrice.toFixed(2) + '/g</strong>';
+          
+          manualAveragePrice = newPrice;
+        } else {
+          manualAveragePrice = avgPrice;
+        }
+        
+        document.getElementById('manualPriceResult').innerHTML = html;
+      }
+      
+      function copyManualPrice() {
+        if (manualAveragePrice === null) {
+          alert('{% if session.get("lang") == "de" %}Bitte zuerst den Durchschnitt berechnen{% else %}Please calculate average first{% endif %}');
+          return;
+        }
+        
+        document.getElementById('goldBuyPrice').value = manualAveragePrice.toFixed(2);
       }
       
       function calculateGoldBuy() {
