@@ -871,23 +871,23 @@
         
         document.getElementById('feeResult').innerHTML = 
           '<div class="row">' +
-            '<div class="col-md-6">' +
-              '<div class="card bg-light">' +
+            '<div class="col-md-6 mb-2 mb-md-0">' +
+              '<div class="card border-primary">' +
                 '<div class="card-body">' +
-                  '<h6 class="card-title">{% if session.get("lang") == "de" %}Diese Plattform{% else %}This Marketplace{% endif %}</h6>' +
+                  '<h6 class="card-title text-primary">{% if session.get("lang") == "de" %}Diese Plattform{% else %}This Marketplace{% endif %}</h6>' +
                   '<p class="mb-1"><strong>€' + salePrice.toFixed(2) + '</strong> {% if session.get("lang") == "de" %}Verkaufspreis{% else %}sale price{% endif %}</p>' +
-                  '<p class="mb-1 text-muted">-' + ourFeePercent + '% {% if session.get("lang") == "de" %}Gebühr{% else %}fee{% endif %}: <strong>€' + ourFee.toFixed(2) + '</strong></p>' +
+                  '<p class="mb-1">-' + ourFeePercent + '% {% if session.get("lang") == "de" %}Gebühr{% else %}fee{% endif %}: <strong>€' + ourFee.toFixed(2) + '</strong></p>' +
                   '<hr>' +
                   '<p class="mb-0"><strong>€' + ourNet.toFixed(2) + '</strong> {% if session.get("lang") == "de" %}Netto{% else %}net{% endif %}</p>' +
                 '</div>' +
               '</div>' +
             '</div>' +
             '<div class="col-md-6">' +
-              '<div class="card bg-light">' +
+              '<div class="card border-secondary">' +
                 '<div class="card-body">' +
                   '<h6 class="card-title">eBay</h6>' +
                   '<p class="mb-1"><strong>€' + salePrice.toFixed(2) + '</strong> {% if session.get("lang") == "de" %}Verkaufspreis{% else %}sale price{% endif %}</p>' +
-                  '<p class="mb-1 text-muted">-' + ebayFeePercent + '% {% if session.get("lang") == "de" %}Gebühr{% else %}fee{% endif %}: <strong>€' + ebayFee.toFixed(2) + '</strong></p>' +
+                  '<p class="mb-1">-' + ebayFeePercent + '% {% if session.get("lang") == "de" %}Gebühr{% else %}fee{% endif %}: <strong>€' + ebayFee.toFixed(2) + '</strong></p>' +
                   '<hr>' +
                   '<p class="mb-0"><strong>€' + ebayNet.toFixed(2) + '</strong> {% if session.get("lang") == "de" %}Netto{% else %}net{% endif %}</p>' +
                 '</div>' +
