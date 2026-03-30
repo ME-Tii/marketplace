@@ -137,6 +137,48 @@
       </div>
     </div>
   </div>
+  
+  <div class="card mt-5 mb-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">💰 Precious Metals Calculator</h5>
+        <div>
+          <button class="btn btn-sm btn-warning me-1" id="goldBtn" onclick="selectMetal('gold')">Gold</button>
+          <button class="btn btn-sm btn-outline-secondary" id="silverBtn" onclick="selectMetal('silver')">Silver</button>
+        </div>
+      </div>
+      <small class="text-dark" id="goldPriceDisplay">Loading...</small>
+    </div>
+    <div class="card-body">
+      <h6>{% if session.get('lang') == 'de' %}Mit Kapital kaufen{% else %}Buy with Capital{% endif %}</h6>
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Kapital (€){% else %}Capital (€){% endif %}</label>
+          <input type="number" class="form-control" id="goldCapital" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Preis pro Gramm (€){% else %}Price per Gram (€){% endif %}</label>
+          <input type="number" class="form-control" id="goldBuyPrice" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Reinheit{% else %}Purity{% endif %}</label>
+          <select class="form-select" id="goldCapitalPurity">
+            <option value="1" selected>24k (100%)</option>
+            <option value="0.916">22k (91.6%)</option>
+            <option value="0.75">18k (75%)</option>
+            <option value="0.585">14k (58.5%)</option>
+            <option value="0.417">10k (41.7%)</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Gold Gewicht (g){% else %}Gold Weight (g){% endif %}</label>
+          <input type="number" class="form-control" id="goldBuyWeight" step="0.01" min="0" placeholder="0.00">
+        </div>
+      </div>
+      <button class="btn btn-info" onclick="calculateGoldBuy()">{% if session.get('lang') == 'de' %}Berechnen{% else %}Calculate{% endif %}</button>
+      <div id="goldBuyResult" class="mt-3 h5"></div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

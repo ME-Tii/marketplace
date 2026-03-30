@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, render_template, session, flash, send_from_directory, Response, g
+from flask import Flask, request, redirect, url_for, render_template, session, flash, send_from_directory, Response, g, jsonify
 import sqlite3
 import os
 import time
@@ -6130,6 +6130,31 @@ def dispute_return_confirm(order_id):
     conn.close()
     
     return redirect(f'/order/{order_id}')
+
+@app.route('/api/gold-price')
+def get_gold_price():
+    try:
+        response = requests.get('https://www.goldpreis.de/', timeout=10)
+        if response.status_code == 200:
+            html = response.text
+            import re
+            oz_eur_match = re.search(r'1 Unze Gold.*?(\d[\d\.,]+)\s*EUR', html)
+            g_eur_match = re.search(r'1 Gramm Gold.*?(\d[\d\.,]+)\s*EUR', html)
+            silver_match = re.search(r'Silberpreis\s*([\d,\.]+)\s*EUR', html)
+            if oz_eur_match and g_eur_match:
+                oz_eur = float(oz_eur_match.group(1).replace(',', ''))
+                g_eur = float(g_eur_match.group(1).replace(',', ''))
+                silver_eur = float(silver_match.group(1).replace(',', '')) if silver_match else 61.32
+                return jsonify({
+                    'gold': {'price_per_oz': round(oz_eur, 2), 'price_per_gram': round(g_eur, 2)},
+                    'silver': {'price_per_oz': round(silver_eur * 31.1035, 2), 'price_per_gram': round(silver_eur, 2)}
+                })
+    except:
+        pass
+    return jsonify({
+        'gold': {'price_per_oz': 3917, 'price_per_gram': 125.93},
+        'silver': {'price_per_oz': 1907, 'price_per_gram': 61.32}
+    })
 
 # One-time migration: update image paths
 conn = sqlite3.connect('database.db')

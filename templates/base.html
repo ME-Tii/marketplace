@@ -582,6 +582,126 @@
       
       window.addEventListener('DOMContentLoaded', checkCookieConsent);
     </script>
+    <script>
+      let currentPrices = null;
+      let selectedMetal = 'gold';
+      
+      async function loadGoldPrice() {
+        try {
+          const res = await fetch('/api/gold-price');
+          const data = await res.json();
+          currentPrices = data;
+          updatePriceDisplay();
+        } catch(e) {
+          currentPrices = {
+            gold: {price_per_oz: 3917, price_per_gram: 125.93},
+            silver: {price_per_oz: 1907, price_per_gram: 61.32}
+          };
+          updatePriceDisplay();
+        }
+      }
+      
+      function updatePriceDisplay() {
+        const priceDisplay = document.getElementById('goldPriceDisplay');
+        const metal = selectedMetal;
+        const price = currentPrices ? currentPrices[metal] : null;
+        if (!priceDisplay || !price) return;
+        priceDisplay.innerHTML = '€' + price.price_per_gram.toFixed(2) + '/g • €' + price.price_per_oz.toFixed(2) + '/oz';
+      }
+      
+      function selectMetal(metal) {
+        selectedMetal = metal;
+        document.getElementById('goldBtn').className = metal === 'gold' ? 'btn btn-warning' : 'btn btn-outline-warning';
+        document.getElementById('silverBtn').className = metal === 'silver' ? 'btn btn-secondary' : 'btn btn-outline-secondary';
+        updatePriceDisplay();
+      }
+      
+      function getCurrentPrice() {
+        if (!currentPrices) return {price_per_oz: 0, price_per_gram: 0};
+        return currentPrices[selectedMetal] || {price_per_oz: 0, price_per_gram: 0};
+      }
+      
+      loadGoldPrice();
+      setInterval(loadGoldPrice, 60000);
+      
+      function calculateGoldBuy() {
+        const capital = parseFloat(document.getElementById('goldCapital').value);
+        const buyPrice = parseFloat(document.getElementById('goldBuyPrice').value);
+        const purity = selectedMetal === 'gold' ? parseFloat(document.getElementById('goldCapitalPurity').value) : 1;
+        const buyWeight = parseFloat(document.getElementById('goldBuyWeight').value);
+        
+        if (!currentPrices) {
+          document.getElementById('goldBuyResult').innerHTML = '<span class="text-warning">Loading price...</span>';
+          return;
+        }
+        
+        try {
+          const marketPricePerGram = getCurrentPrice().price_per_gram;
+          const marketPrice = marketPricePerGram * purity;
+          
+          // Mode 1: Capital + Price per gram → calculate grams you can buy
+          if (capital && buyPrice && !buyWeight) {
+            const exactGrams = capital / buyPrice;
+            const maxGrams = Math.floor(exactGrams);
+            const totalCost = maxGrams * buyPrice;
+            const remaining = capital - totalCost;
+            const marketTotal = maxGrams * marketPrice;
+            const profit = totalCost - marketTotal;
+            const profitPercent = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+            const priceDiff = buyPrice - marketPrice;
+            const priceDiffPercent = (priceDiff / marketPrice) * 100;
+            
+            const priceDiffHtml = priceDiffPercent > 0 
+              ? '<span class="text-danger">+' + priceDiffPercent.toFixed(1) + '%</span>'
+              : '<span class="text-success">' + priceDiffPercent.toFixed(1) + '%</span>';
+            
+            const profitHtml = profit >= 0
+              ? '<span class="text-danger">Seller profit: +€' + profit.toFixed(2) + ' (+' + profitPercent.toFixed(1) + '%)</span>'
+              : '<span class="text-success">Seller profit: -€' + Math.abs(profit).toFixed(2) + ' (' + profitPercent.toFixed(1) + '%)</span>';
+            
+            document.getElementById('goldBuyResult').innerHTML = 
+              '<strong>' + maxGrams + 'g</strong> × €' + buyPrice.toFixed(2) + '/g = <strong>€' + totalCost.toFixed(2) + '</strong><br>' +
+              'Budget: €' + capital.toFixed(2) + ' → ' + 
+              (remaining >= 0 ? '<span class="text-success">Change: €' + remaining.toFixed(2) + '</span>' : '<span class="text-danger">Short: €' + Math.abs(remaining).toFixed(2) + '</span>') + '<br>' +
+              'Market: €' + marketPrice.toFixed(2) + '/g (' + priceDiffPercent.toFixed(1) + '%)<br>' +
+              profitHtml;
+          }
+          // Mode 2: Weight + Price per gram → calculate total cost
+          else if (buyWeight && buyPrice && !capital) {
+            const totalCost = buyWeight * buyPrice;
+            const marketTotal = buyWeight * marketPrice;
+            const priceDiff = buyPrice - marketPrice;
+            const priceDiffPercent = (priceDiff / marketPrice) * 100;
+            const profit = totalCost - marketTotal;
+            const profitPercent = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+            
+            const priceDiffHtml = priceDiffPercent > 0 
+              ? '<span class="text-danger">+' + priceDiffPercent.toFixed(1) + '%</span>'
+              : '<span class="text-success">' + priceDiffPercent.toFixed(1) + '%</span>';
+            
+            const profitHtml = profit >= 0
+              ? '<span class="text-success">Seller profit: +€' + profit.toFixed(2) + ' (+' + profitPercent.toFixed(1) + '%)</span>'
+              : '<span class="text-danger">Seller profit: -€' + Math.abs(profit).toFixed(2) + ' (' + profitPercent.toFixed(1) + '%)</span>';
+            
+            const lossAtHtml = profit < 0 
+              ? '<span class="text-muted">Loss if price &lt; €' + marketPrice.toFixed(2) + '/g</span>'
+              : '<span class="text-muted">Break-even: €' + marketPrice.toFixed(2) + '/g</span>';
+            
+            document.getElementById('goldBuyResult').innerHTML = 
+              '<strong>' + buyWeight + 'g</strong> × €' + buyPrice.toFixed(2) + '/g = <strong>€' + totalCost.toFixed(2) + '</strong><br>' +
+              'Market: €' + marketTotal.toFixed(2) + ' (' + priceDiffPercent.toFixed(1) + '%)<br>' +
+              profitHtml + '<br>' +
+              lossAtHtml;
+          }
+          else {
+            document.getElementById('goldBuyResult').innerHTML = '<span class="text-warning">Enter capital + price, OR weight + price</span>';
+          }
+        } catch(e) {
+          console.error(e);
+          document.getElementById('goldBuyResult').innerHTML = '<span class="text-danger">Error</span>';
+        }
+      }
+    </script>
     
     <div id="tutorial-overlay"></div>
     <div id="tutorial-box">
