@@ -693,7 +693,6 @@
       loadPriceHistory(30);
       
       function calculatePercentPrice() {
-        const capital = parseFloat(document.getElementById('goldPercentCapital').value);
         const percentChange = parseFloat(document.getElementById('goldPercentChange').value);
         
         if (isNaN(percentChange)) {
@@ -714,25 +713,28 @@
         const colorClass = percentChange >= 0 ? 'text-success' : 'text-danger';
         const sign = percentChange >= 0 ? '+' : '';
         
-        let html = '<strong>' + metalName + ':</strong> €' + marketPrice.toFixed(2) + '/g → <strong>€' + newPrice.toFixed(2) + '/g</strong><br>' +
+        document.getElementById('goldPercentResult').innerHTML = 
+          '<strong>' + metalName + ':</strong> €' + marketPrice.toFixed(2) + '/g → <strong>€' + newPrice.toFixed(2) + '/g</strong><br>' +
           '<span class="' + colorClass + '">' + sign + percentChange + '%</span> (' + (change >= 0 ? '+' : '') + '€' + change.toFixed(2) + '/g)';
+      }
+      
+      function copyPercentPrice() {
+        const percentChange = parseFloat(document.getElementById('goldPercentChange').value);
         
-        if (!isNaN(capital) && capital > 0) {
-          const gramsAtCurrent = capital / marketPrice;
-          const gramsAtNew = capital / newPrice;
-          const profit = (gramsAtCurrent - gramsAtNew) * newPrice;
-          const profitPercent = (profit / capital) * 100;
-          
-          const profitColorClass = profit >= 0 ? 'text-success' : 'text-danger';
-          const profitSign = profit >= 0 ? '+' : '';
-          
-          html += '<br><hr><strong>' + metalName + ' with €' + capital.toFixed(2) + ':</strong><br>' +
-            'At current price: <strong>' + gramsAtCurrent.toFixed(2) + 'g</strong><br>' +
-            'At ' + sign + percentChange + '%: <strong>' + gramsAtNew.toFixed(2) + 'g</strong><br>' +
-            '<span class="' + profitColorClass + '">Profit: ' + profitSign + '€' + Math.abs(profit).toFixed(2) + ' (' + profitSign + profitPercent.toFixed(1) + '%)</span>';
+        if (isNaN(percentChange)) {
+          alert('{% if session.get("lang") == "de" %}Bitte zuerst den Prozentsatz berechnen{% else %}Please calculate percentage first{% endif %}');
+          return;
         }
         
-        document.getElementById('goldPercentResult').innerHTML = html;
+        if (!currentPrices) {
+          alert('{% if session.get("lang") == "de" %}Preis wird noch geladen{% else %}Price loading{% endif %}');
+          return;
+        }
+        
+        const marketPrice = getCurrentPrice().price_per_gram;
+        const newPrice = marketPrice * (1 + percentChange / 100);
+        
+        document.getElementById('goldBuyPrice').value = newPrice.toFixed(2);
       }
       
       function calculateGoldBuy() {

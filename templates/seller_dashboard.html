@@ -184,15 +184,14 @@
       <h6>{% if session.get('lang') == 'de' %}Preis bei prozentualer Änderung{% else %}Price at % Change{% endif %}</h6>
       <div class="row">
         <div class="col-md-4 mb-3">
-          <label class="form-label">{% if session.get('lang') == 'de' %}Kapital (€){% else %}Capital (€){% endif %}</label>
-          <input type="number" class="form-control" id="goldPercentCapital" step="0.01" min="0" placeholder="0.00">
-        </div>
-        <div class="col-md-4 mb-3">
           <label class="form-label">{% if session.get('lang') == 'de' %}Prozentuale Änderung (%){% else %}Percent Change (%){% endif %}</label>
           <input type="number" class="form-control" id="goldPercentChange" step="0.1" placeholder="e.g. 2.5, -5, 10">
         </div>
       </div>
       <button class="btn btn-warning" onclick="calculatePercentPrice()">{% if session.get('lang') == 'de' %}Berechnen{% else %}Calculate{% endif %}</button>
+      <button class="btn btn-outline-secondary ms-2" onclick="copyPercentPrice()">
+        {% if session.get('lang') == 'de' %}In Kaufpreis kopieren{% else %}Copy to Buy Price{% endif %}
+      </button>
       <div id="goldPercentResult" class="mt-3 h5"></div>
       
       <hr class="my-4">
