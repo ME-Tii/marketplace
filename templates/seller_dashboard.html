@@ -181,16 +181,6 @@
       </div>
       <button class="btn btn-info" onclick="calculateGoldBuy()">{% if session.get('lang') == 'de' %}Berechnen{% else %}Calculate{% endif %}</button>
       <div id="goldBuyResult" class="mt-3 h5"></div>
-      
-      <h6>💰 {% if session.get('lang') == 'de' %}Gebührenvergleich{% else %}Fee Comparison{% endif %}</h6>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <label class="form-label">{% if session.get('lang') == 'de' %}Verkaufspreis (€){% else %}Sale Price (€){% endif %}</label>
-          <input type="number" class="form-control" id="feeSalePrice" step="0.01" min="0" placeholder="0.00">
-        </div>
-      </div>
-      <button class="btn btn-success" onclick="calculateFees()">{% if session.get('lang') == 'de' %}Berechnen{% else %}Calculate{% endif %}</button>
-      <div id="feeResult" class="mt-3"></div>
        
       <hr class="my-4">
       
@@ -254,6 +244,18 @@
         <button class="btn btn-sm btn-outline-primary" onclick="loadPriceHistory(365)">1Y</button>
       </div>
       <canvas id="priceHistoryChart" height="100"></canvas> -->
+      
+      <hr class="my-4">
+      
+      <h6>💰 {% if session.get('lang') == 'de' %}Gebührenvergleich{% else %}Fee Comparison{% endif %}</h6>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Verkaufspreis (€){% else %}Sale Price (€){% endif %}</label>
+          <input type="number" class="form-control" id="feeSalePrice" step="0.01" min="0" placeholder="0.00">
+        </div>
+      </div>
+      <button class="btn btn-success" onclick="calculateFees()">{% if session.get('lang') == 'de' %}Berechnen{% else %}Calculate{% endif %}</button>
+      <div id="feeResult" class="mt-3"></div>
     </div>
   </div>
 </div>
