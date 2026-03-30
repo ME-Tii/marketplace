@@ -595,7 +595,7 @@
         } catch(e) {
           currentPrices = {
             gold: {price_per_oz: 3917, price_per_gram: 125.93},
-            silver: {price_per_oz: 1907, price_per_gram: 61.32}
+            silver: {price_per_oz: 61.43, price_per_gram: 1.98}
           };
           updatePriceDisplay();
         }
@@ -623,6 +623,117 @@
       
       loadGoldPrice();
       setInterval(loadGoldPrice, 60000);
+      
+      let priceHistoryChart = null;
+      
+      async function loadPriceHistory(days) {
+        try {
+          const res = await fetch('/api/gold-history?days=' + days);
+          const data = await res.json();
+          
+          const metal = selectedMetal;
+          const history = data[metal];
+          
+          if (!history || history.length === 0) {
+            const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+            if (priceHistoryChart) {
+              priceHistoryChart.destroy();
+            }
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'center';
+            ctx.fillText(metal === 'gold' ? 'Gold history unavailable' : 'Silver history unavailable', ctx.canvas.width / 2, ctx.canvas.height / 2);
+            return;
+          }
+          
+          const labels = history.map(h => h.date.slice(5));
+          const prices = history.map(h => h.price);
+          
+          const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+          
+          if (priceHistoryChart) {
+            priceHistoryChart.destroy();
+          }
+          
+          priceHistoryChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: metal === 'gold' ? 'Gold (€/g)' : 'Silver (€/g)',
+                data: prices,
+                borderColor: metal === 'gold' ? '#ffc107' : '#6c757d',
+                backgroundColor: metal === 'gold' ? 'rgba(255, 193, 7, 0.1)' : 'rgba(108, 117, 125, 0.1)',
+                fill: true,
+                tension: 0.3
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: true }
+              },
+              scales: {
+                y: {
+                  ticks: {
+                    callback: function(value) {
+                      return '€' + value.toFixed(2);
+                    }
+                  }
+                }
+              }
+            }
+          });
+        } catch(e) {
+          console.error(e);
+        }
+      }
+      
+      loadPriceHistory(30);
+      
+      function calculatePercentPrice() {
+        const capital = parseFloat(document.getElementById('goldPercentCapital').value);
+        const percentChange = parseFloat(document.getElementById('goldPercentChange').value);
+        
+        if (isNaN(percentChange)) {
+          document.getElementById('goldPercentResult').innerHTML = '<span class="text-warning">Enter a percentage</span>';
+          return;
+        }
+        
+        if (!currentPrices) {
+          document.getElementById('goldPercentResult').innerHTML = '<span class="text-warning">Loading price...</span>';
+          return;
+        }
+        
+        const marketPrice = getCurrentPrice().price_per_gram;
+        const newPrice = marketPrice * (1 + percentChange / 100);
+        const change = newPrice - marketPrice;
+        
+        const metalName = selectedMetal.charAt(0).toUpperCase() + selectedMetal.slice(1);
+        const colorClass = percentChange >= 0 ? 'text-success' : 'text-danger';
+        const sign = percentChange >= 0 ? '+' : '';
+        
+        let html = '<strong>' + metalName + ':</strong> €' + marketPrice.toFixed(2) + '/g → <strong>€' + newPrice.toFixed(2) + '/g</strong><br>' +
+          '<span class="' + colorClass + '">' + sign + percentChange + '%</span> (' + (change >= 0 ? '+' : '') + '€' + change.toFixed(2) + '/g)';
+        
+        if (!isNaN(capital) && capital > 0) {
+          const gramsAtCurrent = capital / marketPrice;
+          const gramsAtNew = capital / newPrice;
+          const profit = (gramsAtCurrent - gramsAtNew) * newPrice;
+          const profitPercent = (profit / capital) * 100;
+          
+          const profitColorClass = profit >= 0 ? 'text-success' : 'text-danger';
+          const profitSign = profit >= 0 ? '+' : '';
+          
+          html += '<br><hr><strong>' + metalName + ' with €' + capital.toFixed(2) + ':</strong><br>' +
+            'At current price: <strong>' + gramsAtCurrent.toFixed(2) + 'g</strong><br>' +
+            'At ' + sign + percentChange + '%: <strong>' + gramsAtNew.toFixed(2) + 'g</strong><br>' +
+            '<span class="' + profitColorClass + '">Profit: ' + profitSign + '€' + Math.abs(profit).toFixed(2) + ' (' + profitSign + profitPercent.toFixed(1) + '%)</span>';
+        }
+        
+        document.getElementById('goldPercentResult').innerHTML = html;
+      }
       
       function calculateGoldBuy() {
         const capital = parseFloat(document.getElementById('goldCapital').value);

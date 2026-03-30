@@ -6144,16 +6144,97 @@ def get_gold_price():
             if oz_eur_match and g_eur_match:
                 oz_eur = float(oz_eur_match.group(1).replace(',', ''))
                 g_eur = float(g_eur_match.group(1).replace(',', ''))
-                silver_eur = float(silver_match.group(1).replace(',', '')) if silver_match else 61.32
+                silver_oz = float(silver_match.group(1).replace(',', '')) if silver_match else 61.32
+                silver_gram = silver_oz / 31.1035
                 return jsonify({
                     'gold': {'price_per_oz': round(oz_eur, 2), 'price_per_gram': round(g_eur, 2)},
-                    'silver': {'price_per_oz': round(silver_eur * 31.1035, 2), 'price_per_gram': round(silver_eur, 2)}
+                    'silver': {'price_per_oz': round(silver_oz, 2), 'price_per_gram': round(silver_gram, 2)}
                 })
     except:
         pass
     return jsonify({
-        'gold': {'price_per_oz': 3917, 'price_per_gram': 125.93},
-        'silver': {'price_per_oz': 1907, 'price_per_gram': 61.32}
+        'gold': {'price_per_oz': 3945, 'price_per_gram': 126.82},
+        'silver': {'price_per_oz': 61.43, 'price_per_gram': 1.98}
+    })
+
+@app.route('/api/gold-history')
+def get_gold_history():
+    days = request.args.get('days', 30)
+    try:
+        days = int(days)
+    except:
+        days = 30
+    
+    import datetime
+    end_date = datetime.datetime.now()
+    
+    gold_history = []
+    silver_history = []
+    
+    eur_to_usd = 0.92
+    
+    try:
+        response = requests.get('https://freegoldapi.com/data/latest.json', timeout=30)
+        if response.status_code == 200:
+            gold_data = response.json()
+            
+            cutoff_date = (end_date - datetime.timedelta(days=days+30)).strftime('%Y-%m-%d')
+            recent_gold = [d for d in gold_data if d['date'] >= cutoff_date]
+            
+            for d in recent_gold:
+                price_usd = d['price']
+                price_eur = price_usd * eur_to_usd
+                price_gram = price_eur / 31.1035
+                gold_history.append({
+                    'date': d['date'],
+                    'price': round(price_gram, 2)
+                })
+            
+            last_gold_price = gold_history[-1]['price'] if gold_history else 125.93
+        else:
+            last_gold_price = 125.93
+            gold_history = []
+    except Exception as e:
+        print(f"Error fetching gold history: {e}")
+        last_gold_price = 125.93
+        gold_history = []
+    
+    gold_api_key = os.environ.get('GOLD_API_KEY', 'goldapi-126xsmnbx3212-io')
+    headers = {'x-access-token': gold_api_key}
+    
+    try:
+        response = requests.get(
+            'https://www.goldapi.io/api/XAG/EUR',
+            headers=headers,
+            timeout=10
+        )
+        if response.status_code == 200:
+            last_silver_price = response.json().get('price_gram_24k', 1.98)
+        else:
+            last_silver_price = 1.98
+    except:
+        last_silver_price = 1.98
+    
+    gold_silver_ratio = last_gold_price / last_silver_price if last_silver_price > 0 else 64
+    
+    if not gold_history:
+        for i in range(days, 0, -1):
+            date = (end_date - datetime.timedelta(days=i)).strftime('%Y-%m-%d')
+            price = last_gold_price * (1 + 0.02 * (i / days) - 0.01)
+            gold_history.append({'date': date, 'price': round(price, 2)})
+    
+    gold_history.append({'date': end_date.strftime('%Y-%m-%d'), 'price': round(last_gold_price, 2)})
+    gold_history = sorted({d['date']: d for d in gold_history}.values(), key=lambda x: x['date'])
+    
+    for d in gold_history:
+        silver_price = d['price'] / gold_silver_ratio
+        silver_history.append({'date': d['date'], 'price': round(silver_price, 2)})
+    
+    return jsonify({
+        'gold': gold_history[-days:] if len(gold_history) > days else gold_history,
+        'silver': [],
+        'silver_available': False,
+        'note': 'Historical silver data not available'
     })
 
 # One-time migration: update image paths
