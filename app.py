@@ -6138,15 +6138,19 @@ def get_gold_price():
         if response.status_code == 200:
             html = response.text
             import re
-            oz_eur_match = re.search(r'1 Unze Gold.*?(\d[\d\.,]+)\s*EUR', html)
-            g_eur_match = re.search(r'1 Gramm Gold.*?(\d[\d\.,]+)\s*EUR', html)
-            silver_match = re.search(r'Silberpreis\s*([\d,\.]+)\s*EUR', html)
-            if oz_eur_match and g_eur_match:
-                gold_gram_1 = float(g_eur_match.group(1).replace(',', ''))
-                silver_oz_1 = float(silver_match.group(1).replace(',', '')) if silver_match else 61.32
+            
+            gold_match = re.search(r'1\s*Gramm\s*Gold.*?(\d+[.,]\d+)\s*EUR', html)
+            if gold_match:
+                gold_gram_1 = float(gold_match.group(1).replace(',', '.'))
+                source_status['goldpreis'] = True
+            
+            silver_match = re.search(r'Silberpreis\s*(\d+[.,]\d+)\s*EUR', html)
+            if silver_match:
+                silver_oz_1 = float(silver_match.group(1).replace(',', '.'))
                 silver_gram_1 = silver_oz_1 / 31.1035
                 source_status['goldpreis'] = True
-    except:
+    except Exception as e:
+        print(f"Goldpreis error: {e}")
         pass
     
     gold_api_key = os.environ.get('GOLD_API_KEY', 'goldapi-126xsmnbx3212-io')
