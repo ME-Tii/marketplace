@@ -74,6 +74,13 @@ function slideInOnScroll() {
         el.style.transition = 'transform 0.8s ease, opacity 0.8s ease';
         observer.observe(el);
     });
+
+    rightElements.forEach(el => {
+        el.style.transform = 'translateX(100px)';
+        el.style.opacity = '0';
+        el.style.transition = 'transform 0.8s ease, opacity 0.8s ease';
+        observer.observe(el);
+    });
 }
 
 // Bounce animation for buttons

@@ -4053,6 +4053,7 @@ def my_offers():
     return render_template('my_offers.html', received_bids=received_bids, placed_bids=placed_bids, unread_messages=get_unread_messages_count(session.get('user_id')))
 
 @app.route('/bid/<int:bid_id>/accept')
+@csrf.exempt
 def accept_bid(bid_id):
     if 'user_id' not in session:
         return redirect('/login')
@@ -4107,6 +4108,7 @@ def accept_bid(bid_id):
     return redirect(f'/checkout/{bid[0]}?order_id={order_id}')
 
 @app.route('/bid/<int:bid_id>/reject')
+@csrf.exempt
 def reject_bid(bid_id):
     if 'user_id' not in session:
         return redirect('/login')
@@ -4125,7 +4127,7 @@ def reject_bid(bid_id):
     conn.close()
     
     flash('Bid rejected.', 'info')
-    return redirect(f'/post/{bid[0]}/bids')
+    return redirect(request.referrer or '/my-offers')
 
 @app.route('/edit_post/<int:post_id>')
 def edit_post_page(post_id):

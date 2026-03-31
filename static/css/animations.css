@@ -31,6 +31,12 @@
     transition: transform 0.8s ease, opacity 0.8s ease;
 }
 
+.slide-in-right {
+    opacity: 0;
+    transform: translateX(100px);
+    transition: transform 0.8s ease, opacity 0.8s ease;
+}
+
 .btn-bounce {
     cursor: pointer;
 }

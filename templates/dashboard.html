@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}"/>
 {% endblock %}
 {% block content %}
+<script>document.body.classList.add('dashboard-page');</script>
 
 <style>
   .stripe-modal {
@@ -68,7 +69,8 @@
     background-size: 200% 200%;
     animation: colorWave 20s linear infinite;
     border-radius: 20px;
-    padding: 3rem 2rem;
+    padding: 5rem 2rem;
+    margin-top: 6rem;
     margin-bottom: 2rem;
     text-align: center;
     position: relative;
@@ -137,6 +139,13 @@
     position: relative;
     overflow: hidden;
     transition: transform 0.4s ease-out;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .trust-bar.visible {
+    opacity: 1;
+    transform: translateY(0);
   }
   .trust-bar.scrolled {
     transform: translateX(-120%);
@@ -172,9 +181,16 @@
     padding: 3rem 2rem;
     margin-bottom: 2rem;
     transition: transform 0.4s ease-out;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .features-section.visible {
+    opacity: 1;
+    transform: translateY(0);
   }
   .features-section.scrolled {
-    transform: translateX(30px);
+    transform: translateX(120%);
   }
   .how-it-works {
     background: rgba(26, 26, 26, 0.8);
@@ -182,9 +198,16 @@
     padding: 3rem 2rem;
     margin-bottom: 2rem;
     transition: transform 0.4s ease-out;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .how-it-works.visible {
+    opacity: 1;
+    transform: translateY(0);
   }
   .how-it-works.scrolled {
-    transform: translateX(-30px);
+    transform: translateX(-120%);
   }
   .section-title {
     text-align: center;
@@ -257,6 +280,24 @@
   }
   .posts-section {
     margin-top: 2rem;
+    overflow-x: hidden;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    width: 100%;
+    max-width: 100vw;
+  }
+  .posts-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .posts-section.ready {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .container {
+    max-width: 100%;
+    overflow-x: hidden;
   }
   @media (max-width: 768px) {
     .hero-title {
@@ -420,12 +461,19 @@
     </div>
 
     <form class="mb-4" method="get">
-      <div class="row g-2">
+      <div class="row g-2 align-items-center">
         <div class="col-md-3">
-          <input class="form-control" type="search" name="q" placeholder="{% if session.get('lang') == 'de' %}Beiträge suchen...{% else %}Search posts...{% endif %}" value="{{ query or '' }}"/>
+          <div class="btn-group w-100 rounded-pill" role="group">
+            <input type="radio" class="btn-check" name="market" id="none-search" value="none" checked>
+            <label class="btn btn-outline-secondary btn-sm rounded-start-pill" for="none-search">Normal</label>
+            <input type="radio" class="btn-check" name="market" id="amazon-search" value="amazon">
+            <label class="btn btn-outline-warning btn-sm" for="amazon-search">Amazon</label>
+            <input type="radio" class="btn-check" name="market" id="ebay-search" value="ebay">
+            <label class="btn btn-outline-info btn-sm rounded-end-pill" for="ebay-search">eBay</label>
+          </div>
         </div>
-        <div class="col-md-2">
-          <input class="form-control" type="search" name="location" placeholder="{% if session.get('lang') == 'de' %}Ort...{% else %}Location...{% endif %}" value="{{ location_filter or '' }}"/>
+        <div class="col-md-5">
+          <input class="form-control" type="search" name="q" placeholder="{% if session.get('lang') == 'de' %}Beiträge/Produkte suchen...{% else %}Search posts/products...{% endif %}" value="{{ query or '' }}"/>
         </div>
         <div class="col-md-2">
           <select class="form-select" name="type">
@@ -437,6 +485,14 @@
             <option value="giveaway" {% if type_filter == 'giveaway' %}selected{% endif %}>{% if session.get('lang') == 'de' %}Verschenken{% else %}Give Away{% endif %}</option>
           </select>
         </div>
+        <div class="col-md-2">
+          <button class="btn btn-outline-primary w-100" type="submit">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
+        </div>
+      </div>
+      <div class="row g-2 mt-3">
+        <div class="col-md-3">
+          <input class="form-control" type="search" name="location" placeholder="{% if session.get('lang') == 'de' %}Ort...{% else %}Location...{% endif %}" value="{{ location_filter or '' }}"/>
+        </div>
         <div class="col-md-3">
           <select class="form-select" name="category">
             <option value="">{% if session.get('lang') == 'de' %}Alle Kategorien{% else %}All Categories{% endif %}</option>
@@ -445,33 +501,8 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-2">
-          <button class="btn btn-outline-primary w-100" type="submit">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
-        </div>
       </div>
     </form>
-
-    <div class="card mb-4 p-3">
-      <h5 class="mb-3">{% if session.get('lang') == 'de' %}Produkte suchen{% else %}Search Products{% endif %}</h5>
-      <form id="product-search-form" method="get" target="_blank">
-        <div class="row g-2 align-items-center">
-          <div class="col-md-2">
-            <div class="btn-group w-100" role="group">
-              <input type="radio" class="btn-check" name="market" id="amazon-search" value="amazon" checked>
-              <label class="btn btn-outline-warning" for="amazon-search">Amazon</label>
-              <input type="radio" class="btn-check" name="market" id="ebay-search" value="ebay">
-              <label class="btn btn-outline-info" for="ebay-search">eBay</label>
-            </div>
-          </div>
-          <div class="col-md-8">
-            <input class="form-control" type="search" name="product-q" placeholder="{% if session.get('lang') == 'de' %}Produkt suchen...{% else %}Search product...{% endif %}" id="product-search-input"/>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-primary w-100" type="submit">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
-          </div>
-        </div>
-      </form>
-    </div>
 
     <div id="products-section">
     <!-- Skeleton Loading -->
@@ -621,7 +652,6 @@
       {% endif %}
       {% endfor %}
     </div>
-    </div>
 
     {% if not posts %}
     <div class="text-center py-5">
@@ -677,11 +707,11 @@
     
     if (icon && text) {
       if (isGrid4x4) {
-        icon.className = 'bi bi-grid-3x3-gap';
-        text.textContent = '{% if session.get("lang") == "de" %}3x3{% else %}3x3{% endif %}';
-      } else {
         icon.className = 'bi bi-grid-3x3-gap-fill';
-        text.textContent = '{% if session.get("lang") == "de" %}4x4{% else %}4x4{% endif %}';
+        text.textContent = '4x4';
+      } else {
+        icon.className = 'bi bi-grid-3x3-gap';
+        text.textContent = '3x3';
       }
     }
   }
@@ -736,10 +766,15 @@
 }
 </style>
 <script>
-document.getElementById('product-search-form').addEventListener('submit', function(e) {
-  e.preventDefault();
-  var query = document.getElementById('product-search-input').value;
+document.querySelector('form[method="get"]').addEventListener('submit', function(e) {
+  var query = this.querySelector('input[name="q"]').value;
   var market = document.querySelector('input[name="market"]:checked').value;
+  
+  if (market === 'none') {
+    return;
+  }
+  
+  e.preventDefault();
   var url;
   if (market === 'amazon') {
     url = 'https://www.amazon.de/s?k=' + encodeURIComponent(query) + '&tag=thomasseitz22-20';
@@ -749,11 +784,35 @@ document.getElementById('product-search-form').addEventListener('submit', functi
   window.open(url, '_blank');
 });
 
+window.addEventListener('load', function() {
+  const trust = document.querySelector('.trust-bar');
+  const whatCanYouDo = document.getElementById('what-you-can-do');
+  const howItWorks = document.getElementById('how-it-works');
+  const postsSection = document.querySelector('.posts-section');
+  
+  setTimeout(() => { if (trust) trust.classList.add('visible'); }, 300);
+  setTimeout(() => { if (whatCanYouDo) whatCanYouDo.classList.add('visible'); }, 600);
+  setTimeout(() => { if (howItWorks) howItWorks.classList.add('visible'); }, 900);
+  setTimeout(() => { if (postsSection) postsSection.classList.add('visible'); }, 1200);
+});
+
 window.addEventListener('scroll', function() {
   const hero = document.querySelector('.hero-section');
   const trust = document.querySelector('.trust-bar');
   const whatCanYouDo = document.getElementById('what-you-can-do');
   const howItWorks = document.getElementById('how-it-works');
+  const postsSection = document.querySelector('.posts-section');
+  
+  // Fade-in sequence for sections (run once)
+  if (!document.body.classList.contains('fade-started')) {
+    document.body.classList.add('fade-started');
+    setTimeout(() => { if (trust) trust.classList.add('visible'); }, 300);
+    setTimeout(() => { if (whatCanYouDo) whatCanYouDo.classList.add('visible'); }, 600);
+    setTimeout(() => { if (howItWorks) howItWorks.classList.add('visible'); }, 900);
+    setTimeout(() => { if (postsSection) postsSection.classList.add('visible'); }, 1200);
+  }
+  
+  // Scroll-based hide after navbar passes
   if (window.scrollY > 100) {
     if (hero) hero.classList.add('scrolled');
     if (trust) trust.classList.add('scrolled');
@@ -764,7 +823,7 @@ window.addEventListener('scroll', function() {
   
   // What You Can Do - moves right
   if (whatCanYouDo) {
-    if (window.scrollY > 250) {
+    if (window.scrollY > 500) {
       whatCanYouDo.classList.add('scrolled');
     } else {
       whatCanYouDo.classList.remove('scrolled');
@@ -773,27 +832,25 @@ window.addEventListener('scroll', function() {
   
   // How It Works - moves left
   if (howItWorks) {
-    if (window.scrollY > 400) {
+    if (window.scrollY > 900) {
       howItWorks.classList.add('scrolled');
     } else {
       howItWorks.classList.remove('scrolled');
     }
   }
   
-  // Alternating left/right for grid items
-  document.querySelectorAll('.grid-item').forEach(function(item, index) {
-    if (window.scrollY > 200) {
-      if (index % 2 === 0) {
-        item.style.transform = 'translateX(-30px)';
-      } else {
-        item.style.transform = 'translateX(30px)';
-      }
-      item.style.opacity = '0.7';
-    } else {
-      item.style.transform = 'translateX(0)';
-      item.style.opacity = '1';
+  // Navbar shows nav items after How It Works section on dashboard
+  const isDashboard = window.location.pathname === '/dashboard' || window.location.pathname === '/';
+  const navbarEl = document.querySelector('.navbar');
+  if (isDashboard) {
+    if (window.scrollY > 900) {
+      if (navbarEl) navbarEl.classList.add('scrolled');
+      if (postsSection) postsSection.classList.add('ready');
     }
-  });
+  } else {
+    if (navbarEl) navbarEl.classList.add('scrolled');
+    if (postsSection) postsSection.classList.add('ready');
+  }
 });
 </script>
 {% endblock %}

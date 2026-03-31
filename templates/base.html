@@ -44,149 +44,45 @@
         height: 100%;
       }
       .navbar {
-        background: rgba(0, 0, 0, 0.3) !important;
+        background: rgba(0, 0, 0, 0.85) !important;
         backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: background 0.3s ease, backdrop-filter 0.3s ease;
       }
-      body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        padding-top: 70px;
-        background-image: url("{{ url_for("static", filename="pictures/mobile/mobile.png") }}");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
+      .navbar.scrolled {
+        background: rgba(0, 0, 0, 0.95) !important;
       }
-      .stripe-btn {
-        transition: all 0.3s ease;
+      .navbar .nav-items {
+        opacity: 0;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        transform: translateX(-20px);
       }
-      .stripe-btn:hover {
-        background-color: #0d6efd !important;
-        color: white !important;
-        transform: scale(1.05);
+      .navbar.scrolled .nav-items {
+        opacity: 1;
+        transform: translateX(0);
       }
-      .ad-card {
-        border: 2px dashed #666;
-        background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+      .navbar .container-fluid {
         position: relative;
-        overflow: hidden;
       }
-      .ad-card:hover {
-        border-color: #888;
+      .navbar .navbar-brand {
+        opacity: 1 !important;
+        position: static;
         transform: none;
       }
-      .ad-card .ad-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #666;
-        color: white;
-        padding: 2px 8px;
-        font-size: 10px;
-        border-radius: 4px;
-        text-transform: uppercase;
-      }
-      .ad-card .ad-content {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        min-height: 150px;
-        color: #888;
-        font-size: 14px;
-      }
-      .ad-placeholder {
-        width: 100%;
-        height: 200px;
-        background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #999;
-        font-size: 14px;
-        border-radius: 8px;
-      }
-      .toast-container {
-        position: fixed;
-        top: 80px;
-        right: 20px;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-      .toast {
-        background: #2d2d2d;
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 10px;
-        padding: 15px 20px;
-        min-width: 300px;
-        max-width: 400px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-        animation: slideIn 0.3s ease;
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-      }
-      .toast.toast-success { border-left: 4px solid #198754; }
-      .toast.toast-danger { border-left: 4px solid #dc3545; }
-      .toast.toast-warning { border-left: 4px solid #ffc107; }
-      .toast.toast-info { border-left: 4px solid #0dcaf0; }
-      .toast-icon {
-        font-size: 1.2rem;
-        flex-shrink: 0;
-      }
-      .toast-content { flex: 1; }
-      .toast-title { font-weight: 600; margin-bottom: 2px; }
-      .toast-message { color: #ccc; font-size: 0.9rem; }
-      .toast-close {
-        background: none;
-        border: none;
-        color: #888;
-        cursor: pointer;
-        padding: 0;
-        font-size: 1.2rem;
-        line-height: 1;
-      }
-      .toast-close:hover { color: #fff; }
-      .toast.hiding {
-        animation: slideOut 0.3s ease forwards;
-      }
-      @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-      }
-      @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-      }
-      .content-wrapper {
-        flex: 1;
-      }
-      footer {
-        flex-shrink: 0;
-      }
-      body::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.85);
-        z-index: -1;
-      }
-      @media (min-width: 992px) {
-        body {
+      body {
           background-image: url("{{ url_for("static", filename="pictures/desktop/desktop.png") }}");
+          background-color: #0d0d0d;
+          background-blend-mode: overlay;
+          overflow-x: hidden;
         }
       }
       @media (max-width: 991px) {
         body {
           background-image: url("{{ url_for("static", filename="pictures/mobile/mobile.png") }}");
+          background-color: #0d0d0d;
+          background-blend-mode: overlay;
+          overflow-x: hidden;
         }
       }
       [data-bs-theme="dark"] {
@@ -332,7 +228,7 @@
     <div class="content-wrapper">
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
-          <a class="navbar-brand" href="/"
+          <a class="navbar-brand brand-center" href="/"
             >{% if session.get('lang') == 'de' %}Marktplatz{% else
             %}Marketplace{% endif %}</a
           >
@@ -344,7 +240,7 @@
           >
             <span class="navbar-toggler-icon"></span>
           </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
+          <div class="collapse navbar-collapse nav-items" id="navbarNav">
             <ul class="navbar-nav me-auto">
               <li class="nav-item">
                 <a id="nav-dashboard" class="nav-link text-nowrap" href="/dashboard"
