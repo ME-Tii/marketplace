@@ -136,6 +136,10 @@
     flex-wrap: wrap;
     position: relative;
     overflow: hidden;
+    transition: transform 0.4s ease-out;
+  }
+  .trust-bar.scrolled {
+    transform: translateX(-120%);
   }
   .trust-bar::before {
     content: '';
@@ -733,13 +737,29 @@ document.getElementById('product-search-form').addEventListener('submit', functi
 
 window.addEventListener('scroll', function() {
   const hero = document.querySelector('.hero-section');
-  if (hero) {
-    if (window.scrollY > 100) {
-      hero.classList.add('scrolled');
-    } else {
-      hero.classList.remove('scrolled');
-    }
+  const trust = document.querySelector('.trust-bar');
+  if (window.scrollY > 100) {
+    if (hero) hero.classList.add('scrolled');
+    if (trust) trust.classList.add('scrolled');
+  } else {
+    if (hero) hero.classList.remove('scrolled');
+    if (trust) trust.classList.remove('scrolled');
   }
+  
+  // Alternating left/right for grid items
+  document.querySelectorAll('.grid-item').forEach(function(item, index) {
+    if (window.scrollY > 200) {
+      if (index % 2 === 0) {
+        item.style.transform = 'translateX(-30px)';
+      } else {
+        item.style.transform = 'translateX(30px)';
+      }
+      item.style.opacity = '0.7';
+    } else {
+      item.style.transform = 'translateX(0)';
+      item.style.opacity = '1';
+    }
+  });
 });
 </script>
 {% endblock %}
