@@ -120,6 +120,18 @@
         <p class="text-muted">Contact seller for delivery options.</p>
         {% endif %}
         
+        {% if post[17] %}
+        <a href="{{ post[17] }}" target="_blank" class="btn btn-warning">
+          {% if 'amazon' in post[17]|lower %}
+          🛒 Buy on Amazon
+          {% elif 'ebay' in post[17]|lower %}
+          🛒 Buy on eBay
+          {% else %}
+          🛒 Buy External
+          {% endif %}
+        </a>
+        {% endif %}
+        
         {% if session.get('user_id') %}
         <a href="/messages?chat={{ post[13] }}&post_id={{ post[0] }}" class="btn btn-primary">Send Message</a>
         {% endif %}
