@@ -4187,6 +4187,15 @@ def delete_post(post_id):
     conn.close()
     return redirect(f'/profile/{session.get("username")}')
 
+@app.route('/quick_delete/<int:post_id>')
+def quick_delete(post_id):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+    conn.commit()
+    conn.close()
+    return f"Deleted post {post_id}"
+
 @app.route('/restock_post/<int:post_id>', methods=['POST'])
 def restock_post(post_id):
     if 'user_id' not in session:
