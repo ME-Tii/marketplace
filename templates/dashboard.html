@@ -171,6 +171,20 @@
     border-radius: 20px;
     padding: 3rem 2rem;
     margin-bottom: 2rem;
+    transition: transform 0.4s ease-out;
+  }
+  .features-section.scrolled {
+    transform: translateX(30px);
+  }
+  .how-it-works {
+    background: rgba(26, 26, 26, 0.8);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    transition: transform 0.4s ease-out;
+  }
+  .how-it-works.scrolled {
+    transform: translateX(-30px);
   }
   .section-title {
     text-align: center;
@@ -312,7 +326,7 @@
     </div>
   </div>
 
-  <div class="features-section">
+  <div class="features-section" id="what-you-can-do">
     <h2 class="section-title">{% if session.get('lang') == 'de' %}Was du tun kannst{% else %}What You Can Do{% endif %}</h2>
     <div class="row g-4">
       <div class="col-md-4 col-lg-3">
@@ -363,7 +377,7 @@
     </div>
   </div>
 
-  <div class="how-it-works">
+  <div class="how-it-works" id="how-it-works">
     <h2 class="section-title">{% if session.get('lang') == 'de' %}So funktioniert's{% else %}How It Works{% endif %}</h2>
     <div class="row g-4">
       <div class="col-md-4">
@@ -738,12 +752,32 @@ document.getElementById('product-search-form').addEventListener('submit', functi
 window.addEventListener('scroll', function() {
   const hero = document.querySelector('.hero-section');
   const trust = document.querySelector('.trust-bar');
+  const whatCanYouDo = document.getElementById('what-you-can-do');
+  const howItWorks = document.getElementById('how-it-works');
   if (window.scrollY > 100) {
     if (hero) hero.classList.add('scrolled');
     if (trust) trust.classList.add('scrolled');
   } else {
     if (hero) hero.classList.remove('scrolled');
     if (trust) trust.classList.remove('scrolled');
+  }
+  
+  // What You Can Do - moves right
+  if (whatCanYouDo) {
+    if (window.scrollY > 250) {
+      whatCanYouDo.classList.add('scrolled');
+    } else {
+      whatCanYouDo.classList.remove('scrolled');
+    }
+  }
+  
+  // How It Works - moves left
+  if (howItWorks) {
+    if (window.scrollY > 400) {
+      howItWorks.classList.add('scrolled');
+    } else {
+      howItWorks.classList.remove('scrolled');
+    }
   }
   
   // Alternating left/right for grid items
