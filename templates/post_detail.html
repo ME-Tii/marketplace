@@ -121,7 +121,17 @@
         {% endif %}
         
         {% if post[17] %}
-        <a href="{{ post[17] }}" target="_blank" class="btn btn-warning">
+        {% set affiliate_url = post[17] %}
+        {% if 'amazon' in post[17]|lower %}
+        {% set affiliate_url = post[17] + ('?' if '?' not in post[17] else '&') + 'tag=thomasseitz22-20' %}
+        {% elif 'ebay' in post[17]|lower %}
+        {% if '?' in post[17] %}
+        {% set affiliate_url = post[17] + '&mkcid=1&mkrid=707-53477-19255-0&siteid=77&campid=5339147201&customid=thomasseitz22&toolid=10001&mkevt=1' %}
+        {% else %}
+        {% set affiliate_url = post[17] + '?mkcid=1&mkrid=707-53477-19255-0&siteid=77&campid=5339147201&customid=thomasseitz22&toolid=10001&mkevt=1' %}
+        {% endif %}
+        {% endif %}
+        <a href="{{ affiliate_url }}" target="_blank" class="btn btn-warning">
           {% if 'amazon' in post[17]|lower %}
           🛒 Buy on Amazon
           {% elif 'ebay' in post[17]|lower %}
