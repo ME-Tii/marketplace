@@ -422,6 +422,28 @@
       </div>
     </form>
 
+    <div class="card mb-4 p-3">
+      <h5 class="mb-3">{% if session.get('lang') == 'de' %}Produkte suchen{% else %}Search Products{% endif %}</h5>
+      <form id="product-search-form" method="get" target="_blank">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-2">
+            <div class="btn-group w-100" role="group">
+              <input type="radio" class="btn-check" name="market" id="amazon-search" value="amazon" checked>
+              <label class="btn btn-outline-warning" for="amazon-search">Amazon</label>
+              <input type="radio" class="btn-check" name="market" id="ebay-search" value="ebay">
+              <label class="btn btn-outline-info" for="ebay-search">eBay</label>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <input class="form-control" type="search" name="product-q" placeholder="{% if session.get('lang') == 'de' %}Produkt suchen...{% else %}Search product...{% endif %}" id="product-search-input"/>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100" type="submit">{% if session.get('lang') == 'de' %}Suchen{% else %}Search{% endif %}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
     <div id="products-section">
     <!-- Skeleton Loading -->
     <div id="skeleton-loader" class="row">
@@ -684,4 +706,18 @@
   object-fit: cover;
 }
 </style>
+<script>
+document.getElementById('product-search-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var query = document.getElementById('product-search-input').value;
+  var market = document.querySelector('input[name="market"]:checked').value;
+  var url;
+  if (market === 'amazon') {
+    url = 'https://www.amazon.de/s?k=' + encodeURIComponent(query) + '&tag=thomasseitz22-20';
+  } else {
+    url = 'https://www.ebay.de/sch/i.html?_nkw=' + encodeURIComponent(query) + '&mkcid=1&mkrid=707-53477-19255-0&siteid=77&campid=5339147201&customid=thomasseitz22&toolid=10001';
+  }
+  window.open(url, '_blank');
+});
+</script>
 {% endblock %}
