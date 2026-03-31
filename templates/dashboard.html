@@ -485,6 +485,20 @@
       </div>
       {% set ad_counter.counter = 0 %}
       {% endif %}
+      {% if ad_counter.counter == 3 %}
+      <div class="col-md-4 mb-4 grid-item">
+        <div class="card h-100 border-info">
+          <div class="card-body d-flex flex-column">
+            <span class="badge bg-info text-white mb-2">🏷️ eBay</span>
+            <img src="https://i.ebayimg.com/00/s/ODAwWDI2MA==/z/g-EAAeSwgXdpymoU$_57.JPG" class="img-fluid mb-2 rounded" alt="eBay Product" style="height: 150px; object-fit: contain;">
+            <p class="card-text small text-secondary">Samsung Galaxy S26 Ultra</p>
+            <p class="fw-bold text-primary">€1,049.90</p>
+            <a href="https://www.ebay.de/itm/287242619499?mkcid=1&mkrid=707-53477-19255-0&siteid=77&campid=5339147201&customid=thomasseitz22&toolid=10001&mkevt=1" target="_blank" class="btn btn-info btn-sm mt-auto">View on eBay</a>
+          </div>
+        </div>
+      </div>
+      {% set ad_counter.counter = 0 %}
+      {% endif %}
       <div class="col-md-4 mb-4 grid-item">
         <div class="card h-100">
           <div class="card-body d-flex flex-column">
