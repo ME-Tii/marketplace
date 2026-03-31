@@ -6127,78 +6127,87 @@ def dispute_return_confirm(order_id):
 
 @app.route('/api/gold-price')
 def get_gold_price():
-    gold_gram_1 = None
-    silver_gram_1 = None
-    gold_gram_2 = None
-    silver_gram_2 = None
-    source_status = {'goldpreis': False, 'goldapi': False}
+    import time
+    current_time = time.time()
     
-    try:
-        response = requests.get('https://www.goldpreis.de/', timeout=10)
-        if response.status_code == 200:
-            html = response.text
-            import re
-            
-            gold_match = re.search(r'1\s*Gramm\s*Gold.*?(\d+[.,]\d+)\s*EUR', html)
-            if gold_match:
-                gold_gram_1 = float(gold_match.group(1).replace(',', '.'))
-                source_status['goldpreis'] = True
-            
-            silver_match = re.search(r'Silberpreis\s*(\d+[.,]\d+)\s*EUR', html)
-            if silver_match:
-                silver_oz_1 = float(silver_match.group(1).replace(',', '.'))
-                silver_gram_1 = silver_oz_1 / 31.1035
-                source_status['goldpreis'] = True
-    except Exception as e:
-        print(f"Goldpreis error: {e}")
-        pass
+    if not hasattr(get_gold_price, 'cache') or current_time - get_gold_price.cache.get('timestamp', 0) > 60:
+        gold_gram_1 = None
+        silver_gram_1 = None
+        gold_gram_2 = None
+        silver_gram_2 = None
+        source_status = {'goldpreis': False, 'goldapi': False}
+        
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        
+        try:
+            response = requests.get('https://www.goldpreis.de/', timeout=10, headers=headers)
+            if response.status_code == 200:
+                html = response.text
+                
+                gold_match = re.search(r'1\s*Gramm\s*Gold.*?(\d+[.,]\d+)\s*EUR', html)
+                if gold_match:
+                    gold_gram_1 = float(gold_match.group(1).replace(',', '.'))
+                    source_status['goldpreis'] = True
+                
+                silver_match = re.search(r'Silberpreis\s*(\d+[.,]\d+)\s*EUR', html)
+                if silver_match:
+                    silver_oz_1 = float(silver_match.group(1).replace(',', '.'))
+                    silver_gram_1 = silver_oz_1 / 31.1035
+                    source_status['goldpreis'] = True
+        except Exception as e:
+            print(f"Goldpreis error: {e}")
+        
+        gold_api_key = os.environ.get('GOLD_API_KEY', 'goldapi-126xsmnbx3212-io')
+        headers['x-access-token'] = gold_api_key
+        
+        try:
+            response = requests.get('https://www.goldapi.io/api/XAU/EUR', headers=headers, timeout=10)
+            if response.status_code == 200:
+                gold_gram_2 = response.json().get('price_gram_24k')
+                if gold_gram_2:
+                    source_status['goldapi'] = True
+        except:
+            pass
+        
+        try:
+            response = requests.get('https://www.goldapi.io/api/XAG/EUR', headers=headers, timeout=10)
+            if response.status_code == 200:
+                silver_gram_2 = response.json().get('price_gram_24k')
+        except:
+            pass
+        
+        gold_prices = [p for p in [gold_gram_1, gold_gram_2] if p]
+        silver_prices = [p for p in [silver_gram_1, silver_gram_2] if p]
+        
+        failed_sources = [k for k, v in source_status.items() if not v]
+        
+        if gold_prices and silver_prices:
+            final_gold = round(sum(gold_prices) / len(gold_prices), 2)
+            final_silver = round(sum(silver_prices) / len(silver_prices), 2)
+            gold_oz = final_gold * 31.1035
+            silver_oz = final_silver * 31.1035
+            result = {
+                'gold': {'price_per_oz': round(gold_oz, 2), 'price_per_gram': final_gold},
+                'silver': {'price_per_oz': round(silver_oz, 2), 'price_per_gram': final_silver},
+                'sources': {
+                    'goldpreis': {'gold': gold_gram_1, 'silver': silver_gram_1},
+                    'goldapi': {'gold': gold_gram_2, 'silver': silver_gram_2}
+                },
+                'source_status': source_status,
+                'failed_sources': failed_sources
+            }
+        else:
+            result = {
+                'gold': {'price_per_oz': 4008, 'price_per_gram': 128.86},
+                'silver': {'price_per_oz': 64.05, 'price_per_gram': 2.06},
+                'source_status': source_status,
+                'failed_sources': failed_sources if failed_sources else ['all']
+            }
+        
+        get_gold_price.cache = {'data': result, 'timestamp': current_time}
+        return jsonify(result)
     
-    gold_api_key = os.environ.get('GOLD_API_KEY', 'goldapi-126xsmnbx3212-io')
-    headers = {'x-access-token': gold_api_key}
-    
-    try:
-        response = requests.get('https://www.goldapi.io/api/XAU/EUR', headers=headers, timeout=10)
-        if response.status_code == 200:
-            gold_gram_2 = response.json().get('price_gram_24k')
-            if gold_gram_2:
-                source_status['goldapi'] = True
-    except:
-        pass
-    
-    try:
-        response = requests.get('https://www.goldapi.io/api/XAG/EUR', headers=headers, timeout=10)
-        if response.status_code == 200:
-            silver_gram_2 = response.json().get('price_gram_24k')
-    except:
-        pass
-    
-    gold_prices = [p for p in [gold_gram_1, gold_gram_2] if p]
-    silver_prices = [p for p in [silver_gram_1, silver_gram_2] if p]
-    
-    failed_sources = [k for k, v in source_status.items() if not v]
-    
-    if gold_prices and silver_prices:
-        final_gold = round(sum(gold_prices) / len(gold_prices), 2)
-        final_silver = round(sum(silver_prices) / len(silver_prices), 2)
-        gold_oz = final_gold * 31.1035
-        silver_oz = final_silver * 31.1035
-        return jsonify({
-            'gold': {'price_per_oz': round(gold_oz, 2), 'price_per_gram': final_gold},
-            'silver': {'price_per_oz': round(silver_oz, 2), 'price_per_gram': final_silver},
-            'sources': {
-                'goldpreis': {'gold': gold_gram_1, 'silver': silver_gram_1},
-                'goldapi': {'gold': gold_gram_2, 'silver': silver_gram_2}
-            },
-            'source_status': source_status,
-            'failed_sources': failed_sources
-        })
-    
-    return jsonify({
-        'gold': {'price_per_oz': 3945, 'price_per_gram': 126.82},
-        'silver': {'price_per_oz': 61.43, 'price_per_gram': 1.98},
-        'source_status': source_status,
-        'failed_sources': failed_sources if failed_sources else ['all']
-    })
+    return jsonify(get_gold_price.cache['data'])
 
 @app.route('/api/gold-history')
 def get_gold_history():
