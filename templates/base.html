@@ -677,6 +677,9 @@
       
       async function loadPriceHistory(days) {
         try {
+          const chartCanvas = document.getElementById('priceHistoryChart');
+          if (!chartCanvas) return;
+          
           const res = await fetch('/api/gold-history?days=' + days);
           const data = await res.json();
           
@@ -684,7 +687,7 @@
           const history = data[metal];
           
           if (!history || history.length === 0) {
-            const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+            const ctx = chartCanvas.getContext('2d');
             if (priceHistoryChart) {
               priceHistoryChart.destroy();
             }
@@ -699,7 +702,7 @@
           const labels = history.map(h => h.date.slice(5));
           const prices = history.map(h => h.price);
           
-          const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+          const ctx = chartCanvas.getContext('2d');
           
           if (priceHistoryChart) {
             priceHistoryChart.destroy();
