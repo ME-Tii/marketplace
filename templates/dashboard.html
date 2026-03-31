@@ -445,74 +445,72 @@
 
     <div id="posts-container" class="row" style="display: none;">
       {% set ad_counter = namespace(counter=0) %}
-      {% for post in posts %}
-      {% set ad_counter.counter = ad_counter.counter + 1 %}
-      {% if ad_counter.counter == 3 %}
-      <div class="col-md-4 mb-4 grid-item">
-        <div class="card h-100 border-warning">
-          <div class="card-body d-flex flex-column">
-            <span class="badge bg-warning text-dark mb-2">📦 Amazon</span>
-            <img src="https://m.media-amazon.com/images/I/61SK7v-0XzL._AC_SX342_SY445_QL70_ML2_.jpg" class="img-fluid mb-2 rounded" alt="Amazon Product" style="height: 150px; object-fit: contain;">
-            <p class="card-text small text-secondary">Apple Mac Mini M4</p>
-            <p class="fw-bold text-primary">€597.00</p>
-            <a href="https://www.amazon.de/dp/B0DLC4TPDC?tag=thomasseitz22-20" target="_blank" class="btn btn-warning btn-sm mt-auto">View on Amazon</a>
-          </div>
-        </div>
-      </div>
-      {% elif ad_counter.counter == 6 %}
-      <div class="col-md-4 mb-4 grid-item">
-        <div class="card h-100 border-warning">
-          <div class="card-body d-flex flex-column">
-            <span class="badge bg-warning text-dark mb-2">📦 Amazon</span>
-            <img src="https://m.media-amazon.com/images/I/71z2kwmbdWL._AC_SX300_SY300_QL70_ML2_.jpg" class="img-fluid mb-2 rounded" alt="Amazon Product" style="height: 150px; object-fit: contain;">
-            <p class="card-text small text-secondary">Behringer MONOPOLY Synthesizer</p>
-            <p class="fw-bold text-primary">€392.90</p>
-            <a href="https://www.amazon.de/dp/B08P27PWKZ?tag=thomasseitz22-20" target="_blank" class="btn btn-warning btn-sm mt-auto">View on Amazon</a>
-          </div>
-        </div>
-      </div>
-      {% elif ad_counter.counter == 9 %}
-      <div class="col-md-4 mb-4 grid-item">
-        <div class="card h-100 border-warning">
-          <div class="card-body d-flex flex-column">
-            <span class="badge bg-warning text-dark mb-2">📦 Amazon</span>
-            <img src="https://m.media-amazon.com/images/I/51+XSuPP7XL._AC_SX300_SY300_QL70_ML2_.jpg" class="img-fluid mb-2 rounded" alt="Amazon Product" style="height: 150px; object-fit: contain;">
-            <p class="card-text small text-secondary">Focusrite Scarlett 2i2</p>
-            <p class="fw-bold text-primary">€159.00</p>
-            <a href="https://www.amazon.de/dp/B0C5JRTS3Y?tag=thomasseitz22-20" target="_blank" class="btn btn-warning btn-sm mt-auto">View on Amazon</a>
-          </div>
-        </div>
-      </div>
-      {% set ad_counter.counter = 0 %}
-      {% endif %}
-      {% if ad_counter.counter == 3 %}
-      <div class="col-md-4 mb-4 grid-item">
-        <div class="card h-100 border-info">
-          <div class="card-body d-flex flex-column">
-            <span class="badge bg-info text-white mb-2">🏷️ eBay</span>
-            <img src="https://i.ebayimg.com/images/g/g-EAAeSwgXdpymoU/s-l500.jpg" class="img-fluid mb-2 rounded" alt="eBay Product" style="height: 150px; object-fit: contain;">
-            <p class="card-text small text-secondary">Samsung Galaxy S26 Ultra</p>
-            <p class="fw-bold text-primary">€1,049.90</p>
-            <a href="https://www.ebay.de/itm/287242619499?mkcid=1&mkrid=707-53477-19255-0&siteid=77&campid=5339147201&customid=thomasseitz22&toolid=10001&mkevt=1" target="_blank" class="btn btn-info btn-sm mt-auto">View on eBay</a>
-          </div>
-        </div>
-      </div>
-      {% set ad_counter.counter = 0 %}
-      {% endif %}
-      {% if ad_counter.counter == 6 %}
-      <div class="col-md-4 mb-4 grid-item">
-        <div class="card h-100 border-info">
-          <div class="card-body d-flex flex-column">
-            <span class="badge bg-info text-white mb-2">🏷️ eBay</span>
-            <img src="https://i.ebayimg.com/images/g/vtQAAeSwOh5py8wq/s-l500.jpg" class="img-fluid mb-2 rounded" alt="eBay Product" style="height: 150px; object-fit: contain;">
-            <p class="card-text small text-secondary">Meta Quest 3 VR</p>
-            <p class="fw-bold text-primary">€320.00</p>
-            <a href="https://www.ebay.de/itm/366317498761?mkcid=1&mkrid=707-53477-19255-0&siteid=77&campid=5339147201&customid=thomasseitz22&toolid=10001&mkevt=1" target="_blank" class="btn btn-info btn-sm mt-auto">View on eBay</a>
-          </div>
-        </div>
-      </div>
-      {% set ad_counter.counter = 0 %}
-      {% endif %}
+       {% for post in posts %}
+       {% set ad_counter.counter = ad_counter.counter + 1 %}
+       {% if ad_counter.counter == 3 %}
+       <div class="col-md-4 mb-4 grid-item">
+         <div class="card h-100 border-warning">
+           <div class="card-body d-flex flex-column">
+             <span class="badge bg-warning text-dark mb-2">📦 Amazon</span>
+             <img src="https://m.media-amazon.com/images/I/61SK7v-0XzL._AC_SX342_SY445_QL70_ML2_.jpg" class="img-fluid mb-2 rounded" alt="Amazon Product" style="height: 150px; object-fit: contain;">
+             <p class="card-text small text-secondary">Apple Mac Mini M4</p>
+             <p class="fw-bold text-primary">€597.00</p>
+             <a href="https://www.amazon.de/dp/B0DLC4TPDC?tag=thomasseitz22-20" target="_blank" class="btn btn-warning btn-sm mt-auto">View on Amazon</a>
+           </div>
+         </div>
+       </div>
+       {% elif ad_counter.counter == 6 %}
+       <div class="col-md-4 mb-4 grid-item">
+         <div class="card h-100 border-info">
+           <div class="card-body d-flex flex-column">
+             <span class="badge bg-info text-white mb-2">🏷️ eBay</span>
+             <img src="https://i.ebayimg.com/images/g/g-EAAeSwgXdpymoU/s-l500.jpg" class="img-fluid mb-2 rounded" alt="eBay Product" style="height: 150px; object-fit: contain;">
+             <p class="card-text small text-secondary">Samsung Galaxy S26 Ultra</p>
+             <p class="fw-bold text-primary">€1,049.90</p>
+             <a href="https://www.ebay.de/itm/287242619499?mkcid=1&mkrid=707-53477-19255-0&siteid=77&campid=5339147201&customid=thomasseitz22&toolid=10001&mkevt=1" target="_blank" class="btn btn-info btn-sm mt-auto">View on eBay</a>
+           </div>
+         </div>
+       </div>
+       {% elif ad_counter.counter == 9 %}
+       <div class="col-md-4 mb-4 grid-item">
+         <div class="card h-100 border-warning">
+           <div class="card-body d-flex flex-column">
+             <span class="badge bg-warning text-dark mb-2">📦 Amazon</span>
+             <img src="https://m.media-amazon.com/images/I/71z2kwmbdWL._AC_SX300_SY300_QL70_ML2_.jpg" class="img-fluid mb-2 rounded" alt="Amazon Product" style="height: 150px; object-fit: contain;">
+             <p class="card-text small text-secondary">Behringer MONOPOLY Synthesizer</p>
+             <p class="fw-bold text-primary">€392.90</p>
+             <a href="https://www.amazon.de/dp/B08P27PWKZ?tag=thomasseitz22-20" target="_blank" class="btn btn-warning btn-sm mt-auto">View on Amazon</a>
+           </div>
+         </div>
+       </div>
+       {% elif ad_counter.counter == 12 %}
+       <div class="col-md-4 mb-4 grid-item">
+         <div class="card h-100 border-info">
+           <div class="card-body d-flex flex-column">
+             <span class="badge bg-info text-white mb-2">🏷️ eBay</span>
+             <img src="https://i.ebayimg.com/images/g/vtQAAeSwOh5py8wq/s-l500.jpg" class="img-fluid mb-2 rounded" alt="eBay Product" style="height: 150px; object-fit: contain;">
+             <p class="card-text small text-secondary">Meta Quest 3 VR</p>
+             <p class="fw-bold text-primary">€320.00</p>
+             <a href="https://www.ebay.de/itm/366317498761?mkcid=1&mkrid=707-53477-19255-0&siteid=77&campid=5339147201&customid=thomasseitz22&toolid=10001&mkevt=1" target="_blank" class="btn btn-info btn-sm mt-auto">View on eBay</a>
+           </div>
+         </div>
+       </div>
+       {% elif ad_counter.counter == 15 %}
+       <div class="col-md-4 mb-4 grid-item">
+         <div class="card h-100 border-warning">
+           <div class="card-body d-flex flex-column">
+             <span class="badge bg-warning text-dark mb-2">📦 Amazon</span>
+             <img src="https://m.media-amazon.com/images/I/51+XSuPP7XL._AC_SX300_SY300_QL70_ML2_.jpg" class="img-fluid mb-2 rounded" alt="Amazon Product" style="height: 150px; object-fit: contain;">
+             <p class="card-text small text-secondary">Focusrite Scarlett 2i2</p>
+             <p class="fw-bold text-primary">€159.00</p>
+             <a href="https://www.amazon.de/dp/B0C5JRTS3Y?tag=thomasseitz22-20" target="_blank" class="btn btn-warning btn-sm mt-auto">View on Amazon</a>
+           </div>
+         </div>
+       </div>
+       {% if ad_counter.counter == 15 %}
+       {% set ad_counter.counter = 0 %}
+       {% endif %}
+       {% endif %}
       <div class="col-md-4 mb-4 grid-item">
         <div class="card h-100">
           <div class="card-body d-flex flex-column">
