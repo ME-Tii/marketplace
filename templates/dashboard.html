@@ -813,7 +813,12 @@ window.addEventListener('scroll', function() {
   }
   
   // Scroll-based hide after navbar passes
-  if (window.scrollY > 100) {
+  const isMobile = window.innerWidth < 768;
+  const heroThreshold = isMobile ? 300 : 100;
+  const featureThreshold = isMobile ? 800 : 500;
+  const howItWorksThreshold = isMobile ? 1400 : 900;
+  
+  if (window.scrollY > heroThreshold) {
     if (hero) hero.classList.add('scrolled');
     if (trust) trust.classList.add('scrolled');
   } else {
@@ -823,7 +828,7 @@ window.addEventListener('scroll', function() {
   
   // What You Can Do - moves right
   if (whatCanYouDo) {
-    if (window.scrollY > 500) {
+    if (window.scrollY > featureThreshold) {
       whatCanYouDo.classList.add('scrolled');
     } else {
       whatCanYouDo.classList.remove('scrolled');
@@ -832,7 +837,7 @@ window.addEventListener('scroll', function() {
   
   // How It Works - moves left
   if (howItWorks) {
-    if (window.scrollY > 900) {
+    if (window.scrollY > howItWorksThreshold) {
       howItWorks.classList.add('scrolled');
     } else {
       howItWorks.classList.remove('scrolled');
@@ -843,7 +848,7 @@ window.addEventListener('scroll', function() {
   const isDashboard = window.location.pathname === '/dashboard' || window.location.pathname === '/';
   const navbarEl = document.querySelector('.navbar');
   if (isDashboard) {
-    if (window.scrollY > 900) {
+    if (window.scrollY > howItWorksThreshold) {
       if (navbarEl) navbarEl.classList.add('scrolled');
       if (postsSection) postsSection.classList.add('ready');
     }
