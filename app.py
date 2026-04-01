@@ -5732,7 +5732,7 @@ def admin_dispute_detail(order_id):
                 
                 # Calculate refund amount (includes platform fee)
                 if shipping_method == 'local_pickup':
-                    refund_amount = total_amount + transaction_fee
+                    refund_amount = item_price + transaction_fee
                 elif include_return_shipping:
                     refund_amount = total_amount + transaction_fee
                 else:
@@ -5759,8 +5759,10 @@ def admin_dispute_detail(order_id):
             
             # Build success message with amount info
             if process_refund_now:
-                if shipping_method == 'local_pickup' or include_return_shipping:
+                if include_return_shipping:
                     flash(f'Dispute resolved: {resolution} (${total_amount:.2f} refunded)', 'success')
+                elif shipping_method == 'local_pickup':
+                    flash(f'Dispute resolved: {resolution} (${item_price:.2f} refunded, no shipping for local pickup)', 'success')
                 else:
                     flash(f'Dispute resolved: {resolution} (${item_price:.2f} refunded, buyer pays return shipping)', 'success')
             else:
