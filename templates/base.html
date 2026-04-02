@@ -496,20 +496,24 @@
       let selectedMetal = 'gold';
       let lastPriceUpdate = null;
       let priceSources = null;
+      let manualPriceOverride = null;
+      let livePrices = null;
       
       async function loadGoldPrice() {
         try {
           const res = await fetch('/api/gold-price');
           const data = await res.json();
+          livePrices = data;
           currentPrices = data;
           priceSources = data;
           lastPriceUpdate = new Date().toLocaleTimeString();
           updatePriceDisplay();
         } catch(e) {
-          currentPrices = {
+          livePrices = {
             gold: {price_per_oz: 3917, price_per_gram: 125.93},
             silver: {price_per_oz: 61.43, price_per_gram: 1.98}
           };
+          currentPrices = livePrices;
           updatePriceDisplay();
         }
       }
@@ -571,12 +575,63 @@
         selectedMetal = metal;
         document.getElementById('goldBtn').className = metal === 'gold' ? 'btn btn-warning' : 'btn btn-outline-warning';
         document.getElementById('silverBtn').className = metal === 'silver' ? 'btn btn-secondary' : 'btn btn-outline-secondary';
+        
+        if (manualPriceOverride && metal === selectedMetal) {
+          currentPrices = {
+            ...currentPrices,
+            [metal]: manualPriceOverride
+          };
+        }
+        
         updatePriceDisplay();
       }
       
       function getCurrentPrice() {
         if (!currentPrices) return {price_per_oz: 0, price_per_gram: 0};
         return currentPrices[selectedMetal] || {price_per_oz: 0, price_per_gram: 0};
+      }
+      
+      function useManualPrice() {
+        const manualInput = document.getElementById('manualMarketPrice');
+        if (!manualInput) return;
+        
+        const manualValue = parseFloat(manualInput.value);
+        if (isNaN(manualValue) || manualValue <= 0) {
+          alert('{% if session.get("lang") == "de" %}Bitte geben Sie einen gültigen Preis ein{% else %}Please enter a valid price{% endif %}');
+          return;
+        }
+        
+        manualPriceOverride = {
+          price_per_oz: manualValue * 31.1035,
+          price_per_gram: manualValue
+        };
+        
+        currentPrices = {
+          ...currentPrices,
+          [selectedMetal]: manualPriceOverride
+        };
+        
+        lastPriceUpdate = '{% if session.get("lang") == "de" %}Manuell{% else %}Manual{% endif %}';
+        updatePriceDisplay();
+        
+        const priceDisplay = document.getElementById('goldPriceDisplay');
+        if (priceDisplay) {
+          priceDisplay.innerHTML = '<span class="badge bg-info">€' + manualValue.toFixed(2) + '/g ({% if session.get("lang") == "de" %}Manuell{% else %}Manual{% endif %})</span> ' + priceDisplay.innerHTML;
+        }
+      }
+      
+      function resetToLivePrice() {
+        const manualInput = document.getElementById('manualMarketPrice');
+        if (manualInput) manualInput.value = '';
+        
+        manualPriceOverride = null;
+        
+        if (livePrices) {
+          currentPrices = livePrices;
+        }
+        
+        lastPriceUpdate = new Date().toLocaleTimeString();
+        updatePriceDisplay();
       }
       
       loadGoldPrice();
