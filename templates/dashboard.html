@@ -295,6 +295,10 @@
     opacity: 1;
     transform: translateY(0);
   }
+  .posts-section.stop-animation {
+    transition: none !important;
+    animation: none !important;
+  }
   .container {
     max-width: 100%;
     overflow-x: hidden;
@@ -854,10 +858,18 @@ window.addEventListener('scroll', function() {
     if (window.scrollY > howItWorksThreshold) {
       if (navbarEl) navbarEl.classList.add('scrolled');
       if (postsSection) postsSection.classList.add('ready');
+      // Stop flying animation once cards are visible
+      setTimeout(() => {
+        if (postsSection) postsSection.classList.add('stop-animation');
+      }, 100);
     }
   } else {
     if (navbarEl) navbarEl.classList.add('scrolled');
     if (postsSection) postsSection.classList.add('ready');
+    // Stop flying animation once cards are visible
+    setTimeout(() => {
+      if (postsSection) postsSection.classList.add('stop-animation');
+    }, 100);
   }
 });
 </script>
