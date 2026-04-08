@@ -62,12 +62,18 @@
         opacity: 1;
         transform: translateX(0);
       }
-      body:not(.dashboard-page) .navbar .nav-items {
-        opacity: 1;
-        transform: translateX(0);
+      body:not(.dashboard-page) .navbar .nav-items,
+      body:not(.dashboard-page) .navbar .navbar-collapse {
+        opacity: 1 !important;
+        transform: none !important;
       }
       body:not(.dashboard-page) .content-wrapper {
         margin-top: 80px;
+      }
+      @media (max-width: 991px) {
+        body:not(.dashboard-page) .navbar-toggler:not(.hidden) {
+          display: block !important;
+        }
       }
       .navbar .container-fluid {
         position: relative;
