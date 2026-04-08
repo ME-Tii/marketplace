@@ -480,7 +480,7 @@
           </div>
         </div>
         <div class="col-md-5">
-          <input class="form-control" type="search" name="q" placeholder="{% if session.get('lang') == 'de' %}Beiträge/Produkte suchen...{% else %}Search posts/products...{% endif %}" value="{{ query or '' }}"/>
+          <input class="form-control" type="search" name="q" id="mainSearchInput" placeholder="{% if session.get('lang') == 'de' %}Beiträge/Produkte suchen...{% else %}Search posts/products...{% endif %}" value="{{ query or '' }}"/>
         </div>
         <div class="col-md-2">
           <select class="form-select" name="type">

@@ -91,6 +91,12 @@
           background-blend-mode: overlay;
           overflow-x: hidden;
         }
+        .navbar-toggler {
+          display: none !important;
+        }
+        .navbar-toggler.visible {
+          display: block !important;
+        }
       }
       [data-bs-theme="dark"] {
         --bs-body-bg: #0d0d0d;
@@ -1153,6 +1159,30 @@
     if (Notification.permission === 'granted') {
       document.getElementById('notification-btn').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#198754" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z"/></svg>';
     }
+
+    // Show navbar menu button when search bar is visible
+    const navbarToggler = document.querySelector('.navbar-toggler');
+    const mainSearchInput = document.getElementById('mainSearchInput');
+    
+    function checkSearchBarVisibility() {
+      if (window.innerWidth <= 991) {
+        if (mainSearchInput) {
+          const rect = mainSearchInput.getBoundingClientRect();
+          const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+          if (navbarToggler) {
+            navbarToggler.classList.toggle('visible', isVisible);
+          }
+        }
+      } else {
+        if (navbarToggler) {
+          navbarToggler.classList.remove('visible');
+        }
+      }
+    }
+    
+    window.addEventListener('scroll', checkSearchBarVisibility);
+    window.addEventListener('resize', checkSearchBarVisibility);
+    checkSearchBarVisibility();
     </script>
     {% block extra_js %}{% endblock %}
   </body>
