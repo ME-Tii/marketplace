@@ -248,6 +248,7 @@
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#navbarNav"
+            style="display:none"
           >
             <span class="navbar-toggler-icon"></span>
           </button>
@@ -1159,13 +1160,8 @@
     }
 
     // Show navbar menu button when search bar is visible
-    const navbarToggler = document.querySelector('.navbar-toggler');
+    const navbarToggler = document.getElementById('navbarToggler');
     const mainSearchInput = document.getElementById('mainSearchInput');
-    
-    // Initially hide on mobile
-    if (window.innerWidth <= 991 && navbarToggler) {
-      navbarToggler.classList.remove('visible');
-    }
     
     function checkSearchBarVisibility() {
       if (window.innerWidth <= 991) {
@@ -1173,19 +1169,19 @@
           const rect = mainSearchInput.getBoundingClientRect();
           const scrolledPast = window.scrollY > rect.top + rect.height;
           if (navbarToggler) {
-            navbarToggler.classList.toggle('visible', scrolledPast);
+            navbarToggler.style.display = scrolledPast ? 'block' : 'none';
           }
         }
       } else {
         if (navbarToggler) {
-          navbarToggler.classList.remove('visible');
+          navbarToggler.style.display = '';
         }
       }
     }
     
     window.addEventListener('scroll', checkSearchBarVisibility);
     window.addEventListener('resize', checkSearchBarVisibility);
-    // Don't call checkSearchBarVisibility immediately - let user scroll first
+    checkSearchBarVisibility();
     </script>
     {% block extra_js %}{% endblock %}
   </body>
