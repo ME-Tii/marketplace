@@ -866,11 +866,31 @@
           '</div>';
       }
       
+      const GRAM_PER_OZ = 31.1035;
+
+      function toggleWeightUnit() {
+        const unit = document.getElementById('goldWeightUnit').value;
+        const input = document.getElementById('goldBuyWeight');
+        const label = input.closest('.col-md-3').querySelector('.form-label');
+        if (unit === 'oz') {
+          input.placeholder = '0.00';
+        } else {
+          input.placeholder = '0.00';
+        }
+      }
+
+      function getWeightInGrams() {
+        const weight = parseFloat(document.getElementById('goldBuyWeight').value);
+        const unit = document.getElementById('goldWeightUnit').value;
+        return unit === 'oz' ? weight * GRAM_PER_OZ : weight;
+      }
+
       function calculateGoldBuy() {
         const capital = parseFloat(document.getElementById('goldCapital').value);
         const buyPrice = parseFloat(document.getElementById('goldBuyPrice').value);
         const purity = selectedMetal === 'gold' ? parseFloat(document.getElementById('goldCapitalPurity').value) : 1;
-        const buyWeight = parseFloat(document.getElementById('goldBuyWeight').value);
+        const weightUnit = document.getElementById('goldWeightUnit').value;
+        const buyWeightGrams = getWeightInGrams();
         
         if (!currentPrices) {
           document.getElementById('goldBuyResult').innerHTML = '<span class="text-warning">Loading price...</span>';
@@ -882,9 +902,10 @@
           const marketPrice = marketPricePerGram * purity;
           
           // Mode 1: Capital + Price per gram → calculate grams you can buy
-          if (capital && buyPrice && !buyWeight) {
+          if (capital && buyPrice && !buyWeightGrams) {
             const exactGrams = capital / buyPrice;
             const maxGrams = Math.floor(exactGrams);
+            const maxOz = maxGrams / GRAM_PER_OZ;
             const totalCost = maxGrams * buyPrice;
             const remaining = capital - totalCost;
             const marketTotal = maxGrams * marketPrice;
@@ -902,16 +923,17 @@
               : '<span class="text-success">Seller profit: -€' + Math.abs(profit).toFixed(2) + ' (' + profitPercent.toFixed(1) + '%)</span>';
             
             document.getElementById('goldBuyResult').innerHTML = 
-              '<strong>' + maxGrams + 'g</strong> × €' + buyPrice.toFixed(2) + '/g = <strong>€' + totalCost.toFixed(2) + '</strong><br>' +
+              '<strong>' + maxGrams.toFixed(2) + 'g (' + maxOz.toFixed(3) + 'oz)</strong> × €' + buyPrice.toFixed(2) + '/g = <strong>€' + totalCost.toFixed(2) + '</strong><br>' +
               'Budget: €' + capital.toFixed(2) + ' → ' + 
               (remaining >= 0 ? '<span class="text-success">Change: €' + remaining.toFixed(2) + '</span>' : '<span class="text-danger">Short: €' + Math.abs(remaining).toFixed(2) + '</span>') + '<br>' +
               'Market: €' + marketPrice.toFixed(2) + '/g (' + priceDiffPercent.toFixed(1) + '%)<br>' +
               profitHtml;
           }
           // Mode 2: Weight + Price per gram → calculate total cost
-          else if (buyWeight && buyPrice && !capital) {
-            const totalCost = buyWeight * buyPrice;
-            const marketTotal = buyWeight * marketPrice;
+          else if (buyWeightGrams && buyPrice && !capital) {
+            const buyOz = buyWeightGrams / GRAM_PER_OZ;
+            const totalCost = buyWeightGrams * buyPrice;
+            const marketTotal = buyWeightGrams * marketPrice;
             const priceDiff = buyPrice - marketPrice;
             const priceDiffPercent = (priceDiff / marketPrice) * 100;
             const profit = totalCost - marketTotal;
@@ -930,7 +952,7 @@
               : '<span class="text-muted">Break-even: €' + marketPrice.toFixed(2) + '/g</span>';
             
             document.getElementById('goldBuyResult').innerHTML = 
-              '<strong>' + buyWeight + 'g</strong> × €' + buyPrice.toFixed(2) + '/g = <strong>€' + totalCost.toFixed(2) + '</strong><br>' +
+              '<strong>' + buyWeightGrams.toFixed(2) + 'g (' + buyOz.toFixed(3) + 'oz)</strong> × €' + buyPrice.toFixed(2) + '/g = <strong>€' + totalCost.toFixed(2) + '</strong><br>' +
               'Market: €' + marketTotal.toFixed(2) + ' (' + priceDiffPercent.toFixed(1) + '%)<br>' +
               profitHtml + '<br>' +
               lossAtHtml;

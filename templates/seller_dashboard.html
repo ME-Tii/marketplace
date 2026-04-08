@@ -183,8 +183,14 @@
           </select>
         </div>
         <div class="col-md-3 mb-3">
-          <label class="form-label">{% if session.get('lang') == 'de' %}Gold Gewicht (g){% else %}Gold Weight (g){% endif %}</label>
-          <input type="number" class="form-control" id="goldBuyWeight" step="0.01" min="0" placeholder="0.00">
+          <label class="form-label">{% if session.get('lang') == 'de' %}Gold Gewicht{% else %}Gold Weight{% endif %}</label>
+          <div class="input-group">
+            <input type="number" class="form-control" id="goldBuyWeight" step="0.01" min="0" placeholder="0.00">
+            <select class="form-select" id="goldWeightUnit" onchange="toggleWeightUnit()" style="max-width: 90px;">
+              <option value="g" selected>g</option>
+              <option value="oz">oz</option>
+            </select>
+          </div>
         </div>
       </div>
       <button class="btn btn-info" onclick="calculateGoldBuy()">{% if session.get('lang') == 'de' %}Berechnen{% else %}Calculate{% endif %}</button>
