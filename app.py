@@ -604,7 +604,7 @@ def init_db():
         c.execute("ALTER TABLE users ADD COLUMN created_at DATETIME")
     except sqlite3.OperationalError:
         pass
-    c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123')))
+    c.execute("INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)", ('admin', 'admin@example.com', generate_password_hash('admin123', method='pbkdf2:sha256')))
     c.execute('''CREATE TABLE IF NOT EXISTS visits
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, ip_address TEXT, user_agent TEXT, visited_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
     try:
@@ -1269,7 +1269,7 @@ def register():
         return 'All fields required', 400
     if password != confirm:
         return 'Passwords do not match', 400
-    hashed = generate_password_hash(password)
+    hashed = generate_password_hash(password, method='pbkdf2:sha256')
     
     verification_token = secrets.token_urlsafe(32)
     
@@ -1892,7 +1892,7 @@ def reset_password(token):
                                  error='Passwords do not match', unread_messages=0)
         
         # Update password and clear token
-        hashed = generate_password_hash(new_password)
+        hashed = generate_password_hash(new_password, method='pbkdf2:sha256')
         c.execute("UPDATE users SET password = ?, reset_token = NULL, reset_sent_at = NULL WHERE id = ?", 
                  (hashed, user_id))
         conn.commit()
@@ -4300,7 +4300,7 @@ def edit_profile():
             if not user or not check_password_hash(user[0], current_password):
                 password_error = 'Current password is incorrect.'
             else:
-                hashed_new = generate_password_hash(new_password)
+                hashed_new = generate_password_hash(new_password, method='pbkdf2:sha256')
                 conn = sqlite3.connect('database.db')
                 c = conn.cursor()
                 c.execute("UPDATE users SET password = ? WHERE id = ?", (hashed_new, session['user_id']))

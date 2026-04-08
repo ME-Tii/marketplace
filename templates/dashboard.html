@@ -821,9 +821,10 @@ window.addEventListener('scroll', function() {
   
   // Scroll-based hide after navbar passes
   const isMobile = window.innerWidth < 768;
-  const heroThreshold = isMobile ? 400 : 100;
-  const featureThreshold = isMobile ? 1200 : 500;
-  const howItWorksThreshold = isMobile ? 2000 : 900;
+  const navbarHeight = document.querySelector('.navbar')?.offsetHeight || 70;
+  const heroThreshold = navbarHeight + 50;
+  const featureThreshold = navbarHeight + 400;
+  const howItWorksThreshold = navbarHeight + 700;
   
   if (window.scrollY > heroThreshold) {
     if (hero) hero.classList.add('scrolled');
