@@ -106,35 +106,8 @@
         --bs-dropdown-bg: #1a1a1a;
         --bs-code-bg: #1a1a1a;
       }
-      [data-bs-theme="light"] {
-        --bs-body-bg: #f8f9fa;
-        --bs-body-color: #212529;
-        --bs-secondary-bg: #ffffff;
-        --bs-tertiary-bg: #e9ecef;
-        --bs-card-bg: #ffffff;
-        --bs-modal-bg: #ffffff;
-        --bs-input-bg: #ffffff;
-        --bs-dropdown-bg: #ffffff;
-        --bs-code-bg: #f8f9fa;
-      }
-      [data-bs-theme="light"] .navbar {
-        background: rgba(255, 255, 255, 0.95) !important;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      }
-      [data-bs-theme="light"] body {
-        background-image: none !important;
-      }
-      .theme-toggle {
-        background: none;
-        border: none;
-        padding: 0.5rem;
-        cursor: pointer;
-        opacity: 0.8;
-        transition: opacity 0.2s;
-      }
-      .theme-toggle:hover {
-        opacity: 1;
-      }
+
+
       .card:hover {
         border-color: #0d6efd;
         box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.5);
@@ -338,11 +311,6 @@
               {% endif %}
             </ul>
             <ul class="navbar-nav">
-              <li class="nav-item">
-                <button class="theme-toggle nav-link text-nowrap" onclick="toggleTheme()" title="Toggle theme" id="themeToggle">
-                  <span id="themeIcon">☀️</span>
-                </button>
-              </li>
               <li class="nav-item">
                 <a id="nav-language"
                   class="nav-link text-nowrap"
@@ -1192,28 +1160,6 @@
     if (Notification.permission === 'granted') {
       document.getElementById('notification-btn').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#198754" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z"/></svg>';
     }
-
-    // Theme toggle
-    function toggleTheme() {
-      const html = document.documentElement;
-      const currentTheme = html.getAttribute('data-bs-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-bs-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      updateThemeIcon(newTheme);
-    }
-
-    function updateThemeIcon(theme) {
-      const icon = document.getElementById('themeIcon');
-      if (icon) {
-        icon.textContent = theme === 'dark' ? '☀️' : '🌙';
-      }
-    }
-
-    // Initialize theme from localStorage
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-bs-theme', savedTheme);
-    updateThemeIcon(savedTheme);
 
     // Show navbar menu button when search bar is visible
     const navbarToggler = document.getElementById('navbarToggler');
