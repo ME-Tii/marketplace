@@ -809,24 +809,19 @@ window.addEventListener('scroll', function() {
   const whatCanYouDo = document.getElementById('what-you-can-do');
   const howItWorks = document.getElementById('how-it-works');
   const postsSection = document.querySelector('.posts-section');
+  const searchBar = document.getElementById('mainSearchInput');
   
-  // Fade-in sequence for sections (run once)
-  if (!document.body.classList.contains('fade-started')) {
-    document.body.classList.add('fade-started');
-    setTimeout(() => { if (trust) trust.classList.add('visible'); }, 300);
-    setTimeout(() => { if (whatCanYouDo) whatCanYouDo.classList.add('visible'); }, 600);
-    setTimeout(() => { if (howItWorks) howItWorks.classList.add('visible'); }, 900);
-    setTimeout(() => { if (postsSection) postsSection.classList.add('visible'); }, 1200);
-  }
+  const navbar = document.querySelector('.navbar');
+  const navbarBottom = navbar ? navbar.offsetTop + navbar.offsetHeight : 70;
+  const navbarToggler = document.getElementById('navbarToggler');
   
-  // Scroll-based hide after navbar passes
-  const isMobile = window.innerWidth < 768;
-  const navbarHeight = document.querySelector('.navbar')?.offsetHeight || 70;
-  const heroThreshold = navbarHeight + 50;
-  const featureThreshold = navbarHeight + 400;
-  const howItWorksThreshold = navbarHeight + 700;
+  const isElementUnderNavbar = (element) => {
+    if (!element) return false;
+    const rect = element.getBoundingClientRect();
+    return rect.top < navbarBottom;
+  };
   
-  if (window.scrollY > heroThreshold) {
+  if (isElementUnderNavbar(hero)) {
     if (hero) hero.classList.add('scrolled');
     if (trust) trust.classList.add('scrolled');
   } else {
@@ -834,32 +829,36 @@ window.addEventListener('scroll', function() {
     if (trust) trust.classList.remove('scrolled');
   }
   
-  // What You Can Do - moves right
   if (whatCanYouDo) {
-    if (window.scrollY > featureThreshold) {
+    if (isElementUnderNavbar(whatCanYouDo)) {
       whatCanYouDo.classList.add('scrolled');
     } else {
       whatCanYouDo.classList.remove('scrolled');
     }
   }
   
-  // How It Works - moves left
   if (howItWorks) {
-    if (window.scrollY > howItWorksThreshold) {
+    if (isElementUnderNavbar(howItWorks)) {
       howItWorks.classList.add('scrolled');
     } else {
       howItWorks.classList.remove('scrolled');
     }
   }
   
-  // Navbar shows nav items after How It Works section on dashboard
+  if (searchBar && navbarToggler) {
+    if (isElementUnderNavbar(searchBar)) {
+      navbarToggler.classList.add('visible');
+    } else {
+      navbarToggler.classList.remove('visible');
+    }
+  }
+  
   const isDashboard = window.location.pathname === '/dashboard' || window.location.pathname === '/';
   const navbarEl = document.querySelector('.navbar');
   if (isDashboard) {
-    if (window.scrollY > howItWorksThreshold) {
+    if (isElementUnderNavbar(howItWorks)) {
       if (navbarEl) navbarEl.classList.add('scrolled');
       if (postsSection) postsSection.classList.add('ready');
-      // Stop flying animation once cards are visible
       setTimeout(() => {
         if (postsSection) postsSection.classList.add('stop-animation');
       }, 100);
@@ -867,7 +866,6 @@ window.addEventListener('scroll', function() {
   } else {
     if (navbarEl) navbarEl.classList.add('scrolled');
     if (postsSection) postsSection.classList.add('ready');
-    // Stop flying animation once cards are visible
     setTimeout(() => {
       if (postsSection) postsSection.classList.add('stop-animation');
     }, 100);
